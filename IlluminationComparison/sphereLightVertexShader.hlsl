@@ -24,7 +24,6 @@ struct VertexToPixel
 {
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float3 normal		: NORMAL;
-	float3 worldPos		: POSITION;
 	float3 viewRay		: VRAY;
 	float2 uv			: TEXCOORD;
 	float4 posForShadow	: TEXCOORD1;
@@ -42,7 +41,6 @@ VertexToPixel main(VertexShaderInput input)
 	output.position = mul(float4(input.position, 1.0f), worldViewProj);
 
 	// Calculate the world position of the vert
-	output.worldPos = mul(float4(input.position, 1), world).xyz;
 	float4 v = mul(float4(output.position.x, output.position.y, 1, 1), invProjection);
 	v /= v.w;
 	v /= v.z;

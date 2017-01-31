@@ -17,8 +17,8 @@ BouncingBallScene::BouncingBallScene()
 
 
 	PointLights.push_back(new ScenePointLight(
-		VEC4(0.3f, 0.5f, 0.3f, 1.0f),
-		VEC3(0, 10, 20), 20.0f));
+		VEC4(1.0f, 0.5f, 0.3f, 1.0f),
+		VEC3(0, 0, 0), 20.0f));
 
 	DirectionalLights.push_back(SceneDirectionalLight(
 		VEC4(0.1f, 0.1f, 0.1f, 1.0f),
