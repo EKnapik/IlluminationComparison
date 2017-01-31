@@ -259,6 +259,9 @@
     <FxCompile Include="SSAOPS.hlsl">
       <Filter>Shaders\PostProcessing</Filter>
     </FxCompile>
+    <FxCompile Include="sphereLightVertexShader.hlsl">
+      <Filter>Shaders\Deffered</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

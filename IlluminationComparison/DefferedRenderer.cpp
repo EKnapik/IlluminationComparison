@@ -120,7 +120,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descPositionTexture.Height = height;
 	descPositionTexture.MipLevels = 1;
 	descPositionTexture.ArraySize = 1;
-	descPositionTexture.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	descPositionTexture.Format = DXGI_FORMAT_R32_FLOAT;
 	descPositionTexture.SampleDesc.Count = 1;
 	descPositionTexture.SampleDesc.Quality = 0;
 	descPositionTexture.Usage = D3D11_USAGE_DEFAULT;
@@ -298,7 +298,7 @@ void DefferedRenderer::pointLightRender()
 	context->OMSetBlendState(blendState, factors, 0xFFFFFFFF);
 	context->RSSetState(lightRastState);
 
-	SimpleVertexShader* vertexShader = GetVertexShader("default");
+	SimpleVertexShader* vertexShader = GetVertexShader("sphereLight");
 	SimplePixelShader* pixelShader = GetPixelShader("sphereLight");
 	vertexShader->SetShader();
 	pixelShader->SetShader();
@@ -311,10 +311,13 @@ void DefferedRenderer::pointLightRender()
 	// send constant data
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
+	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
 
+	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat("width", windowWidth);
 	pixelShader->SetFloat("height", windowHeight);
+	pixelShader->SetFloat("zFar", camera->GetFarPlane());
 	
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -360,6 +363,9 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetShader();
 
 	// Send G buffers to pixel shader
+	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
+	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
+	pixelShader->SetFloat("zFar", camera->GetFarPlane());
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
 	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
@@ -424,6 +430,7 @@ void DefferedRenderer::DrawOpaqueMaterials()
 		// Send Geometry
 		vertexShader->SetMatrix4x4("view", *camera->GetView());
 		vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
+		vertexShader->SetFloat("zFar", camera->GetFarPlane());
 		pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 		pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
 
@@ -475,6 +482,7 @@ void DefferedRenderer::DrawTransparentMaterials()
 		// Send Geometry
 		vertexShader->SetMatrix4x4("view", *camera->GetView());
 		vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
+		vertexShader->SetFloat("zFar", camera->GetFarPlane());
 		pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 		pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
 

@@ -15,10 +15,12 @@ struct PointLight
 
 cbuffer externalData : register(b0)
 {
+	matrix invView;
 	PointLight pointLight;
 	float3 cameraPosition;
 	float width;
 	float height;
+	float zFar;
 }
 
 struct VertexToPixel
@@ -26,6 +28,7 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float3 normal		: NORMAL;
 	float3 worldPos		: POSITION;
+	float3 viewRay		: VRAY;
 	float2 uv			: TEXCOORD;
 };
 
@@ -39,8 +42,11 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// float valX = input.position.x / 1280;
 	// float valY = input.position.y / 720;
 	float2 gUV = float2(input.position.x / width, input.position.y / height);
+	float depth = gPosition.Sample(basicSampler, gUV).x;
+	float3 gWorldPos = input.viewRay * -depth * zFar;
+	gWorldPos = mul(float4(gWorldPos, 1.0), invView);
 
-	float3 gWorldPos = gPosition.Sample(basicSampler, gUV).xyz;
+	// float3 gWorldPos = gPosition.Sample(basicSampler, gUV).xyz;
 	// need to unpack normal
 	float3 normal = (gNormal.Sample(basicSampler, gUV).xyz * 2.0f) - 1.0f;
 	float4 surfaceColor = gAlbedo.Sample(basicSampler, gUV);

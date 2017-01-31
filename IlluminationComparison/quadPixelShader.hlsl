@@ -16,14 +16,17 @@ struct DirectionalLight
 
 cbuffer externalData	: register(b0)
 {
+	matrix invView;
 	DirectionalLight dirLight;
 	float3 cameraPosition;
+	float zFar;
 }
 
 // Struct representing the data we expect to receive from earlier pipeline stages
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
+	float3 viewRay		: VRAY;
 	float2 uv			: TEXCOORD;
 };
 
@@ -32,7 +35,10 @@ struct VertexToPixel
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	float3 gWorldPos = gPosition.Sample(basicSampler, input.uv).xyz;
+	float depth = gPosition.Sample(basicSampler, input.uv).x;
+	float3 gWorldPos = input.viewRay * -depth * zFar;
+	gWorldPos = mul(float4(gWorldPos, 1.0), invView);
+	//float3 gWorldPos = gPosition.Sample(basicSampler, input.uv).xyz;
 	// need to unpack normal
 	float3 normal = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
 	float4 surfaceColor = gAlbedo.Sample(basicSampler, input.uv);

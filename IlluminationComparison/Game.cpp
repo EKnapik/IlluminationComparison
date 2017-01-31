@@ -94,6 +94,7 @@ void Game::LoadShaders()
 	renderer->AddPixelShader("gBuffer", L"gBufferPixelShader.cso");
 	renderer->AddVertexShader("quad", L"quadVertexShader.cso");
 	renderer->AddPixelShader("quad", L"quadPixelShader.cso");
+	renderer->AddVertexShader("sphereLight", L"sphereLightVertexShader.cso");
 	renderer->AddPixelShader("sphereLight", L"sphereLightPixelShader.cso");
 
 	// Create shaders for Particle Systems

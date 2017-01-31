@@ -203,6 +203,13 @@ namespace GMath
 			farClip));					// Far clip plane distance); // Transpose for HLSL!
 	}
 
+	inline void SetInverseMatrix(MAT4X4* mat,  MAT4X4* matToInv)
+	{
+		MATRIX matrix = DirectX::XMLoadFloat4x4(matToInv);
+		VECTOR vecNonUse;
+		XMStoreFloat4x4(mat, XMMatrixInverse(&vecNonUse, matrix));
+	}
+
 	inline void GetMagnitude(FLOAT* length, VEC3* vec)
 	{
 		DirectX::XMStoreFloat(length, DirectX::XMVector3Length(GetVector(vec)));

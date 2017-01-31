@@ -12,6 +12,7 @@ struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
 	float3 worldPos		: POSITION;
+	float  depth		: DEPTH;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float2 uv			: TEXCOORD0;
@@ -65,7 +66,8 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	output.Normal.a = 1.0;
 
 	// Set the depth
-	output.Depth = float4(input.worldPos, 1.0);
+	//output.Depth = float4(input.worldPos, 1.0);
+	output.Depth.x = input.depth;
 
 	// Time for shadows!
 	// Figure out this pixel's UV in the SHADOW MAP

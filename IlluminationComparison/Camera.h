@@ -10,9 +10,13 @@ public:
 	void Update(FLOAT dt);
 
 	MAT4X4* GetView();
+	MAT4X4* GetInvView();
 	MAT4X4* GetProjection();
+	MAT4X4* GetInvProjection();
+
 	VEC3* GetPosition() { return &position; }
 	VEC3* GetDirection() { return &direction; }
+	FLOAT GetFarPlane() { return zFar; }
 
 	void RotateXY(FLOAT x, FLOAT y);
 
@@ -21,13 +25,16 @@ private:
 	/// This is a LOOK TO view matrix.
 	///</summary>
 	MAT4X4 view;
+	MAT4X4 invView;
 
 	VEC3 position;
 	VEC3 direction;
+	FLOAT zFar;
 	FLOAT xRot;
 	FLOAT yRot;
 
 	MAT4X4 projection;
+	MAT4X4 invProjection;
 
 
 	FLOAT speed = 5;
