@@ -8,8 +8,8 @@ BouncingBallScene::BouncingBallScene()
 
 		Ball* ball = new Ball();
 		ball->SetEntity(firstEntity);
-		ball->kinematics->velocity = VEC3(0, 0, 0);
-		ball->kinematics->acceleration = VEC3(-2.5f + i * 0.5f, -(i + 1), -2.5f + i * 0.5f);
+		//ball->kinematics->velocity = VEC3(0, 0, 0);
+		//ball->kinematics->acceleration = VEC3(-2.5f + i * 0.5f, -(i + 1), -2.5f + i * 0.5f);
 		ball->kinematics->SetPosition(VEC3(-5 + i, 4, 0));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
@@ -19,6 +19,10 @@ BouncingBallScene::BouncingBallScene()
 	PointLights.push_back(new ScenePointLight(
 		VEC4(1.0f, 0.5f, 0.3f, 1.0f),
 		VEC3(0, 0, 0), 20.0f));
+
+	PointLights.push_back(new ScenePointLight(
+		VEC4(0.1f, 1.0f, 0.3f, 1.0f),
+		VEC3(0, 2, 0), 6.0f));
 
 	DirectionalLights.push_back(SceneDirectionalLight(
 		VEC4(0.1f, 0.1f, 0.1f, 1.0f),

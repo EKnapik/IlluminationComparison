@@ -312,7 +312,6 @@ void DefferedRenderer::pointLightRender()
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
 	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
-
 	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat("width", windowWidth);

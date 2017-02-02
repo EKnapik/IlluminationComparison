@@ -28,7 +28,8 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float3 normal		: NORMAL;
 	float3 viewRay		: VRAY;
-	float2 uv			: TEXCOORD;
+	float2 uv			: TEXCOORD0;
+	float4 posForShadow	: TEXCOORD1;
 };
 
 
@@ -42,7 +43,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// float valY = input.position.y / 720;
 	float2 gUV = float2(input.position.x / width, input.position.y / height);
 	float depth = gPosition.Sample(basicSampler, gUV).x;
-	float3 gWorldPos = input.viewRay * -depth * zFar;
+	float3 gWorldPos = (input.viewRay * -depth * zFar);
 	gWorldPos = mul(float4(gWorldPos, 1.0), invView);
 
 	// float3 gWorldPos = gPosition.Sample(basicSampler, gUV).xyz;
@@ -71,6 +72,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// float3 refl = reflect(-dirToLight, normal);
 	// float spec = pow(max(dot(refl, toCamera), 0), 200);
 
-	return pointLight.Color * pointLightAmount * surfaceColor;
-	return float4(0, 0, 0, 0);
+	return (pointLight.Color * pointLightAmount * surfaceColor) + float4(0, 0, 0, 0);
+	return float4(0, 0, 1, 0);
 }

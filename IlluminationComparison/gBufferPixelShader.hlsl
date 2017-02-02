@@ -12,11 +12,11 @@ struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
 	float3 worldPos		: POSITION;
-	float  depth		: DEPTH;
+	float  depth : DEPTH;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float2 uv			: TEXCOORD0;
-	float4 posForShadow : TEXCOORD1;
+	float4 posForShadow	: TEXCOORD1;
 };
 
 cbuffer externalData : register(b0)

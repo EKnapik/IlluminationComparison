@@ -25,7 +25,7 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float3 normal		: NORMAL;
 	float3 viewRay		: VRAY;
-	float2 uv			: TEXCOORD;
+	float2 uv			: TEXCOORD0;
 	float4 posForShadow	: TEXCOORD1;
 };
 
@@ -44,7 +44,7 @@ VertexToPixel main(VertexShaderInput input)
 	float4 v = mul(float4(output.position.x, output.position.y, 1, 1), invProjection);
 	v /= v.w;
 	v /= v.z;
-	output.viewRay = v.xyz;
+	output.viewRay = normalize(v.xyz);
 
 	// Set the normal
 	output.normal = mul(input.normal, (float3x3)world);
