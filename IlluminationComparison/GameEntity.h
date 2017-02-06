@@ -83,7 +83,7 @@ private:
 
 	///<summary>
 	/// The material for this object. Represented as a string. The renderer will 
-	/// assign the proper mesh.
+	/// assign the proper material.
 	///</summary>
 	std::string material = "default";
 

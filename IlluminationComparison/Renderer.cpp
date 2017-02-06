@@ -862,3 +862,13 @@ SimpleGeometryShader * Renderer::GetGeometryShader(std::string name)
 	return GeometryShaderDictionary.at(name);
 }
 
+
+/*
+I need to clean this up a bit and make this an actual primary class. That is pulling some
+of the code out of the deffered rendering.
+
+Sort objects front to back opaque.
+sort objects back to front transluscent.
+
+The deferred rendering has a specific way to render normal materials, and PBR materials
+*/
