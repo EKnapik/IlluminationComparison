@@ -2,7 +2,7 @@ float4 main() : SV_TARGET
 {
 	return float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
-
+/*
 out vec4 FragColor;
 in vec2 TexCoords;
 in vec3 WorldPos;
@@ -134,3 +134,5 @@ vec3 normal = getNormalFromMap();
 float metallic = texture(metallicMap, TexCoords).r;
 float roughness = texture(roughnessMap, TexCoords).r;
 float ao = texture(aoMap, TexCoords).r;
+
+*/

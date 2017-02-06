@@ -12,7 +12,6 @@ public:
 	
 
 private:
-
 	void gBufferRender(FLOAT deltaTime, FLOAT totalTime);
 	void pointLightRender();
 	void directionalLightRender();
@@ -32,12 +31,17 @@ private:
 	ID3D11RenderTargetView *	PositionRTV;
 	ID3D11ShaderResourceView*	PositionSRV;
 
+	// Light Buffer
+	ID3D11RenderTargetView *	LightRTV;
+	ID3D11ShaderResourceView*	LightSRV;
+
+	// PBR (metallic, roughness, ao)
+	ID3D11RenderTargetView *	PBR_RTV;
+	ID3D11ShaderResourceView*	PBR_SRV;
+	
 	ID3D11SamplerState* simpleSampler;
 	ID3D11BlendState* blendState;
 	ID3D11RasterizerState* lightRastState;
 	ID3D11BlendState* transBlendState;
-
-	float windowWidth;
-	float windowHeight;
 };
 
