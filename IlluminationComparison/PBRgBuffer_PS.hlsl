@@ -1,30 +1,37 @@
-float4 main() : SV_TARGET
+// Texture info
+Texture2D gAlbedo			: register(t0);
+Texture2D gNormal			: register(t1);
+Texture2D gDepth			: register(t2);
+Texture2D gPBR				: register(t3);
+SamplerState basicSampler	: register(s0);
+
+struct DirectionalLight
 {
-	return float4(1.0f, 1.0f, 1.0f, 1.0f);
+	float4 AmbientColor;
+	float4 DiffuseColor;
+	float3 Direction;
+};
+
+cbuffer externalData	: register(b0)
+{
+	matrix invView;
+	DirectionalLight dirLight;
+	float3 cameraPosition;
+	float zFar;
 }
-/*
-out vec4 FragColor;
-in vec2 TexCoords;
-in vec3 WorldPos;
-in vec3 Normal;
-in mat3 TBN;
 
-// material parameters
-uniform vec3 albedo;
-uniform float metallic;
-uniform float roughness;
-uniform float ao;
 
-// lights
-uniform vec3 lightPositions[4];
-uniform vec3 lightColors[4];
+struct VertexToPixel
+{
+	float4 position		: SV_POSITION;
+	float3 viewRay		: VRAY;
+	float2 uv			: TEXCOORD;
+};
 
-uniform vec3 camPos;
-uniform float exposure;
 
-const float PI = 3.14159265359;
-// ----------------------------------------------------------------------------
-float DistributionGGX(vec3 N, vec3 H, float roughness)
+static const float PI = 3.14159265359;
+
+float DistributionGGX(float3 N, float3 H, float roughness)
 {
 	float a = roughness*roughness;
 	float a2 = a*a;
@@ -37,7 +44,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
 
 	return nom / denom;
 }
-// ----------------------------------------------------------------------------
+
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
 	float r = (roughness + 1.0);
@@ -48,8 +55,8 @@ float GeometrySchlickGGX(float NdotV, float roughness)
 
 	return nom / denom;
 }
-// ----------------------------------------------------------------------------
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+
+float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
 {
 	float NdotV = max(dot(N, V), 0.0);
 	float NdotL = max(dot(N, L), 0.0);
@@ -58,76 +65,80 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 	return ggx1 * ggx2;
 }
-// ----------------------------------------------------------------------------
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+
+float3 fresnelSchlick(float cosTheta, float3 F0)
 {
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
-// ----------------------------------------------------------------------------
-void main()
+
+
+float4 main(VertexToPixel input) : SV_TARGET
 {
-	vec3 N = normalize(Normal);
-	vec3 V = normalize(camPos - WorldPos);
-	vec3 R = reflect(-V, N);
+	float depth = gDepth.Sample(basicSampler, input.uv).x;
+	float3 gWorldPos = input.viewRay * -depth * zFar;
+	gWorldPos = mul(float4(gWorldPos, 1.0), invView);
+	// need to unpack normal
+	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
+	float3 albedo = pow(gAlbedo.Sample(basicSampler, input.uv).xyz, 2.2); // convert to linear from sRGB
+	float3 PBR = gPBR.Sample(basicSampler, input.uv).xyz;
+	float metalness = PBR.x;
+	float roughness = PBR.y;
+	float ao		= PBR.z;
+
+	// Check for clip
+	// CLIPPING MIGHT NOT BE THE BEST CHOICE BUT IT IS A CHOICE
+	// clip(surfaceColor.a + -0.01);
+
+	// NOT INVERTING THE DIRECTION TO THE LIGHT
+	// L = direction toward light from world position
+	// V = direction toward camera from world position
+	float3 L = normalize(dirLight.Direction);
+	float3 V = normalize(cameraPosition - gWorldPos);
+	float3 R = reflect(-V, N);
+	float3 H = normalize(V + L);
 
 	// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
 	// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, albedo, metallic);
+	float3 F0 = float3(0.04f, 0.04f, 0.04f);
+	F0 = lerp(F0, albedo, metalness);
 
-	// reflectance equation
-	vec3 Lo = vec3(0.0);
-	for (int i = 0; i < 4; ++i)
-	{
-		// calculate per-light radiance
-		vec3 L = normalize(lightPositions[i] - WorldPos);
-		vec3 H = normalize(V + L);
-		float distance = length(lightPositions[i] - WorldPos);
-		float attenuation = 1.0 / (distance * distance);
-		vec3 radiance = lightColors[i] * attenuation;
+	// Cook-Torrance BRDF
+	float NDF = DistributionGGX(N, H, roughness);
+	float G = GeometrySmith(N, V, L, roughness);
+	float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+	// kS is equal to Fresnel
+	// energy conservation can only have 100% light unless object is emitter
+	float3 kS = F;
+	float3 kD = float3(1.0f, 1.0f, 1.0f) - kS;
+	kD *= 1.0 - metalness;
+	
+	// simple attenuation if this wasn't a directional light
+	/// float distance = length(lightPositions[i] - WorldPos);
+	/// float attenuation = 1.0 / (distance * distance);
+	/// vec3 radiance = lightColors[i] * attenuation;
+	float3 radiance = dirLight.DiffuseColor * 1.0f;
 
-		// Cook-Torrance BRDF
-		float NDF = DistributionGGX(N, H, roughness);
-		float G = GeometrySmith(N, V, L, roughness);
-		vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+	float3 nominator = NDF * G * F;
+	float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+	float3 brdf = nominator / denominator;
 
-		vec3 nominator = NDF * G * F;
-		float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
-		vec3 brdf = nominator / denominator;
+	// scale light by N dot L
+	float lightAmount = max(dot(N, L), 0.0);
+	float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
+	
+	// ambient lighting, will be replaced with environment lighting IBL
+	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * ao;
+	float3 color = ambient + Lo;
 
-		// kS is equal to Fresnel
-		vec3 kS = F;
-		// for energy conservation, the diffuse and specular light can't
-		// be above 1.0 (unless the surface emits light); to preserve this
-		// relationship the diffuse component (kD) should equal 1.0 - kS.
-		vec3 kD = vec3(1.0) - kS;
-		// multiply kD by the inverse metalness such that only non-metals 
-		// have diffuse lighting, or a linear blend if partly metal (pure metals
-		// have no diffuse light).
-		kD *= 1.0 - metallic;
-
-		// scale light by NdotL
-		float NdotL = max(dot(N, L), 0.0);
-
-		// add to outgoing radiance Lo
-		Lo += (kD * albedo / PI + brdf) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-	}
-
-	// ambient lighting (note that the next IBL tutorial will replace 
-	// this ambient lighting with environment lighting).
-	vec3 ambient = vec3(0.03) * albedo * ao;
-
-	vec3 color = ambient + Lo;
-
-	// HDR tonemapping
-	color = color / (color + vec3(1.0));
+	// HDR tonemapping might cause issue with addative lighting
+	color = color / (color + float3(1.0f, 1.0f, 1.0f));
 	// gamma correct
-	color = pow(color, vec3(1.0 / 2.2));
-
-	FragColor = vec4(color, 1.0);
+	color = pow(color, (1.0 / 2.2));
+	return float4(color, 1.0);
 }
 
 
+/*
 // this is converting albedo into linear space because most albedo textures are in sRGB
 vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, 2.2);
 vec3 normal = getNormalFromMap();

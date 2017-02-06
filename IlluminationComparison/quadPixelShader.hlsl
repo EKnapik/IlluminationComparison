@@ -6,7 +6,6 @@ Texture2D gPosition			: register(t2);
 Texture2D ssao				: register(t3);
 SamplerState basicSampler	: register(s0);
 
-
 struct DirectionalLight
 {
 	float4 AmbientColor;
