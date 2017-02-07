@@ -40,10 +40,12 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	input.tangent = normalize(input.tangent);
 	
 	// Normal Mapping
-	/*float3 normalFromMap = NormalMap.Sample(basicSampler, input.uv).rgb * 2 - 1;
+	/*
+	float3 normalFromMap = NormalMap.Sample(basicSampler, input.uv).rgb * 2 - 1;
 	float3 T = normalize(input.tangent - input.normal * dot(input.tangent, input.normal));
 	float3x3 TBN = float3x3(T, cross(T, input.normal), input.normal);
-	input.normal = normalize(mul(normalFromMap, TBN));*/
+	input.normal = normalize(mul(normalFromMap, TBN));
+	*/
 	GBufferOutput output;
 
 	float3 toCamera = normalize(cameraPosition - input.worldPos);;

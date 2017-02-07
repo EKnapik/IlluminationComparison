@@ -55,8 +55,8 @@ VertexToPixel main( VertexShaderInput input )
 	// transform normal
 	output.normal = mul(input.normal, (float3x3)world);
 	output.normal = normalize(output.normal);
-	//output.tangent = mul(input.tangent, (float3x3)world);
-	//output.tangent = normalize(output.tangent);
+	output.tangent = mul(input.tangent, (float3x3)world);
+	output.tangent = normalize(output.tangent);
 
 	output.uv = input.uv;
 	// This github uses depth then recalculates the world position, so the buffer is smaller
