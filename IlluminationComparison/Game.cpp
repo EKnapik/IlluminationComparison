@@ -206,6 +206,7 @@ void Game::Update(float deltaTime, float totalTime)
 	bool currShift = (GetAsyncKeyState(VK_RSHIFT) & 0x8000) != 0;
 	bool currTab = (GetAsyncKeyState('	') & 0x8000) != 0;
 	bool currO = (GetAsyncKeyState('O') & 0x8000) != 0;
+	/*
 	if (currShift)
 	{
 		if (currO && !O_toggle)
@@ -262,7 +263,7 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 	}
 
-
+	*/
 
 	if (gameManager.EntitiesDirty)
 	{

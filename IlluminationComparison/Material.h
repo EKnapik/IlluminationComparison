@@ -64,8 +64,8 @@ private:
 	ID3D11SamplerState* SamplerState;
 	ID3D11ShaderResourceView* albedoSRV;
 	ID3D11ShaderResourceView* normalSRV;
-	ID3D11ShaderResourceView* metallicSRV;
-	ID3D11ShaderResourceView* roughnessSRV;
+	ID3D11ShaderResourceView* metallicSRV = nullptr;
+	ID3D11ShaderResourceView* roughnessSRV = nullptr;
 	ID3D11ShaderResourceView* aoSRV;
 	float metallic;
 	float roughness;

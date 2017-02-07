@@ -86,4 +86,6 @@ private:
 	/// The destructor for the mesh, handles releasing all DirectX related things as well
 	///</summary>
 	~Mesh();
+
+	void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
 };

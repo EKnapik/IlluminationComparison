@@ -36,9 +36,9 @@ public:
 	void AddMesh(std::string name, std::string path);
 
 	Mesh* GetMesh(std::string name);
-	Material* GetMaterial(std::string name);
+	PBRMaterial* GetMaterial(std::string name);
 
-	void AddMaterial(std::string name, Material* material);
+	void AddMaterial(std::string name, PBRMaterial* material);
 	void AddMaterial(std::string name, std::wstring path, std::string sampler);
 	///<summary>
 	/// Adds a material with the specified name and path. Uses a Default sampler description
@@ -80,6 +80,7 @@ public:
 	void SetParticleEmitters(std::vector<ParticleEmitter*>* particleEmitters) { this->particleEmitters = particleEmitters; }
 
 	// This section is the Post Process Boolean section.
+	/*
 	BOOL PostProcessing = false;
 	BOOL Blur = false;
 	BOOL EdgeDetect = false;
@@ -89,8 +90,7 @@ public:
 	BOOL Sharpness = false;
 	BOOL BottomSobel = false;
 	BOOL ASCII = false;
-
-	void DisableAllPostProcess();
+	*/
 
 protected:
 	void SortObjects();
@@ -123,7 +123,7 @@ protected:
 	std::vector<VEC3> ssaoKernel;
 
 	std::map<std::string, Mesh*>				MeshDictionary;
-	std::map<std::string, Material*>			MaterialDictionary;
+	std::map<std::string, PBRMaterial*>			MaterialDictionary;
 	std::map<std::string, SimpleVertexShader*>	VertexShaderDictionary;
 	std::map<std::string, SimplePixelShader*>	PixelShaderDictionary;
 	std::map<std::string, SimpleGeometryShader*>GeometryShaderDictionary;

@@ -73,7 +73,7 @@ Renderer::~Renderer()
 		iterator->second->Release();
 	}
 
-	typedef std::map<std::string, Material*>::iterator material_type;
+	typedef std::map<std::string, PBRMaterial*>::iterator material_type;
 	for (material_type iterator = MaterialDictionary.begin(); iterator != MaterialDictionary.end(); iterator++) {
 		iterator->second->Release();
 	}
@@ -219,6 +219,7 @@ void Renderer::DrawParticleEmitters(FLOAT deltaTime, FLOAT totalTime)
 
 void Renderer::PostProcess()
 {
+	/*
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
@@ -469,6 +470,7 @@ void Renderer::PostProcess()
 		GetPixelShader("ascii")->SetShaderResourceView("Pixels", 0);
 		GetPixelShader("ascii")->SetShaderResourceView("ASCII", 0);
 	}
+	*/
 }
 
 void Renderer::AddMesh(std::string name, Mesh * mesh)
@@ -484,9 +486,9 @@ void Renderer::AddMesh(std::string name, std::string path)
 	mesh->AddReference();
 }
 
-void Renderer::AddMaterial(std::string name, Material * material)
+void Renderer::AddMaterial(std::string name, PBRMaterial * material)
 {
-	MaterialDictionary.insert(std::pair<std::string, Material*>(name, material));
+	MaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, material));
 	material->AddReference();
 }
 
@@ -494,8 +496,8 @@ void Renderer::AddMaterial(std::string name, std::wstring path, std::string samp
 {
 	ID3D11ShaderResourceView* SRV;
 	CreateWICTextureFromFile(device, context, path.c_str(), 0, &SRV);
-	Material* mat = new Material(SRV, GetSampler(sampler));
-	MaterialDictionary.insert(std::pair<std::string, Material*>(name, mat));
+	PBRMaterial* mat = new PBRMaterial(SRV, GetSampler(sampler));
+	MaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, mat));
 	mat->AddReference();
 }
 
@@ -615,19 +617,6 @@ bool backToFront(GameEntity* s1, GameEntity* s2)
 	return s1->GetPosition().z > s2->GetPosition().z;
 }
 
-
-void Renderer::DisableAllPostProcess()
-{
-	PostProcessing = false;
-	Blur = false;
-	EdgeDetect = false;
-	Bloom = false;
-	Emboss = false;
-	BlurWithKernel = false;
-	Sharpness = false;
-	BottomSobel = false;
-	ASCII = false;
-}
 
 void Renderer::SortObjects()
 {
@@ -759,7 +748,6 @@ void Renderer::SetUpPostProcessing()
 {
 	// Post Processing needs a Texture 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	// TODO: We still don't pass in width and height
 	textureDesc.Width = width;
 	textureDesc.Height = height;
 	textureDesc.ArraySize = 1;
@@ -842,7 +830,7 @@ Mesh * Renderer::GetMesh(std::string name)
 	return MeshDictionary.at(name);
 }
 
-Material * Renderer::GetMaterial(std::string name)
+PBRMaterial * Renderer::GetMaterial(std::string name)
 {
 	return MaterialDictionary.at(name);
 }

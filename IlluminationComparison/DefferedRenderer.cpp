@@ -138,7 +138,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	PositionRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	PositionRTVDesc.Texture2D.MipSlice = 0;
 
-	hr = device->CreateRenderTargetView(PositionTexture, &PositionRTVDesc, &PositionRTV);
+	hr = device->CreateRenderTargetView(PositionTexture, &PositionRTVDesc, &DepthRTV);
 
 	if (FAILED(hr))
 		printf("Error creating depth RT.\n");
@@ -151,10 +151,56 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	PositionSRVDesc.Texture2D.MostDetailedMip = 0;
 	PositionSRVDesc.Texture2D.MipLevels = 1;
 
-	hr = device->CreateShaderResourceView(PositionTexture, &PositionSRVDesc, &PositionSRV);
+	hr = device->CreateShaderResourceView(PositionTexture, &PositionSRVDesc, &DepthSRV);
 
 	// Don't need the actual depth texture
 	PositionTexture->Release();
+
+	// PBR (metallic, roughness, ao)
+	D3D11_TEXTURE2D_DESC descPBRTexture;
+	ID3D11Texture2D* PBRTexture;
+	ZeroMemory(&descPBRTexture, sizeof(descPBRTexture));
+	descPBRTexture.Width = width;
+	descPBRTexture.Height = height;
+	descPBRTexture.MipLevels = 1;
+	descPBRTexture.ArraySize = 1;
+	descPBRTexture.Format = DXGI_FORMAT_R11G11B10_FLOAT;
+	descPBRTexture.SampleDesc.Count = 1;
+	descPBRTexture.SampleDesc.Quality = 0;
+	descPBRTexture.Usage = D3D11_USAGE_DEFAULT;
+	descPBRTexture.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	descPBRTexture.CPUAccessFlags = 0;
+	descPBRTexture.MiscFlags = 0;
+
+	hr = device->CreateTexture2D(&descPBRTexture, NULL, &PBRTexture);
+	if (FAILED(hr))
+		printf("Error creating pbr texture.\n");
+
+	// Create the PBR render target.
+	D3D11_RENDER_TARGET_VIEW_DESC pbrRTVDesc;
+	ZeroMemory(&pbrRTVDesc, sizeof(pbrRTVDesc));
+	pbrRTVDesc.Format = descPBRTexture.Format;
+	pbrRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	pbrRTVDesc.Texture2D.MipSlice = 0;
+
+	hr = device->CreateRenderTargetView(PBRTexture, &pbrRTVDesc, &PBR_RTV);
+	if (FAILED(hr))
+		printf("Error creating pbr RT.\n");
+
+	// Create the PBR shader resource view
+	D3D11_SHADER_RESOURCE_VIEW_DESC pbrSRVDesc;
+	pbrSRVDesc.Format = descPBRTexture.Format;
+	pbrSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	pbrSRVDesc.Texture2D.MostDetailedMip = 0;
+	pbrSRVDesc.Texture2D.MipLevels = 1;
+
+	hr = device->CreateShaderResourceView(PBRTexture, &pbrSRVDesc, &PBR_SRV);
+	if (FAILED(hr))
+		printf("Error creating pbr SRV.\n");
+
+	// Don't need the actual pbr texture
+	PBRTexture->Release();
+	//----------------------------------------------------------------------------------------
 
 	// create sampler
 	D3D11_SAMPLER_DESC sampleDesc = {};
@@ -213,8 +259,12 @@ DefferedRenderer::~DefferedRenderer()
 	NormalSRV->Release();
 
 	// Depth
-	PositionRTV->Release();
-	PositionSRV->Release();
+	DepthRTV->Release();
+	DepthSRV->Release();
+
+	// PBR
+	PBR_RTV->Release();
+	PBR_SRV->Release();
 
 	simpleSampler->Release();
 	blendState->Release();
@@ -233,7 +283,8 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	// clear all the render targets
 	context->ClearRenderTargetView(AlbedoRTV, black);
 	context->ClearRenderTargetView(NormalRTV, black);
-	context->ClearRenderTargetView(PositionRTV, black);
+	context->ClearRenderTargetView(DepthRTV, black);
+	context->ClearRenderTargetView(PBR_RTV, black);
 	context->ClearRenderTargetView(postProcessRTV, black);
 	context->ClearDepthStencilView(depthStencilView,
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
@@ -243,39 +294,24 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 
 	gBufferRender(deltaTime, totalTime);
 
-	if (PostProcessing)
-	{
-		context->OMSetRenderTargets(1, &postProcessRTV, 0);
-		pointLightRender();
-		directionalLightRender();
+	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
+	// pointLightRender();
+	directionalLightRender();
 
-		context->OMSetRenderTargets(1, &postProcessRTV, depthStencilView);
-		context->OMSetDepthStencilState(0, 0);
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	context->OMSetDepthStencilState(0, 0);
 
-		DrawSkyBox();
-		DrawParticleEmitters(deltaTime, totalTime);
-		PostProcess();
-	}
-	else
-	{
-		context->OMSetRenderTargets(1, &backBufferRTV, 0);
-		pointLightRender();
-		directionalLightRender();
-
-		context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
-		context->OMSetDepthStencilState(0, 0);
-
-		DrawSkyBox();
-		DrawParticleEmitters(deltaTime, totalTime);
-	}
+	DrawSkyBox();
+	DrawParticleEmitters(deltaTime, totalTime);
 }
 
 
 void DefferedRenderer::gBufferRender(FLOAT deltaTime, FLOAT totalTime)
 {
-	ID3D11RenderTargetView* RTViews[3] = { AlbedoRTV, NormalRTV, PositionRTV };
+	ID3D11RenderTargetView* RTViews[4] = { AlbedoRTV, NormalRTV, DepthRTV, PBR_RTV};
 
-	context->OMSetRenderTargets(3, RTViews, depthStencilView);
+	context->OMSetRenderTargets(4, RTViews, depthStencilView);
 	
 	//OUR SCENE NEEDS AT LEAST ONE DIRECTIONAL LIGHT TO LOOK GOOD
 	if (directionalLights->size() <= 0)
@@ -283,8 +319,9 @@ void DefferedRenderer::gBufferRender(FLOAT deltaTime, FLOAT totalTime)
 
 	// RENDER NORMALLY NOW
 	DrawOpaqueMaterials();
-	DrawTransparentMaterials();
-	DrawSSAO();
+	// DrawTransparentMaterials();
+	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
+	// DrawSSAO();
 }
 
 
@@ -304,7 +341,7 @@ void DefferedRenderer::pointLightRender()
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
 	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
-	pixelShader->SetShaderResourceView("gPosition", PositionSRV);
+	pixelShader->SetShaderResourceView("gPosition", DepthSRV);
 	// send constant data
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
@@ -365,7 +402,7 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
 	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
-	pixelShader->SetShaderResourceView("gPosition", PositionSRV);
+	pixelShader->SetShaderResourceView("gPosition", DepthSRV);
 	pixelShader->SetShaderResourceView("ssao", ssaoSRV);
 
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
@@ -414,7 +451,7 @@ void DefferedRenderer::DrawOpaqueMaterials()
 
 	for (int i = 0; i < opaque.size(); i++)
 	{
-		Material* material = GetMaterial(opaque.at(i)->GetMaterial());
+		PBRMaterial* material = GetMaterial(opaque.at(i)->GetMaterial());
 		vertexShader->SetShader();
 		pixelShader->SetShader();
 
@@ -447,6 +484,8 @@ void DefferedRenderer::DrawOpaqueMaterials()
 	context->RSSetState(0);
 }
 
+
+/// TODO: FIX TRANSPARENT MATERIAL RENDER TO WORK UNDER PBR
 void DefferedRenderer::DrawTransparentMaterials()
 {
 	if (transparent.size() == 0) return;
@@ -466,13 +505,13 @@ void DefferedRenderer::DrawTransparentMaterials()
 
 	for (int i = 0; i < transparent.size(); i++)
 	{
-		Material* material = GetMaterial(transparent.at(i)->GetMaterial());
+		PBRMaterial* material = GetMaterial(transparent.at(i)->GetMaterial());
 		vertexShader->SetShader();
 		pixelShader->SetShader();
 
 		// Send texture Info
 		pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
-		pixelShader->SetShaderResourceView("diffuseTexture", material->GetSRV());
+		// pixelShader->SetShaderResourceView("diffuseTexture", material->GetSRV());
 		//pixelShader->SetShaderResourceView("NormalMap", material->GetSRV());
 
 		// Send Geometry
@@ -500,6 +539,7 @@ void DefferedRenderer::DrawTransparentMaterials()
 }
 
 
+/// TODO: FIX SSAO TO WORK
 void DefferedRenderer::DrawSSAO()
 {
 	UINT stride = sizeof(Vertex);
@@ -521,7 +561,7 @@ void DefferedRenderer::DrawSSAO()
 
 	GetPixelShader("ssao")->SetShaderResourceView("texNoise", postProcessSRV);
 	GetPixelShader("ssao")->SetShaderResourceView("gNormal", NormalSRV);
-	GetPixelShader("ssao")->SetShaderResourceView("gPosition", PositionSRV);
+	GetPixelShader("ssao")->SetShaderResourceView("gPosition", DepthSRV);
 	GetPixelShader("ssao")->SetSamplerState("Sampler", GetSampler("default"));
 	GetPixelShader("ssao")->CopyAllBufferData();
 	// Now actually draw

@@ -268,7 +268,7 @@
     <FxCompile Include="sphereLightVertexShader.hlsl">
       <Filter>Shaders\Deffered</Filter>
     </FxCompile>
-    <FxCompile Include="PBRgBuffer_PS.hlsl">
+    <FxCompile Include="PBRquad_PS.hlsl">
       <Filter>Shaders\Deffered</Filter>
     </FxCompile>
   </ItemGroup>
