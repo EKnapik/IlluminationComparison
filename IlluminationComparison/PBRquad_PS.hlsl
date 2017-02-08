@@ -33,7 +33,9 @@ static const float PI = 3.14159265359;
 
 float DistributionGGX(float3 N, float3 H, float roughness)
 {
-	float a = roughness*roughness;
+	// There appears to be something different here.........
+	// float a = roughness*roughness;
+	float a = roughness;
 	float a2 = a*a;
 	float NdotH = max(dot(N, H), 0.0);
 	float NdotH2 = NdotH*NdotH;
@@ -80,20 +82,18 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// need to unpack normal
 	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
 	float3 albedo = pow(gAlbedo.Sample(basicSampler, input.uv).xyz, 2.2); // convert to linear from sRGB
-	float3 PBR = gPBR.Sample(basicSampler, input.uv).xyz;
+	float2 PBR = gPBR.Sample(basicSampler, input.uv).xy;
 	float metalness = PBR.x;
 	float roughness = PBR.y;
-	float ao		= PBR.z;
 
 	// Check for clip
 	// CLIPPING MIGHT NOT BE THE BEST CHOICE BUT IT IS A CHOICE
 	// clip(surfaceColor.a + -0.01);
 
-	// NOT INVERTING THE DIRECTION TO THE LIGHT
 	// L = direction toward light from world position
 	// V = direction toward camera from world position
 	float3 L = normalize(dirLight.Direction);
-	float3 V = normalize(cameraPosition - gWorldPos);
+	float3 V = normalize(gWorldPos - cameraPosition);
 	float3 R = reflect(-V, N);
 	float3 H = normalize(V + L);
 
@@ -118,16 +118,17 @@ float4 main(VertexToPixel input) : SV_TARGET
 	/// vec3 radiance = lightColors[i] * attenuation;
 	float3 radiance = dirLight.DiffuseColor * 1.0f;
 
-	float3 nominator = NDF * G * F;
+	float3 nominator = (NDF * G) * F;
 	float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
 	float3 brdf = nominator / denominator;
 
 	// scale light by N dot L
 	float lightAmount = max(dot(N, L), 0.0);
 	float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
-	
+	// return float4(lightAmount, lightAmount, lightAmount, 1.0f);
+
 	// ambient lighting, will be replaced with environment lighting IBL
-	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * ao;
+	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo;
 	float3 color = ambient + Lo;
 
 	// HDR tonemapping might cause issue with addative lighting

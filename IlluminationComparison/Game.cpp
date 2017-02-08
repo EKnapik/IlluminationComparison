@@ -94,6 +94,7 @@ void Game::LoadShaders()
 	renderer->AddPixelShader("gBuffer", L"gBufferPixelShader.cso");
 	renderer->AddVertexShader("quad", L"quadVertexShader.cso");
 	renderer->AddPixelShader("quad", L"quadPixelShader.cso");
+	renderer->AddPixelShader("quadPBR", L"PBRquad_PS.cso");
 	renderer->AddVertexShader("sphereLight", L"sphereLightVertexShader.cso");
 	renderer->AddPixelShader("sphereLight", L"sphereLightPixelShader.cso");
 
@@ -137,21 +138,17 @@ void Game::LoadMeshes()
 
 void Game::LoadMaterials()
 {
-	renderer->AddMaterial("default", L"Assets/Textures/MetalPlate.png");
-	renderer->AddMaterial("electricity", L"Assets/Textures/Electricity.png");
-	renderer->AddMaterial("greenopaque", L"Assets/Textures/GreenOpaque.png");
-	renderer->GetMaterial("greenopaque")->transparency = true;
-	renderer->AddMaterial("gridclip", L"Assets/Textures/GridClip.png");
-	renderer->AddMaterial("white", L"Assets/Textures/White.png");
-	renderer->AddMaterial("ascii", L"Assets/Textures/asciiTexture.png");
-	//renderer->AddMaterial("soccer", L"Assets/Textures/soccer_ball_diffuse.bmp");
-	renderer->AddMaterial("basketball", L"Assets/Textures/basketball texture.jpg");
-	renderer->AddMaterial("wood", L"Assets/Textures/wooden floor texture.jpg");
-	//renderer->AddMaterial("bat", L"Assets/Textures/bat.jpg");
-	//renderer->AddMaterial("batnormal", L"Assets/Textures/batnormal.JPG");
-	renderer->AddMaterial("win", L"Assets/Textures/Win.png");
-	renderer->AddMaterial("quit", L"Assets/Textures/Quit.png");
-	renderer->AddMaterial("play", L"Assets/Textures/Play.png");
+	/*
+	renderer->AddMaterial("default", L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-basecolor.png",
+		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-normal.png",
+		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-metalness.png",
+		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-roughness.png");
+	*/
+	renderer->AddMaterial("default", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_metallic.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_roughness.png");
+
 
 	renderer->AddCubeMaterial("skybox", L"Assets/Textures/SunnyCubeMap.dds");
 	renderer->AddCubeMaterial("japan", L"Assets/Textures/Yokohama.dds");

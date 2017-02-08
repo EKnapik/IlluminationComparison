@@ -37,13 +37,14 @@ public:
 
 	Mesh* GetMesh(std::string name);
 	PBRMaterial* GetMaterial(std::string name);
+	Material* GetCubeMaterial(std::string name);
 
 	void AddMaterial(std::string name, PBRMaterial* material);
-	void AddMaterial(std::string name, std::wstring path, std::string sampler);
+	void AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, std::wstring metallicPath, std::wstring roughnessPath, std::string sampler);
 	///<summary>
 	/// Adds a material with the specified name and path. Uses a Default sampler description
 	///</summary>
-	void AddMaterial(std::string name, std::wstring path);
+	void AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, std::wstring metallicPath, std::wstring roughnessPath);
 
 	void AddCubeMaterial(std::string name, CubeMap* material);
 	void AddCubeMaterial(std::string name, std::wstring path, std::string sampler, D3D11_RASTERIZER_DESC* rasterDesc, D3D11_DEPTH_STENCIL_DESC* depthStencilDesc);
@@ -123,7 +124,8 @@ protected:
 	std::vector<VEC3> ssaoKernel;
 
 	std::map<std::string, Mesh*>				MeshDictionary;
-	std::map<std::string, PBRMaterial*>			MaterialDictionary;
+	std::map<std::string, PBRMaterial*>			PBRMaterialDictionary;
+	std::map<std::string, Material*>			MaterialDictionary;
 	std::map<std::string, SimpleVertexShader*>	VertexShaderDictionary;
 	std::map<std::string, SimplePixelShader*>	PixelShaderDictionary;
 	std::map<std::string, SimpleGeometryShader*>GeometryShaderDictionary;

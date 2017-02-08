@@ -73,7 +73,12 @@ Renderer::~Renderer()
 		iterator->second->Release();
 	}
 
-	typedef std::map<std::string, PBRMaterial*>::iterator material_type;
+	typedef std::map<std::string, PBRMaterial*>::iterator pbrMaterial_type;
+	for (pbrMaterial_type iterator = PBRMaterialDictionary.begin(); iterator != PBRMaterialDictionary.end(); iterator++) {
+		iterator->second->Release();
+	}
+	
+	typedef std::map<std::string, Material*>::iterator material_type;
 	for (material_type iterator = MaterialDictionary.begin(); iterator != MaterialDictionary.end(); iterator++) {
 		iterator->second->Release();
 	}
@@ -488,22 +493,29 @@ void Renderer::AddMesh(std::string name, std::string path)
 
 void Renderer::AddMaterial(std::string name, PBRMaterial * material)
 {
-	MaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, material));
+	PBRMaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, material));
 	material->AddReference();
 }
 
-void Renderer::AddMaterial(std::string name, std::wstring path, std::string sampler)
+void Renderer::AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, std::wstring metallicPath, std::wstring roughnessPath, std::string sampler)
 {
-	ID3D11ShaderResourceView* SRV;
-	CreateWICTextureFromFile(device, context, path.c_str(), 0, &SRV);
-	PBRMaterial* mat = new PBRMaterial(SRV, GetSampler(sampler));
-	MaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, mat));
+	ID3D11ShaderResourceView* albedo;
+	ID3D11ShaderResourceView* normal;
+	ID3D11ShaderResourceView* metallic;
+	ID3D11ShaderResourceView* roughness;
+
+	CreateWICTextureFromFile(device, context, albedoPath.c_str(), 0, &albedo);
+	CreateWICTextureFromFile(device, context, normalPath.c_str(), 0, &normal);
+	CreateWICTextureFromFile(device, context, metallicPath.c_str(), 0, &metallic);
+	CreateWICTextureFromFile(device, context, roughnessPath.c_str(), 0, &roughness);
+	PBRMaterial* mat = new PBRMaterial(GetSampler(sampler), albedo, normal, metallic, roughness);
+	PBRMaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, mat));
 	mat->AddReference();
 }
 
-void Renderer::AddMaterial(std::string name, std::wstring path)
+void Renderer::AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, std::wstring metallicPath, std::wstring roughnessPath)
 {
-	AddMaterial(name, path, "default");
+	AddMaterial(name, albedoPath, normalPath, metallicPath, roughnessPath, "default");
 }
 
 void Renderer::AddCubeMaterial(std::string name, CubeMap * material)
@@ -602,7 +614,7 @@ ID3D11SamplerState * Renderer::GetSampler(std::string name)
 
 void Renderer::SetSkyBox(std::string name)
 {
-	skyBox = (CubeMap*)GetMaterial(name);
+	skyBox = (CubeMap*)GetCubeMaterial(name);
 }
 
 
@@ -624,9 +636,6 @@ void Renderer::SortObjects()
 	transparent.clear();
 	for (int i = 0; i < gameEntitys->size(); i++)
 	{
-		if (GetMaterial(gameEntitys->at(i)->GetMaterial())->transparency)
-			transparent.push_back(gameEntitys->at(i));
-		else
 			opaque.push_back(gameEntitys->at(i));
 	}
 	std::sort(opaque.begin(), opaque.end(), frontToBack);
@@ -831,6 +840,11 @@ Mesh * Renderer::GetMesh(std::string name)
 }
 
 PBRMaterial * Renderer::GetMaterial(std::string name)
+{
+	return PBRMaterialDictionary.at(name);
+}
+
+Material * Renderer::GetCubeMaterial(std::string name)
 {
 	return MaterialDictionary.at(name);
 }

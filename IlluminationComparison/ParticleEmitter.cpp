@@ -4,6 +4,7 @@ using namespace GMath;
 
 void ParticleEmitter::Init(Renderer * renderer)
 {
+	/*
 	particleTexture = renderer->GetMaterial(Texture)->GetSRV();
 	particleSampler = renderer->GetSampler("default");
 
@@ -69,6 +70,7 @@ void ParticleEmitter::Init(Renderer * renderer)
 	frameCount = 0;
 
 	initialized = true;
+	*/
 }
 
 /// If a negative emitter lifetime is given the emitter will last forever

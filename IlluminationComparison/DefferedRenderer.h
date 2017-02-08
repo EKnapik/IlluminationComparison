@@ -35,7 +35,7 @@ private:
 	ID3D11RenderTargetView *	LightRTV;
 	ID3D11ShaderResourceView*	LightSRV;
 
-	// PBR (metallic, roughness, ao)
+	// PBR (metallic, roughness)
 	ID3D11RenderTargetView *	PBR_RTV;
 	ID3D11ShaderResourceView*	PBR_SRV;
 	

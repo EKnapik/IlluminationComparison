@@ -156,7 +156,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	// Don't need the actual depth texture
 	PositionTexture->Release();
 
-	// PBR (metallic, roughness, ao)
+	// PBR (metallic, roughness)
 	D3D11_TEXTURE2D_DESC descPBRTexture;
 	ID3D11Texture2D* PBRTexture;
 	ZeroMemory(&descPBRTexture, sizeof(descPBRTexture));
@@ -164,7 +164,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descPBRTexture.Height = height;
 	descPBRTexture.MipLevels = 1;
 	descPBRTexture.ArraySize = 1;
-	descPBRTexture.Format = DXGI_FORMAT_R11G11B10_FLOAT;
+	descPBRTexture.Format = DXGI_FORMAT_R16G16_FLOAT;
 	descPBRTexture.SampleDesc.Count = 1;
 	descPBRTexture.SampleDesc.Quality = 0;
 	descPBRTexture.Usage = D3D11_USAGE_DEFAULT;
@@ -291,7 +291,7 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 		1.0f, 0);
 
 	SortObjects();
-
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	gBufferRender(deltaTime, totalTime);
 
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
@@ -303,6 +303,7 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	context->OMSetDepthStencilState(0, 0);
 
 	DrawSkyBox();
+	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
 	DrawParticleEmitters(deltaTime, totalTime);
 }
 
@@ -391,22 +392,22 @@ void DefferedRenderer::directionalLightRender() {
 	context->OMSetBlendState(blendState, factors, 0xFFFFFFFF);
 	
 	SimpleVertexShader* vertexShader = GetVertexShader("quad");
-	SimplePixelShader* pixelShader = GetPixelShader("quad");
+	SimplePixelShader* pixelShader = GetPixelShader("quadPBR");
 	vertexShader->SetShader();
 	pixelShader->SetShader();
 
 	// Send G buffers to pixel shader
 	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
+	vertexShader->CopyAllBufferData();
 	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
+	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat("zFar", camera->GetFarPlane());
+
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
 	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
-	pixelShader->SetShaderResourceView("gPosition", DepthSRV);
-	pixelShader->SetShaderResourceView("ssao", ssaoSRV);
-
-	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
-	vertexShader->CopyAllBufferData();
+	pixelShader->SetShaderResourceView("gDepth", DepthSRV);
+	pixelShader->SetShaderResourceView("gPBR", PBR_SRV);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -429,8 +430,8 @@ void DefferedRenderer::directionalLightRender() {
 	// RESET STATES
 	pixelShader->SetShaderResourceView("gAlbedo", 0);
 	pixelShader->SetShaderResourceView("gNormal", 0);
-	pixelShader->SetShaderResourceView("gPosition", 0);
-	pixelShader->SetShaderResourceView("ssao", 0);
+	pixelShader->SetShaderResourceView("gDepth", 0);
+	pixelShader->SetShaderResourceView("gPBR", 0);
 	context->OMSetBlendState(0, factors, 0xFFFFFFFF);
 	return;
 }
@@ -441,32 +442,31 @@ void DefferedRenderer::DrawOpaqueMaterials()
 
 	SimpleVertexShader* vertexShader = GetVertexShader("gBuffer");
 	SimplePixelShader* pixelShader = GetPixelShader("gBuffer");
+	vertexShader->SetShader();
+	pixelShader->SetShader();
 
 	//Do shadow stuff!
 	SceneDirectionalLight* firstDirectionalLight = &directionalLights->at(0);
-	vertexShader->SetMatrix4x4("shadowView", firstDirectionalLight->ViewMatrix);
-	vertexShader->SetMatrix4x4("shadowProjection", shadowDirectionalProjectionMatrix);
-	pixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
-	pixelShader->SetSamplerState("ShadowSampler", GetSampler("shadow"));
+	vertexShader->SetMatrix4x4("view", *camera->GetView());
+	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
+	vertexShader->SetFloat("zFar", camera->GetFarPlane());
+
+	pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
+	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 
 	for (int i = 0; i < opaque.size(); i++)
 	{
 		PBRMaterial* material = GetMaterial(opaque.at(i)->GetMaterial());
-		vertexShader->SetShader();
-		pixelShader->SetShader();
-
 		// Send texture Info
 		pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
-		pixelShader->SetShaderResourceView("diffuseTexture", material->GetSRV());
-		//pixelShader->SetShaderResourceView("NormalMap", material->GetSRV());
+		pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
+		pixelShader->SetShaderResourceView("normalMap", material->GetNormalSRV());
+		pixelShader->SetShaderResourceView("metalMap",  material->GetMetallicSRV());
+		pixelShader->SetShaderResourceView("roughMap",  material->GetRoughnessSRV());
+		pixelShader->SetFloat("metallic", material->GetMetallicParam());
+		pixelShader->SetFloat("roughness", material->GetRoughnessParam());
 
 		// Send Geometry
-		vertexShader->SetMatrix4x4("view", *camera->GetView());
-		vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
-		vertexShader->SetFloat("zFar", camera->GetFarPlane());
-		pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
-		pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
-
 		UINT stride = sizeof(Vertex);
 		UINT offset = 0;
 		Mesh* meshTmp;
@@ -495,13 +495,6 @@ void DefferedRenderer::DrawTransparentMaterials()
 
 	SimpleVertexShader* vertexShader = GetVertexShader("gBuffer");
 	SimplePixelShader* pixelShader = GetPixelShader("gBuffer");
-
-	//Do shadow stuff!
-	SceneDirectionalLight* firstDirectionalLight = &directionalLights->at(0);
-	vertexShader->SetMatrix4x4("shadowView", firstDirectionalLight->ViewMatrix);
-	vertexShader->SetMatrix4x4("shadowProjection", shadowDirectionalProjectionMatrix);
-	pixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
-	pixelShader->SetSamplerState("ShadowSampler", GetSampler("shadow"));
 
 	for (int i = 0; i < transparent.size(); i++)
 	{

@@ -4,13 +4,9 @@ Texture2D albedoMap			: register(t0);
 Texture2D normalMap			: register(t1);
 Texture2D metalMap			: register(t2);
 Texture2D roughMap			: register(t3);
-Texture2D aoMap				: register(t4);
 
-Texture2D ShadowMap			: register(t5);
-TextureCube Sky				: register(t6);
+TextureCube Sky				: register(t5);
 SamplerState basicSampler	: register(s0);
-SamplerComparisonState ShadowSampler : register(s1);
-
 
 struct VertexToPixel
 {
@@ -20,7 +16,6 @@ struct VertexToPixel
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float2 uv			: TEXCOORD0;
-	float4 posForShadow	: TEXCOORD1;
 };
 
 cbuffer externalData : register(b0)
@@ -37,8 +32,8 @@ struct GBufferOutput
 {
 	float4 Color  : COLOR0;
 	float4 Normal : COLOR1;
-	float4 Depth  : COLOR2;
-	float3 PBR    : COLOR3;
+	float Depth  : COLOR2;
+	float2 PBR    : COLOR3;
 };
 
 GBufferOutput main(VertexToPixel input) : SV_TARGET
@@ -46,10 +41,10 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	input.normal = normalize(input.normal);
 	input.tangent = normalize(input.tangent);
 	// Normal Mapping
-	float3 normalFromMap = normalMap.Sample(basicSampler, input.uv).rgb * 2 - 1;
-	float3 T = normalize(input.tangent - input.normal * dot(input.tangent, input.normal));
-	float3x3 TBN = float3x3(T, cross(T, input.normal), input.normal);
-	input.normal = normalize(mul(normalFromMap, TBN));
+	// float3 normalFromMap = normalMap.Sample(basicSampler, input.uv).rgb * 2 - 1;
+	// float3 T = normalize(input.tangent - input.normal * dot(input.tangent, input.normal));
+	// float3x3 TBN = float3x3(T, cross(T, input.normal), input.normal);
+	// input.normal = normalize(mul(normalFromMap, TBN));
 
 	GBufferOutput output;
 	float3 toCamera = normalize(cameraPosition - input.worldPos);
@@ -73,19 +68,7 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	// Set the PBR Values
 	output.PBR.r = metalMap.Sample(basicSampler, input.uv).r + metallic;
 	output.PBR.g = roughMap.Sample(basicSampler, input.uv).r + roughness;
-	output.PBR.b = aoMap.Sample(basicSampler, input.uv).r;
 
-	// Time for shadows!
-	// Figure out this pixel's UV in the SHADOW MAP
-	float2 shadowUV = input.posForShadow.xy / input.posForShadow.w * 0.5f + 0.5f;
-	shadowUV.y = 1.0f - shadowUV.y; // Flip the Y since UV coords and screen coords are different
-
-	// Calculate this pixel's actual depth from the light
-	float depthFromLight = input.posForShadow.z / input.posForShadow.w;
-
-	// Sample the shadow map
-	float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, depthFromLight);
-
-	output.Color = output.Color * (shadowAmount + 0.3f);
+	output.Color = output.Color;
 	return output;
 }

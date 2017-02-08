@@ -91,11 +91,11 @@ void Camera::Update(FLOAT dt)
 			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(1, 0, 0))), dt * -speed));
 		}
 
-		if (GetAsyncKeyState('Z') & 0x8000)
+		if (GetAsyncKeyState('E') & 0x8000)
 		{
 			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(0, 1, 0))), dt * speed));
 		}
-		else if (GetAsyncKeyState('X') & 0x8000)
+		else if (GetAsyncKeyState('Q') & 0x8000)
 		{
 			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(0, 1, 0))), dt * -speed));
 		}
