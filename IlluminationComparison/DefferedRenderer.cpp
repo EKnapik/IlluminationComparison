@@ -15,7 +15,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descAlbedoTexture.Height = height;
 	descAlbedoTexture.MipLevels = 1;
 	descAlbedoTexture.ArraySize = 1;
-	descAlbedoTexture.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	descAlbedoTexture.Format = DXGI_FORMAT_R11G11B10_FLOAT;
 	descAlbedoTexture.SampleDesc.Count = 1;
 	descAlbedoTexture.SampleDesc.Quality = 0;
 	descAlbedoTexture.Usage = D3D11_USAGE_DEFAULT;
@@ -66,7 +66,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descNormalTexture.Height = height;
 	descNormalTexture.MipLevels = 1;
 	descNormalTexture.ArraySize = 1;
-	descNormalTexture.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	descNormalTexture.Format = DXGI_FORMAT_R11G11B10_FLOAT;
 	descNormalTexture.SampleDesc.Count = 1;
 	descNormalTexture.SampleDesc.Quality = 0;
 	descNormalTexture.Usage = D3D11_USAGE_DEFAULT;
@@ -117,7 +117,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descPositionTexture.Height = height;
 	descPositionTexture.MipLevels = 1;
 	descPositionTexture.ArraySize = 1;
-	descPositionTexture.Format = DXGI_FORMAT_R32_FLOAT;
+	descPositionTexture.Format = DXGI_FORMAT_R16_FLOAT;
 	descPositionTexture.SampleDesc.Count = 1;
 	descPositionTexture.SampleDesc.Quality = 0;
 	descPositionTexture.Usage = D3D11_USAGE_DEFAULT;

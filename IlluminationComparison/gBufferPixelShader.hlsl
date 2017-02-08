@@ -30,8 +30,8 @@ cbuffer externalData : register(b0)
 // --------------------------------------------------------
 struct GBufferOutput
 {
-	float4 Color  : COLOR0;
-	float4 Normal : COLOR1;
+	float3 Color  : COLOR0;
+	float3 Normal : COLOR1;
 	float Depth  : COLOR2;
 	float2 PBR    : COLOR3;
 };
@@ -50,15 +50,13 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	float3 toCamera = normalize(cameraPosition - input.worldPos);
 
 	// Lets include the textures now!
-	float4 surfaceColor = albedoMap.Sample(basicSampler, input.uv);
-	clip(surfaceColor.a - 0.1f);
-	float4 skyColor = Sky.Sample(basicSampler, reflect(-toCamera, input.normal));
+	float3 surfaceColor = albedoMap.Sample(basicSampler, input.uv).rgb;
+	float3 skyColor = Sky.Sample(basicSampler, reflect(-toCamera, input.normal)).rgb;
 	// output.Color = lerp(skyColor, surfaceColor, 0.9f);
 	output.Color = surfaceColor;
 
 	// Output the normal in [0, 1] space.
 	output.Normal.rgb = 0.5f * (input.normal + 1.0f);
-	output.Normal.a = 1.0;
 
 	// Set the depth
 	// http://stackoverflow.com/questions/28066906/reconstructing-world-position-from-linear-depth
