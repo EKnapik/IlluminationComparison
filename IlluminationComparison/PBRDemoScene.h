@@ -5,13 +5,13 @@
 #include "Material.h"
 #include "Mesh.h"
 
-class BouncingBallScene : public Scene {
+class PBRDemoScene : public Scene {
 public:
-	BouncingBallScene();
+	PBRDemoScene();
 	void Initialize();
 	void Update();
 
 	std::vector<Ball*> balls;
 
-	~BouncingBallScene();
+	~PBRDemoScene();
 };

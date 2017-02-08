@@ -89,6 +89,6 @@ private:
 
 	bool O_toggle = false;
 	bool prevTab = false;
-	int postProcessChoice = 1;
+	int skyboxChoice = 0;
 };
 

@@ -513,6 +513,18 @@ void Renderer::AddMaterial(std::string name, std::wstring albedoPath, std::wstri
 	mat->AddReference();
 }
 
+void Renderer::AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, float metallic, float roughness, std::string sampler)
+{
+	ID3D11ShaderResourceView* albedo;
+	ID3D11ShaderResourceView* normal;
+
+	CreateWICTextureFromFile(device, context, albedoPath.c_str(), 0, &albedo);
+	CreateWICTextureFromFile(device, context, normalPath.c_str(), 0, &normal);
+	PBRMaterial* mat = new PBRMaterial(GetSampler(sampler), albedo, normal, metallic, roughness);
+	PBRMaterialDictionary.insert(std::pair<std::string, PBRMaterial*>(name, mat));
+	mat->AddReference();
+}
+
 void Renderer::AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, std::wstring metallicPath, std::wstring roughnessPath)
 {
 	AddMaterial(name, albedoPath, normalPath, metallicPath, roughnessPath, "default");

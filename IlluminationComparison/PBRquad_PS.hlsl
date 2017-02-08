@@ -35,8 +35,7 @@ static const float PI = 3.14159265359;
 
 float DistributionGGX(float3 N, float3 H, float roughness)
 {
-	// There appears to be something different here.........
-	//float a = roughness*roughness;
+	// float a = roughness*roughness;
 	float a = roughness;
 	float a2 = a*a;
 	float NdotH = max(dot(N, H), 0.0);

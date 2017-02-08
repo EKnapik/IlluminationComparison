@@ -108,17 +108,14 @@
     <ClCompile Include="Win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BouncingBallScene.cpp">
+    <ClCompile Include="PostProcesser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcesser.cpp">
+    <ClCompile Include="PBRDemoScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BouncingBallScene.h">
-      <Filter>Header Files\Engine\Scenes</Filter>
-    </ClInclude>
     <ClInclude Include="DXMathImpl.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
@@ -190,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="PostProcesser.h">
       <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="PBRDemoScene.h">
+      <Filter>Header Files\Engine\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

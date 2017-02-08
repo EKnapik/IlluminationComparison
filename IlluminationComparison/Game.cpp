@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Vertex.h"
 #include "WICTextureLoader.h"
-#include "BouncingBallScene.h"
+#include "PBRDemoScene.h"
 #include "Start.h"
 #include "DefferedRenderer.h"
 #include "Win.h"
@@ -72,87 +72,8 @@ void Game::Init()
 	light.DiffuseColor = VEC4(0, 0, 1, 1);
 	light.Direction = VEC3(1, -1, 0);
 
-	gameManager.SetActiveScene(new BouncingBallScene());
+	gameManager.SetActiveScene(new PBRDemoScene());
 	renderer->SetSkyBox("japan");
-}
-
-// --------------------------------------------------------
-// Loads shaders from compiled shader object (.cso) files using
-// my SimpleShader wrapper for DirectX shader manipulation.
-void Game::LoadShaders()
-{
-	renderer->AddVertexShader("default", L"VertexShader.cso");
-	renderer->AddPixelShader("default", L"PixelShader.cso");
-
-	renderer->AddVertexShader("skybox", L"SkyVertex.cso");
-	renderer->AddPixelShader("skybox", L"SkyPixel.cso");
-
-	renderer->AddVertexShader("shadow", L"ShadowVertex.cso");
-
-	// Create shaders for deffered
-	renderer->AddVertexShader("gBuffer", L"gBufferVertexShader.cso");
-	renderer->AddPixelShader("gBuffer", L"gBufferPixelShader.cso");
-	renderer->AddVertexShader("quad", L"quadVertexShader.cso");
-	renderer->AddPixelShader("quad", L"quadPixelShader.cso");
-	renderer->AddPixelShader("quadPBR", L"PBRquad_PS.cso");
-	renderer->AddVertexShader("sphereLight", L"sphereLightVertexShader.cso");
-	renderer->AddPixelShader("sphereLight", L"sphereLightPixelShader.cso");
-
-	// Create shaders for Particle Systems
-	renderer->AddPixelShader("particle", L"ParticlePS.cso");
-	renderer->AddVertexShader("particle", L"ParticleVS.cso");
-	renderer->AddGeometryShader("particle", L"ParticleGS.cso");
-	renderer->AddGeometryShader("spawn", L"SpawnGS.cso", true, false);
-	renderer->AddVertexShader("spawn", L"SpawnVS.cso");
-
-	// Add Shaders for post processing
-	renderer->AddVertexShader("blur", L"BlurPostProcessVS.cso");
-	renderer->AddVertexShader("postprocess", L"PostProcessDefaultVS.cso");
-	renderer->AddPixelShader("blur", L"BlurPostProcessPS.cso");
-	renderer->AddPixelShader("kernel", L"KernelPS.cso");
-	renderer->AddPixelShader("bloomExtract", L"BloomExtractPS.cso");
-	renderer->AddPixelShader("linearBlur", L"LinearBlurPS.cso");
-	renderer->AddPixelShader("bloomCombine", L"BloomCombinePS.cso");
-	renderer->AddPixelShader("ascii", L"AsciiPS.cso");
-	renderer->AddPixelShader("ssao", L"SSAOPS.cso");
-}
-
-void Game::LoadMeshes()
-{
-	renderer->AddMesh("cone", "Assets/cone.obj");
-	renderer->AddMesh("cube", "Assets/cube.obj");
-	renderer->AddMesh("cylinder", "Assets/cylinder.obj");
-	renderer->AddMesh("helix", "Assets/helix.obj");
-	renderer->AddMesh("sphere", "Assets/sphere.obj");
-	renderer->AddMesh("torus", "Assets/torus.obj");
-	//renderer->AddMesh("court", "Assets/Court.obj");
-	renderer->AddMesh("panel", "Assets/Panel.obj");
-	//renderer->AddMesh("golf", "Assets/golfball.obj");
-	renderer->AddMesh("soccer", "Assets/soccerball.obj");
-	renderer->AddMesh("bbcourt", "Assets/bbcourt.obj");
-	//renderer->AddMesh("bat", "Assets/baseballbat.obj");
-	// full screen quad mesh
-	renderer->AddMesh("quad", new Mesh(device));
-	//renderer->AddMesh("paddle", "Assets/paddle.obj");
-}
-
-void Game::LoadMaterials()
-{
-	/*
-	renderer->AddMaterial("default", L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-basecolor.png",
-		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-normal.png",
-		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-metalness.png",
-		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-roughness.png");
-	*/
-	renderer->AddMaterial("default", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
-		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png",
-		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_metallic.png",
-		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_roughness.png");
-
-
-	renderer->AddCubeMaterial("skybox", L"Assets/Textures/SunnyCubeMap.dds");
-	renderer->AddCubeMaterial("japan", L"Assets/Textures/Yokohama.dds");
-	renderer->AddCubeMaterial("bridge", L"Assets/Textures/GoldenGateBridge.dds");
 }
 
 // --------------------------------------------------------
@@ -187,7 +108,7 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (GetAsyncKeyState('R') & 0x8000)
 	{
-		gameManager.SetActiveScene(new BouncingBallScene());
+		gameManager.SetActiveScene(new PBRDemoScene());
 	}
 
 	/*
@@ -203,6 +124,20 @@ void Game::Update(float deltaTime, float totalTime)
 	bool currShift = (GetAsyncKeyState(VK_RSHIFT) & 0x8000) != 0;
 	bool currTab = (GetAsyncKeyState('	') & 0x8000) != 0;
 	bool currO = (GetAsyncKeyState('O') & 0x8000) != 0;
+	if (currO && !O_toggle)
+	{
+		skyboxChoice = (skyboxChoice + 1) % 3;
+		switch (skyboxChoice)
+		{
+			case 0: renderer->SetSkyBox("japan");
+				break;
+			case 1: renderer->SetSkyBox("bridge");
+				break;
+			case 2: renderer->SetSkyBox("skybox");
+				break;
+		}
+	}
+	O_toggle = currO;
 	/*
 	if (currShift)
 	{
@@ -351,11 +286,127 @@ void Game::OnMouseWheel(float wheelDelta, int x, int y)
 {
 	// Add any code here...
 }
-Camera * Game::GetCamera()
+
+Camera* Game::GetCamera()
 {
 	if (cameraPointer == nullptr)
 		return nullptr;
 	else
 		return cameraPointer;
 }
+
+
+
+// --------------------------------------------------------
+// Loads shaders from compiled shader object (.cso) files using
+// my SimpleShader wrapper for DirectX shader manipulation.
+void Game::LoadShaders()
+{
+	renderer->AddVertexShader("default", L"VertexShader.cso");
+	renderer->AddPixelShader("default", L"PixelShader.cso");
+
+	renderer->AddVertexShader("skybox", L"SkyVertex.cso");
+	renderer->AddPixelShader("skybox", L"SkyPixel.cso");
+
+	renderer->AddVertexShader("shadow", L"ShadowVertex.cso");
+
+	// Create shaders for deffered
+	renderer->AddVertexShader("gBuffer", L"gBufferVertexShader.cso");
+	renderer->AddPixelShader("gBuffer", L"gBufferPixelShader.cso");
+	renderer->AddVertexShader("quad", L"quadVertexShader.cso");
+	renderer->AddPixelShader("quad", L"quadPixelShader.cso");
+	renderer->AddPixelShader("quadPBR", L"PBRquad_PS.cso");
+	renderer->AddVertexShader("sphereLight", L"sphereLightVertexShader.cso");
+	renderer->AddPixelShader("sphereLight", L"sphereLightPixelShader.cso");
+
+	// Create shaders for Particle Systems
+	renderer->AddPixelShader("particle", L"ParticlePS.cso");
+	renderer->AddVertexShader("particle", L"ParticleVS.cso");
+	renderer->AddGeometryShader("particle", L"ParticleGS.cso");
+	renderer->AddGeometryShader("spawn", L"SpawnGS.cso", true, false);
+	renderer->AddVertexShader("spawn", L"SpawnVS.cso");
+
+	// Add Shaders for post processing
+	renderer->AddVertexShader("blur", L"BlurPostProcessVS.cso");
+	renderer->AddVertexShader("postprocess", L"PostProcessDefaultVS.cso");
+	renderer->AddPixelShader("blur", L"BlurPostProcessPS.cso");
+	renderer->AddPixelShader("kernel", L"KernelPS.cso");
+	renderer->AddPixelShader("bloomExtract", L"BloomExtractPS.cso");
+	renderer->AddPixelShader("linearBlur", L"LinearBlurPS.cso");
+	renderer->AddPixelShader("bloomCombine", L"BloomCombinePS.cso");
+	renderer->AddPixelShader("ascii", L"AsciiPS.cso");
+	renderer->AddPixelShader("ssao", L"SSAOPS.cso");
+}
+
+void Game::LoadMeshes()
+{
+	// renderer->AddMesh("cone", "Assets/cone.obj");
+	renderer->AddMesh("cube", "Assets/cube.obj");
+	// renderer->AddMesh("cylinder", "Assets/cylinder.obj");
+	// renderer->AddMesh("helix", "Assets/helix.obj");
+	renderer->AddMesh("sphere", "Assets/sphere.obj");
+	// renderer->AddMesh("torus", "Assets/torus.obj");
+	// renderer->AddMesh("court", "Assets/Court.obj");
+	// renderer->AddMesh("panel", "Assets/Panel.obj");
+	// renderer->AddMesh("golf", "Assets/golfball.obj");
+	// renderer->AddMesh("soccer", "Assets/soccerball.obj");
+	// renderer->AddMesh("bbcourt", "Assets/bbcourt.obj");
+	//renderer->AddMesh("bat", "Assets/baseballbat.obj");
+	// full screen quad mesh
+	renderer->AddMesh("quad", new Mesh(device));
+	//renderer->AddMesh("paddle", "Assets/paddle.obj");
+}
+
+void Game::LoadMaterials()
+{
+	renderer->AddMaterial("default", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_metallic.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_roughness.png");
+	renderer->AddMaterial("goldScuffed", renderer->GetMaterial("default"));
+
+	renderer->AddMaterial("ironRusted4", L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-basecolor.png",
+		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-normal.png",
+		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-metalness.png",
+		L"Assets/PBR_Textures/iron-rusted4-Unreal-Engine/iron-rusted4-roughness.png");
+	renderer->AddMaterial("aluminumScuffed", L"Assets/PBR_Textures/Aluminum-Scuffed_Unreal-Engine/Aluminum-Scuffed_basecolor.png",
+		L"Assets/PBR_Textures/Aluminum-Scuffed_Unreal-Engine/Aluminum-Scuffed_normal.png",
+		L"Assets/PBR_Textures/Aluminum-Scuffed_Unreal-Engine/Aluminum-Scuffed_metallic.png",
+		L"Assets/PBR_Textures/Aluminum-Scuffed_Unreal-Engine/Aluminum-Scuffed_roughness.png");
+	renderer->AddMaterial("copperScuffed", L"Assets/PBR_Textures/Copper-scuffed_Unreal-Engine/Copper-scuffed_basecolor-boosted.png",
+		L"Assets/PBR_Textures/Copper-scuffed_Unreal-Engine/Copper-scuffed_normal.png",
+		L"Assets/PBR_Textures/Copper-scuffed_Unreal-Engine/Copper-scuffed_metallic.png",
+		L"Assets/PBR_Textures/Copper-scuffed_Unreal-Engine/Copper-scuffed_roughness.png");
+	renderer->AddMaterial("graniteSmooth", L"Assets/PBR_Textures/granitesmooth1-Unreal-Engine/granitesmooth1-albedo.png",
+		L"Assets/PBR_Textures/granitesmooth1-Unreal-Engine/granitesmooth1-normal2.png",
+		L"Assets/PBR_Textures/granitesmooth1-Unreal-Engine/granitesmooth1-metalness.png",
+		L"Assets/PBR_Textures/granitesmooth1-Unreal-Engine/granitesmooth1-roughness3.png");
+	renderer->AddMaterial("greasyMetal", L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-albedo.png",
+		L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-normal.png",
+		L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-metal.png",
+		L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-roughness.png");
+	renderer->AddMaterial("rust", L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-basecolor.png",
+		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-normal.png",
+		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-metal.png",
+		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-roughness.png");
+	renderer->AddMaterial("bluePlastic", L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-blue-alb.png",
+		L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-normal.png",
+		L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-metal.png",
+		L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-rough.png");
+	renderer->AddMaterial("redPlastic", L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-red-alb.png",
+		L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-normal.png",
+		L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-metal.png",
+		L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-rough.png");
+
+	renderer->AddMaterial("metalTest", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.5, 0.0, "default");
+	renderer->AddMaterial("roughTest", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.0, 0.5, "default");
+
+	renderer->AddCubeMaterial("skybox", L"Assets/Textures/SunnyCubeMap.dds");
+	renderer->AddCubeMaterial("japan", L"Assets/Textures/Yokohama.dds");
+	renderer->AddCubeMaterial("bridge", L"Assets/Textures/GoldenGateBridge.dds");
+}
+
+
 #pragma endregion

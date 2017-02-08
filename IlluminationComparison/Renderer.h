@@ -45,6 +45,7 @@ public:
 	/// Adds a material with the specified name and path. Uses a Default sampler description
 	///</summary>
 	void AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, std::wstring metallicPath, std::wstring roughnessPath);
+	void AddMaterial(std::string name, std::wstring albedoPath, std::wstring normalPath, float metallic, float roughness, std::string sampler);
 
 	void AddCubeMaterial(std::string name, CubeMap* material);
 	void AddCubeMaterial(std::string name, std::wstring path, std::string sampler, D3D11_RASTERIZER_DESC* rasterDesc, D3D11_DEPTH_STENCIL_DESC* depthStencilDesc);
