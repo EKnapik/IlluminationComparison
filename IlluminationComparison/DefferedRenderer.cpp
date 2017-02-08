@@ -451,9 +451,6 @@ void DefferedRenderer::DrawOpaqueMaterials()
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
 	vertexShader->SetFloat("zFar", camera->GetFarPlane());
 
-	pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
-	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
-
 	for (int i = 0; i < opaque.size(); i++)
 	{
 		PBRMaterial* material = GetMaterial(opaque.at(i)->GetMaterial());
@@ -511,8 +508,6 @@ void DefferedRenderer::DrawTransparentMaterials()
 		vertexShader->SetMatrix4x4("view", *camera->GetView());
 		vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
 		vertexShader->SetFloat("zFar", camera->GetFarPlane());
-		pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
-		pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
 
 		UINT stride = sizeof(Vertex);
 		UINT offset = 0;

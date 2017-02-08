@@ -5,13 +5,11 @@ Texture2D normalMap			: register(t1);
 Texture2D metalMap			: register(t2);
 Texture2D roughMap			: register(t3);
 
-TextureCube Sky				: register(t5);
 SamplerState basicSampler	: register(s0);
 
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
-	float3 worldPos		: POSITION;
 	float  depth        : DEPTH;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
@@ -20,7 +18,6 @@ struct VertexToPixel
 
 cbuffer externalData : register(b0)
 {
-	float3 cameraPosition;
 	float metallic;
 	float roughness;
 }
@@ -47,12 +44,9 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	// input.normal = normalize(mul(normalFromMap, TBN));
 
 	GBufferOutput output;
-	float3 toCamera = normalize(cameraPosition - input.worldPos);
 
 	// Lets include the textures now!
 	float3 surfaceColor = albedoMap.Sample(basicSampler, input.uv).rgb;
-	float3 skyColor = Sky.Sample(basicSampler, reflect(-toCamera, input.normal)).rgb;
-	// output.Color = lerp(skyColor, surfaceColor, 0.9f);
 	output.Color = surfaceColor;
 
 	// Output the normal in [0, 1] space.
