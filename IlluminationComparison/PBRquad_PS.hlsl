@@ -36,7 +36,7 @@ static const float PI = 3.14159265359;
 float DistributionGGX(float3 N, float3 H, float roughness)
 {
 	// There appears to be something different here.........
-	// float a = roughness*roughness;
+	//float a = roughness*roughness;
 	float a = roughness;
 	float a2 = a*a;
 	float NdotH = max(dot(N, H), 0.0);
@@ -75,11 +75,17 @@ float3 fresnelSchlick(float cosTheta, float3 F0)
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float2 Hammersley(uint i, uint N)
-{
-	return float2(
-		float(i) / float(N),
-		float(bitfieldReverse(i)) * 2.3283064365386963e-10);
+float radicalInverse_VdC(uint bits) {
+	bits = (bits << 16u) | (bits >> 16u);
+	bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+	bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+	bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+	bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+	return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+}
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+float2 Hammersley(uint i, uint N) {
+	return float2(float(i) / float(N), radicalInverse_VdC(i));
 }
 
 // Addapted from http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
@@ -108,7 +114,7 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 {
 	float3 SpecularLighting = 0;
 
-	const uint NumSamples = 1024;
+	const uint NumSamples = 42;
 	for (uint i = 0; i < NumSamples; i++)
 	{
 		float2 Xi = Hammersley(i, NumSamples);
@@ -122,9 +128,9 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 
 		if (NoL > 0)
 		{
-			float3 SampleColor = EnvMap.SampleLevel(EnvMapSampler, L, 0).rgb;
+			float3 SampleColor = Sky.Sample(basicSampler, L).rgb;
 
-			float G = DistributionGGX(NoV, NoL, Roughness);
+			float G = GeometrySmith(N, V, L, Roughness);
 			float Fc = pow(1 - VoH, 5);
 			float3 F = (1 - Fc) * SpecularColor + Fc;
 
@@ -137,9 +143,9 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 	return SpecularLighting / NumSamples;
 }
 
-https://dirkiek.wordpress.com/2015/05/31/physically-based-rendering-and-image-based-lighting/
-cpp auto and make_unique
-c++ smart pointer
+// https://dirkiek.wordpress.com/2015/05/31/physically-based-rendering-and-image-based-lighting/
+// cpp auto and make_unique
+// c++ smart pointer
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
@@ -195,7 +201,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// return float4(lightAmount, lightAmount, lightAmount, 1.0f);
 
 	// ambient lighting, will be replaced with environment lighting IBL
-	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo;
+	float3 ambient = SpecularIBL(albedo, roughness, N, V);
 	float3 color = ambient + Lo;
 
 	// HDR tonemapping might cause issue with addative lighting
@@ -204,18 +210,5 @@ float4 main(VertexToPixel input) : SV_TARGET
 	color = pow(color, (1.0 / 2.2));
 	return float4(color, 1.0);
 }
-
-
-/*
-// this is converting albedo into linear space because most albedo textures are in sRGB
-vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, 2.2);
-vec3 normal = getNormalFromMap();
-float metallic = texture(metallicMap, TexCoords).r;
-float roughness = texture(roughnessMap, TexCoords).r;
-float ao = texture(aoMap, TexCoords).r;
-
-float3 skyColor = Sky.Sample(basicSampler, reflect(-toCamera, input.normal)).rgb;
-
-*/
 
 
