@@ -19,6 +19,7 @@ cbuffer externalData	: register(b0)
 	matrix invView;
 	DirectionalLight dirLight;
 	float3 cameraPosition;
+	float3 cameraForward;
 	float zFar;
 }
 
@@ -82,12 +83,14 @@ float radicalInverse_VdC(uint bits) {
 	bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
 	return float(bits) * 2.3283064365386963e-10; // / 0x100000000
 }
+
 // http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 float2 Hammersley(uint i, uint N) {
 	return float2(float(i) / float(N), radicalInverse_VdC(i));
 }
 
 // Addapted from http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+// https://dirkiek.wordpress.com/2015/05/31/physically-based-rendering-and-image-based-lighting/
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
 {
 	float a = Roughness * Roughness;
@@ -142,12 +145,11 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 	return SpecularLighting / NumSamples;
 }
 
-// https://dirkiek.wordpress.com/2015/05/31/physically-based-rendering-and-image-based-lighting/
-// cpp auto and make_unique
-// c++ smart pointer
-
 float4 main(VertexToPixel input) : SV_TARGET
 {
+
+	// dot(cameraDir, viewRay) * depth
+	float3 viewRay = normalize(input.viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
 	float3 gWorldPos = input.viewRay * -depth * zFar;
 	gWorldPos = mul(float4(gWorldPos, 1.0), invView);

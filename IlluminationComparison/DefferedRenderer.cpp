@@ -66,7 +66,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descNormalTexture.Height = height;
 	descNormalTexture.MipLevels = 1;
 	descNormalTexture.ArraySize = 1;
-	descNormalTexture.Format = DXGI_FORMAT_R11G11B10_FLOAT;
+	descNormalTexture.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	descNormalTexture.SampleDesc.Count = 1;
 	descNormalTexture.SampleDesc.Quality = 0;
 	descNormalTexture.Usage = D3D11_USAGE_DEFAULT;
@@ -401,6 +401,7 @@ void DefferedRenderer::directionalLightRender() {
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
+	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
 	pixelShader->SetFloat("zFar", camera->GetFarPlane());
 
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
@@ -450,7 +451,7 @@ void DefferedRenderer::DrawOpaqueMaterials()
 	SceneDirectionalLight* firstDirectionalLight = &directionalLights->at(0);
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
-	vertexShader->SetFloat("zFar", camera->GetFarPlane());
+	pixelShader->SetFloat("zFar", camera->GetFarPlane());
 
 	for (int i = 0; i < opaque.size(); i++)
 	{

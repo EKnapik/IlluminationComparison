@@ -40,6 +40,7 @@ private:
 	ID3D11ShaderResourceView*	PBR_SRV;
 	
 	ID3D11SamplerState* simpleSampler;
+
 	ID3D11BlendState* blendState;
 	ID3D11RasterizerState* lightRastState;
 	ID3D11BlendState* transBlendState;

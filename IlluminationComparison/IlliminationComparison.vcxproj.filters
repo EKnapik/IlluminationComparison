@@ -16,9 +16,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{5f37ec8c-c624-4f3d-8d2e-1571a1df475b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Math">
-      <UniqueIdentifier>{151fffa3-ff12-415f-8253-f94969455d06}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Core">
       <UniqueIdentifier>{a36faee3-e082-48d3-be83-fe2b979e0b92}</UniqueIdentifier>
     </Filter>
@@ -48,6 +45,9 @@
     </Filter>
     <Filter Include="Shaders\PostProcessing">
       <UniqueIdentifier>{729492c2-4edd-4353-8394-5eaa7e18d727}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Deffered\Math">
+      <UniqueIdentifier>{151fffa3-ff12-415f-8253-f94969455d06}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -117,10 +117,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXMathImpl.h">
-      <Filter>Header Files\Math</Filter>
+      <Filter>Shaders\Deffered\Math</Filter>
     </ClInclude>
     <ClInclude Include="GameMath.h">
-      <Filter>Header Files\Math</Filter>
+      <Filter>Shaders\Deffered\Math</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
       <Filter>Header Files\Core</Filter>
