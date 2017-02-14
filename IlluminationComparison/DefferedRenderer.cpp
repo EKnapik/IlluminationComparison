@@ -409,7 +409,8 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
 	pixelShader->SetShaderResourceView("gDepth", DepthSRV);
 	pixelShader->SetShaderResourceView("gPBR", PBR_SRV);
-	pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
+	// pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
+	pixelShader->SetShaderResourceView("Sky", GetCubeMaterial("japanFiltered")->GetSRV());
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;

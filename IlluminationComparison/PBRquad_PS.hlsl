@@ -116,7 +116,7 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 {
 	float3 SpecularLighting = 0;
 
-	const uint NumSamples = 42;
+	const uint NumSamples = 5;
 	for (uint i = 0; i < NumSamples; i++)
 	{
 		float2 Xi = Hammersley(i, NumSamples);
@@ -130,7 +130,7 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 
 		if (NoL > 0)
 		{
-			float3 SampleColor = Sky.Sample(basicSampler, L).rgb;
+			float3 SampleColor = SampleColor = Sky.SampleLevel(basicSampler, L, (Roughness * 6.0f)).rgb;
 
 			float G = GeometrySmith(N, V, L, Roughness);
 			float Fc = pow(1 - VoH, 5);

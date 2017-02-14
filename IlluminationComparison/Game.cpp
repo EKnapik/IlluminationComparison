@@ -405,6 +405,7 @@ void Game::LoadMaterials()
 
 	renderer->AddCubeMaterial("skybox", L"Assets/Textures/SunnyCubeMap.dds");
 	renderer->AddCubeMaterial("japan", L"Assets/Textures/Yokohama.dds");
+	renderer->AddCubeMaterial("japanFiltered", L"Assets/Textures/YokohamaFiltered.dds");
 	renderer->AddCubeMaterial("bridge", L"Assets/Textures/GoldenGateBridge.dds");
 }
 
