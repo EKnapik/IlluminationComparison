@@ -3,6 +3,8 @@
 cbuffer externalData : register(b0)
 {
 	matrix invProjection;
+	matrix invView;
+	float3 cameraPosition;
 };
 
 // Struct representing a single vertex worth of data
@@ -29,11 +31,15 @@ VertexToPixel main( VertexShaderInput input )
 	// Set up output struct
 	VertexToPixel output = (VertexToPixel)0;
 	output.position = float4(input.position.xyz, 1.0f);
-
+	/*
 	float4 v = mul(float4(output.position.x, output.position.y, 1, 1), invProjection);
 	v /= v.w;
 	v /= v.z;
 	output.viewRay = v.xyz;
+	*/
+	// float3 wsPosition = mul(output.position, mul(invView, invProjection)).xyz;
+	float3 wsPosition = mul(output.position, mul(invView, invProjection)).xyz;
+	output.viewRay = wsPosition - cameraPosition;
 
 	output.uv = input.uv;
 

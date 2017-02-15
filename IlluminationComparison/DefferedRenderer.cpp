@@ -407,6 +407,8 @@ void DefferedRenderer::directionalLightRender() {
 
 	// Send G buffers to pixel shader
 	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
+	vertexShader->SetMatrix4x4("invView", *camera->GetInvView());
+	vertexShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());

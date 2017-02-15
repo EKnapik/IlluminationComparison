@@ -57,6 +57,7 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	// http://stackoverflow.com/questions/28066906/reconstructing-world-position-from-linear-depth
 	// https://mynameismjp.wordpress.com/2009/03/10/reconstructing-position-from-depth/
 	output.Depth.x = input.positionVS.z / zFar;
+	// output.Depth.x = length(input.positionVS);
 
 	// Set the PBR Values
 	output.PBR.r = metalMap.Sample(basicSampler, input.uv).r + metallic;
