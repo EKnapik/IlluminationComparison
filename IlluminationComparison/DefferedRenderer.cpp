@@ -250,6 +250,9 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 
 DefferedRenderer::~DefferedRenderer()
 {
+	if (postProcessingInit)
+		delete postProcesser;
+
 	// Albedo
 	AlbedoRTV->Release();
 	AlbedoSRV->Release();
@@ -305,6 +308,12 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	DrawSkyBox();
 	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
 	DrawParticleEmitters(deltaTime, totalTime);
+}
+
+void DefferedRenderer::AddPostProcessSystem(PostProcesser * newPostProcesser)
+{
+	this->postProcesser = newPostProcesser;
+	postProcessingInit = true;
 }
 
 

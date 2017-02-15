@@ -38,16 +38,189 @@ FLOAT defaultKernel[] = {
 };
 
 
-PostProcesser::PostProcesser()
-{
-}
 
+PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
+{
+	this->renderer = renderingSystem;
+}
 
 PostProcesser::~PostProcesser()
 {
 }
 
 
+
+void PostProcesser::renderKernel(FLOAT kernel[9])
+{
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
+	// renderer->context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	renderer->GetVertexShader("postprocess")->SetShader();
+
+	renderer->GetPixelShader("kernel")->SetShader();
+	renderer->GetPixelShader("kernel")->SetShaderResourceView("Pixels", postProcessSRV);
+	renderer->GetPixelShader("kernel")->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	renderer->GetPixelShader("kernel")->SetFloat("pixelWidth", 1.0f / renderer->width);
+	renderer->GetPixelShader("kernel")->SetFloat("pixelHeight", 1.0f / renderer->height);
+	renderer->GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(kernel[0], kernel[1], kernel[2]));
+	renderer->GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(kernel[3], kernel[4], kernel[5]));
+	renderer->GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(kernel[6], kernel[7], kernel[8]));
+	renderer->GetPixelShader("kernel")->SetFloat("kernelWeight", 1);
+	renderer->GetPixelShader("kernel")->CopyAllBufferData();
+
+	// Now actually draw
+	ID3D11Buffer* nothing = 0;
+	renderer->context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	renderer->context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	renderer->context->Draw(3, 0);
+
+	renderer->GetPixelShader("kernel")->SetShaderResourceView("Pixels", 0);
+}
+
+void PostProcesser::bloom()
+{
+	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	renderer->context->ClearRenderTargetView(bloomExtractRTV, black);
+	renderer->context->ClearRenderTargetView(bloomHorizonatalRTV, black);
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	ID3D11Buffer* nothing = 0;
+	SimplePixelShader* pixelShader;
+	float intensityThreshold = 2.5f;
+	float dir[2];
+	renderer->GetVertexShader("postprocess")->SetShader();
+
+
+	// extract
+	renderer->context->OMSetRenderTargets(1, &bloomExtractRTV, 0);
+	pixelShader = renderer->GetPixelShader("bloomExtract");
+	pixelShader->SetShader();
+	pixelShader->SetShaderResourceView("Pixels", 0);
+	pixelShader->SetShaderResourceView("Pixels", postProcessSRV);
+	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	pixelShader->SetFloat("threshold", intensityThreshold);
+	pixelShader->CopyAllBufferData();
+	// draw to the extract
+
+	renderer->context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	renderer->context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+	renderer->context->Draw(3, 0);
+	pixelShader->SetShaderResourceView("Pixels", 0);
+
+	// blur horizontal
+	dir[0] = 1.0f;
+	dir[1] = 0.0f;
+	renderer->context->OMSetRenderTargets(1, &bloomHorizonatalRTV, 0);
+	pixelShader = renderer->GetPixelShader("linearBlur");
+	pixelShader->SetShader();
+	pixelShader->SetShaderResourceView("Pixels", 0);
+	pixelShader->SetShaderResourceView("Pixels", bloomExtractSRV);
+	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	pixelShader->SetFloat2("dir", dir);
+	pixelShader->SetFloat("pixelWidth", 1.0f / renderer->width);
+	pixelShader->SetFloat("pixelHeight", 1.0f / renderer->height);
+	pixelShader->CopyAllBufferData();
+	// draw to the extract
+	renderer->context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	renderer->context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+	renderer->context->Draw(3, 0);
+	pixelShader->SetShaderResourceView("Pixels", 0);
+	renderer->context->ClearRenderTargetView(bloomExtractRTV, black);
+
+	// blur vertical
+	dir[0] = 0.0f;
+	dir[1] = 1.0f;
+	renderer->context->OMSetRenderTargets(1, &bloomExtractRTV, 0); // can resuse this texture
+	pixelShader->SetShaderResourceView("Pixels", bloomHorizonatalSRV);
+	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	pixelShader->SetFloat2("dir", dir);
+	pixelShader->SetFloat("pixelWidth", 1.0f / renderer->width);
+	pixelShader->SetFloat("pixelHeight", 1.0f / renderer->height);
+	pixelShader->CopyAllBufferData();
+	// draw to the extract
+	renderer->context->Draw(3, 0);
+	pixelShader->SetShaderResourceView("Pixels", 0);
+
+	// additively blend to back buffer
+	// bloomExtract now holds the blurred bright pixels
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
+	// renderer->context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	pixelShader = renderer->GetPixelShader("bloomCombine");
+	pixelShader->SetShader();
+	pixelShader->SetShaderResourceView("Source", postProcessSRV);
+	pixelShader->SetShaderResourceView("Blurred", bloomExtractSRV);
+	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	pixelShader->CopyAllBufferData();
+	renderer->context->Draw(3, 0);
+	pixelShader->SetShaderResourceView("Source", 0);
+	pixelShader->SetShaderResourceView("Blurred", 0);
+}
+
+void PostProcesser::blur()
+{
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
+	// renderer->context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	// Set up post process shader
+	renderer->GetVertexShader("blur")->SetShader();
+
+	renderer->GetPixelShader("blur")->SetShader();
+	renderer->GetPixelShader("blur")->SetShaderResourceView("Pixels", postProcessSRV);
+	renderer->GetPixelShader("blur")->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	renderer->GetPixelShader("blur")->SetInt("blurAmount", 1);
+	renderer->GetPixelShader("blur")->SetFloat("pixelWidth", 1.0f / renderer->width);
+	renderer->GetPixelShader("blur")->SetFloat("pixelHeight", 1.0f / renderer->height);
+	renderer->GetPixelShader("blur")->CopyAllBufferData();
+
+	// Now actually draw
+	ID3D11Buffer* nothing = 0;
+	renderer->context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	renderer->context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	renderer->context->Draw(3, 0);
+
+	renderer->GetPixelShader("blur")->SetShaderResourceView("Pixels", 0);
+}
+
+void PostProcesser::ascii()
+{
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+
+	Mesh* meshTmp = renderer->GetMesh("quad");
+	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
+	// renderer->context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	renderer->GetVertexShader("quad")->SetShader();
+
+	renderer->GetPixelShader("ascii")->SetShader();
+	renderer->GetPixelShader("ascii")->SetFloat("width", float(renderer->width));
+	renderer->GetPixelShader("ascii")->SetFloat("height", float(renderer->height));
+	renderer->GetPixelShader("ascii")->SetFloat("pixelWidth", 1.0f / renderer->width);
+	renderer->GetPixelShader("ascii")->SetFloat("pixelHeight", 1.0f / renderer->height);
+	renderer->GetPixelShader("ascii")->SetShaderResourceView("Pixels", postProcessSRV);
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
+	// renderer->GetPixelShader("ascii")->SetShaderResourceView("ASCII", renderer->GetMaterial("ascii")->GetSRV());
+	renderer->GetPixelShader("ascii")->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	renderer->GetPixelShader("ascii")->CopyAllBufferData();
+	// Now actually draw
+	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
+	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	renderer->context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
+
+	renderer->GetPixelShader("ascii")->SetShaderResourceView("Pixels", 0);
+	renderer->GetPixelShader("ascii")->SetShaderResourceView("ASCII", 0);
+}
+
+void PostProcesser::unfinalizeCurrentFrame()
+{
+}
+
+/*
 SetUpPostProcessing()
 {
 	// Post Processing needs a Texture 
@@ -128,258 +301,4 @@ SetUpPostProcessing()
 		ssaoKernel.push_back(sample);
 	}
 }
-
-PostProcess()
-{
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-
-	if (Blur)
-	{
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	// Set up post process shader
-	GetVertexShader("blur")->SetShader();
-
-	GetPixelShader("blur")->SetShader();
-	GetPixelShader("blur")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("blur")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("blur")->SetInt("blurAmount", 1);
-	GetPixelShader("blur")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("blur")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("blur")->CopyAllBufferData();
-
-	// Now actually draw
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	context->Draw(3, 0);
-
-	GetPixelShader("blur")->SetShaderResourceView("Pixels", 0);
-	}
-	if (EdgeDetect)
-	{
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	GetVertexShader("postprocess")->SetShader();
-
-	GetPixelShader("kernel")->SetShader();
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("kernel")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("kernel")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("kernel")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(edgeDetectKernel[0], edgeDetectKernel[1], edgeDetectKernel[2]));
-	GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(edgeDetectKernel[3], edgeDetectKernel[4], edgeDetectKernel[5]));
-	GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(edgeDetectKernel[6], edgeDetectKernel[7], edgeDetectKernel[8]));
-	GetPixelShader("kernel")->SetFloat("kernelWeight", 1);
-	GetPixelShader("kernel")->CopyAllBufferData();
-
-	// Now actually draw
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	context->Draw(3, 0);
-
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", 0);
-	}
-	if (Emboss)
-	{
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	GetVertexShader("postprocess")->SetShader();
-
-	GetPixelShader("kernel")->SetShader();
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("kernel")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("kernel")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("kernel")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(embossKernel[0], embossKernel[1], embossKernel[2]));
-	GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(embossKernel[3], embossKernel[4], embossKernel[5]));
-	GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(embossKernel[6], embossKernel[7], embossKernel[8]));
-	GetPixelShader("kernel")->SetFloat("kernelWeight", 1);
-	GetPixelShader("kernel")->CopyAllBufferData();
-
-	// Now actually draw
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	context->Draw(3, 0);
-
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", 0);
-	}
-	if (BlurWithKernel)
-	{
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	GetVertexShader("postprocess")->SetShader();
-
-	GetPixelShader("kernel")->SetShader();
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("kernel")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("kernel")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("kernel")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(blurKernel[0], blurKernel[1], blurKernel[2]));
-	GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(blurKernel[3], blurKernel[4], blurKernel[5]));
-	GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(blurKernel[6], blurKernel[7], blurKernel[8]));
-	GetPixelShader("kernel")->SetFloat("kernelWeight", 14);
-	GetPixelShader("kernel")->CopyAllBufferData();
-
-	// Now actually draw
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	context->Draw(3, 0);
-
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", 0);
-	}
-	if (Sharpness)
-	{
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	GetVertexShader("postprocess")->SetShader();
-
-	GetPixelShader("kernel")->SetShader();
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("kernel")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("kernel")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("kernel")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(sharpnessKernel[0], sharpnessKernel[1], sharpnessKernel[2]));
-	GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(sharpnessKernel[3], sharpnessKernel[4], sharpnessKernel[5]));
-	GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(sharpnessKernel[6], sharpnessKernel[7], sharpnessKernel[8]));
-	GetPixelShader("kernel")->SetFloat("kernelWeight", 1);
-	GetPixelShader("kernel")->CopyAllBufferData();
-
-	// Now actually draw
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	context->Draw(3, 0);
-
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", 0);
-	}
-	if (BottomSobel)
-	{
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	GetVertexShader("postprocess")->SetShader();
-
-	GetPixelShader("kernel")->SetShader();
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("kernel")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("kernel")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("kernel")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(bottomSobelKernel[0], bottomSobelKernel[1], bottomSobelKernel[2]));
-	GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(bottomSobelKernel[3], bottomSobelKernel[4], bottomSobelKernel[5]));
-	GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(bottomSobelKernel[6], bottomSobelKernel[7], bottomSobelKernel[8]));
-	GetPixelShader("kernel")->SetFloat("kernelWeight", 1);
-	GetPixelShader("kernel")->CopyAllBufferData();
-
-	// Now actually draw
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-	context->Draw(3, 0);
-
-	GetPixelShader("kernel")->SetShaderResourceView("Pixels", 0);
-	}
-	if (Bloom)
-	{
-	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	context->ClearRenderTargetView(bloomExtractRTV, black);
-	context->ClearRenderTargetView(bloomHorizonatalRTV, black);
-
-	ID3D11Buffer* nothing = 0;
-	SimplePixelShader* pixelShader;
-	float intensityThreshold = 2.5f;
-	float dir[2];
-	GetVertexShader("postprocess")->SetShader();
-
-
-	// extract
-	context->OMSetRenderTargets(1, &bloomExtractRTV, 0);
-	pixelShader = GetPixelShader("bloomExtract");
-	pixelShader->SetShader();
-	pixelShader->SetShaderResourceView("Pixels", 0);
-	pixelShader->SetShaderResourceView("Pixels", postProcessSRV);
-	pixelShader->SetSamplerState("Sampler", GetSampler("default"));
-	pixelShader->SetFloat("threshold", intensityThreshold);
-	pixelShader->CopyAllBufferData();
-	// draw to the extract
-
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-	context->Draw(3, 0);
-	pixelShader->SetShaderResourceView("Pixels", 0);
-
-	// blur horizontal
-	dir[0] = 1.0f;
-	dir[1] = 0.0f;
-	context->OMSetRenderTargets(1, &bloomHorizonatalRTV, 0);
-	pixelShader = GetPixelShader("linearBlur");
-	pixelShader->SetShader();
-	pixelShader->SetShaderResourceView("Pixels", 0);
-	pixelShader->SetShaderResourceView("Pixels", bloomExtractSRV);
-	pixelShader->SetSamplerState("Sampler", GetSampler("default"));
-	pixelShader->SetFloat2("dir", dir);
-	pixelShader->SetFloat("pixelWidth", 1.0f / width);
-	pixelShader->SetFloat("pixelHeight", 1.0f / height);
-	pixelShader->CopyAllBufferData();
-	// draw to the extract
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-	context->Draw(3, 0);
-	pixelShader->SetShaderResourceView("Pixels", 0);
-	context->ClearRenderTargetView(bloomExtractRTV, black);
-
-	// blur vertical
-	dir[0] = 0.0f;
-	dir[1] = 1.0f;
-	context->OMSetRenderTargets(1, &bloomExtractRTV, 0); // can resuse this texture
-	pixelShader->SetShaderResourceView("Pixels", bloomHorizonatalSRV);
-	pixelShader->SetSamplerState("Sampler", GetSampler("default"));
-	pixelShader->SetFloat2("dir", dir);
-	pixelShader->SetFloat("pixelWidth", 1.0f / width);
-	pixelShader->SetFloat("pixelHeight", 1.0f / height);
-	pixelShader->CopyAllBufferData();
-	// draw to the extract
-	context->Draw(3, 0);
-	pixelShader->SetShaderResourceView("Pixels", 0);
-
-	// additively blend to back buffer
-	// bloomExtract now holds the blurred bright pixels
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	pixelShader = GetPixelShader("bloomCombine");
-	pixelShader->SetShader();
-	pixelShader->SetShaderResourceView("Source", postProcessSRV);
-	pixelShader->SetShaderResourceView("Blurred", bloomExtractSRV);
-	pixelShader->SetSamplerState("Sampler", GetSampler("default"));
-	pixelShader->CopyAllBufferData();
-	context->Draw(3, 0);
-	pixelShader->SetShaderResourceView("Source", 0);
-	pixelShader->SetShaderResourceView("Blurred", 0);
-	}
-	if (ASCII)
-	{
-	Mesh* meshTmp = GetMesh("quad");
-	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	GetVertexShader("quad")->SetShader();
-
-	GetPixelShader("ascii")->SetShader();
-	GetPixelShader("ascii")->SetFloat("width", float(width));
-	GetPixelShader("ascii")->SetFloat("height", float(height));
-	GetPixelShader("ascii")->SetFloat("pixelWidth", 1.0f / width);
-	GetPixelShader("ascii")->SetFloat("pixelHeight", 1.0f / height);
-	GetPixelShader("ascii")->SetShaderResourceView("Pixels", postProcessSRV);
-	GetPixelShader("ascii")->SetShaderResourceView("ASCII", GetMaterial("ascii")->GetSRV());
-	GetPixelShader("ascii")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("ascii")->CopyAllBufferData();
-	// Now actually draw
-	context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
-	context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-	context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
-
-	GetPixelShader("ascii")->SetShaderResourceView("Pixels", 0);
-	GetPixelShader("ascii")->SetShaderResourceView("ASCII", 0);
-	}
-	
-}
+*/

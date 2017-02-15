@@ -6,42 +6,6 @@
 
 using namespace DirectX;
 
-FLOAT edgeDetectKernel[] = {
--1, -1, -1,
--1, 8, -1,
--1, -1, -1
-};
-
-FLOAT embossKernel[] = {
--2, -1, 0,
--1, 1, 1,
-0, 1, 2
-};
-
-FLOAT blurKernel[] = {
--1, 2, 1,
-2, 4, 2,
-1, 2, 1
-};
-
-FLOAT sharpnessKernel[] = {
--1, -1, -1,
--1, 9, -1,
--1, -1, -1
-};
-
-FLOAT bottomSobelKernel[] = {
--1, -2, -1,
-0, 0, 0,
-1, 2, 1
-};
-
-FLOAT defaultKernel[] = {
-0, 0, 0,
-0, 1, 0,
-0, 0, 0
-};
-
 Renderer::Renderer(Camera *camera, ID3D11DeviceContext *context, ID3D11Device* device, ID3D11RenderTargetView* backBufferRTV, ID3D11DepthStencilView* depthStencilView, int width, int height)
 {
 	this->camera = camera;

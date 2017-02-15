@@ -1,6 +1,9 @@
 #pragma once
 
+#include "PostProcesser.h"
 #include "Renderer.h"
+
+class PostProcesser;
 
 class DefferedRenderer : public Renderer
 {
@@ -9,7 +12,7 @@ public:
 		ID3D11RenderTargetView* backBufferRTV, ID3D11DepthStencilView* depthStencilView, int width, int height);
 	virtual ~DefferedRenderer();
 	void Render(FLOAT deltaTime, FLOAT totalTime);
-	
+	void AddPostProcessSystem(PostProcesser* newPostProcesser);
 
 private:
 	void gBufferRender(FLOAT deltaTime, FLOAT totalTime);
@@ -18,6 +21,12 @@ private:
 	void DrawOpaqueMaterials();
 	void DrawTransparentMaterials();
 	void DrawSSAO();
+
+	// Post Processing System, IF RENDERING BLACK POST PROCESSOR MAY HAVE NOT BEEN INITALIZED;
+	PostProcesser* postProcesser;
+	ID3D11RenderTargetView *	unfinalizedBackRTV;
+	ID3D11ShaderResourceView*	unfinalizedBackSRV;
+	bool postProcessingInit = false;
 
 	// Albedo
 	ID3D11RenderTargetView *	AlbedoRTV;
