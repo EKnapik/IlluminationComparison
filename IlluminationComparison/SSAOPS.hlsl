@@ -1,7 +1,7 @@
 // Texture info
 Texture2D texNoise			: register(t0);
 Texture2D gNormal			: register(t1);
-Texture2D gPosition			: register(t2);
+Texture2D gDepth			: register(t2);
 SamplerState basicSampler	: register(s0);
 
 cbuffer externalData : register(b0)
@@ -98,7 +98,7 @@ float main(VertexToPixel input) : SV_TARGET
 	const float2 noiseScale = float2(width / 100, height / 100);
 
     // Get input for SSAO algorithm
-    float3 fragPos = mul(float4(gPosition.Sample(basicSampler, input.uv).xyz, 1.0), view).xyz;
+    float3 fragPos = mul(float4(gDepth.Sample(basicSampler, input.uv).xyz, 1.0), view).xyz;
 	float3 normal = gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f;
 	float3 randomVec = normalize(texNoise.Sample(basicSampler, input.uv * noiseScale).xyz);
     // Create TBN change-of-basis matrix: from tangent-space to view-space
@@ -120,7 +120,7 @@ float main(VertexToPixel input) : SV_TARGET
         offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
         
         // get sample depth
-        float sampleDepth = mul(float4(gPosition.Sample(basicSampler, offset.xy).xyz, 1.0), view).z; // Get depth value of kernel sample
+        float sampleDepth = mul(float4(gDepth.Sample(basicSampler, offset.xy).xyz, 1.0), view).z; // Get depth value of kernel sample
         
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));

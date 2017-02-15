@@ -199,12 +199,6 @@
     <FxCompile Include="gBufferPixelShader.hlsl">
       <Filter>Shaders\Deffered</Filter>
     </FxCompile>
-    <FxCompile Include="quadPixelShader.hlsl">
-      <Filter>Shaders\Deffered</Filter>
-    </FxCompile>
-    <FxCompile Include="quadVertexShader.hlsl">
-      <Filter>Shaders\Deffered</Filter>
-    </FxCompile>
     <FxCompile Include="sphereLightPixelShader.hlsl">
       <Filter>Shaders\Deffered</Filter>
     </FxCompile>
@@ -269,6 +263,9 @@
       <Filter>Shaders\Deffered</Filter>
     </FxCompile>
     <FxCompile Include="PBRquad_PS.hlsl">
+      <Filter>Shaders\Deffered</Filter>
+    </FxCompile>
+    <FxCompile Include="PBRquad_VS.hlsl">
       <Filter>Shaders\Deffered</Filter>
     </FxCompile>
   </ItemGroup>

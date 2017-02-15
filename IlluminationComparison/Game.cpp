@@ -313,8 +313,7 @@ void Game::LoadShaders()
 	// Create shaders for deffered
 	renderer->AddVertexShader("gBuffer", L"gBufferVertexShader.cso");
 	renderer->AddPixelShader("gBuffer", L"gBufferPixelShader.cso");
-	renderer->AddVertexShader("quad", L"quadVertexShader.cso");
-	renderer->AddPixelShader("quad", L"quadPixelShader.cso");
+	renderer->AddVertexShader("quadPBR", L"PBRquad_VS.cso");
 	renderer->AddPixelShader("quadPBR", L"PBRquad_PS.cso");
 	renderer->AddVertexShader("sphereLight", L"sphereLightVertexShader.cso");
 	renderer->AddPixelShader("sphereLight", L"sphereLightPixelShader.cso");

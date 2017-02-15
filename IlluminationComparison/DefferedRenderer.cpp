@@ -400,7 +400,7 @@ void DefferedRenderer::directionalLightRender() {
 	float factors[4] = { 1,1,1,1 };
 	context->OMSetBlendState(blendState, factors, 0xFFFFFFFF);
 	
-	SimpleVertexShader* vertexShader = GetVertexShader("quad");
+	SimpleVertexShader* vertexShader = GetVertexShader("quadPBR");
 	SimplePixelShader* pixelShader = GetPixelShader("quadPBR");
 	vertexShader->SetShader();
 	pixelShader->SetShader();
