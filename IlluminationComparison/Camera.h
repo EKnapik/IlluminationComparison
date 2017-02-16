@@ -17,6 +17,7 @@ public:
 	VEC3* GetPosition() { return &position; }
 	VEC3* GetDirection() { return &direction; }
 	FLOAT GetFarPlane() { return zFar; }
+	VEC2  GetProjectionConsts();
 
 	void RotateXY(FLOAT x, FLOAT y);
 
@@ -30,6 +31,7 @@ private:
 	VEC3 position;
 	VEC3 direction;
 	FLOAT zFar;
+	FLOAT zNear = 0.0f;
 	FLOAT xRot;
 	FLOAT yRot;
 

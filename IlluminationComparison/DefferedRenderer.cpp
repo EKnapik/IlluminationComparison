@@ -463,7 +463,8 @@ void DefferedRenderer::DrawOpaqueMaterials()
 	SceneDirectionalLight* firstDirectionalLight = &directionalLights->at(0);
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
-	pixelShader->SetFloat("zFar", camera->GetFarPlane());
+	vertexShader->SetFloat2("projectionConst", camera->GetProjectionConsts());
+	vertexShader->SetFloat("zFar", camera->GetFarPlane());
 
 	for (int i = 0; i < opaque.size(); i++)
 	{

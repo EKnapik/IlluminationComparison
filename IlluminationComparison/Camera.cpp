@@ -122,6 +122,13 @@ MAT4X4 * Camera::GetInvProjection()
 	return &invProjection;
 }
 
+VEC2 Camera::GetProjectionConsts()
+{
+	float projA = zFar / (zFar - zNear);
+	float projB = (-zFar * zNear) / (zFar - zNear);
+	return VEC2(projA, projB);
+}
+
 void Camera::RotateXY(FLOAT x, FLOAT y)
 {
 	xRot += x;

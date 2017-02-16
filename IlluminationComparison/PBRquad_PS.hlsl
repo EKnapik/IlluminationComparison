@@ -147,17 +147,16 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-
-	// dot(cameraDir, viewRay) * depth
-	float3 viewRay = normalize(input.viewRay);
+	float3 viewRay = input.viewRay;
 	float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
 	float3 gWorldPos = cameraPosition - input.viewRay * (depth / viewZDist);
-	gWorldPos = mul(float4(gWorldPos, 1.0), invView);
+	gWorldPos = mul(float4(gWorldPos, 1.0), invView).xyz;
 
-	return depth.xxxx;
-
+	// return depth.xxxx;
 	// return float4(gWorldPos, 1.0f);
+
+
 	// need to unpack normal
 	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
 	float3 albedo = pow(gAlbedo.Sample(basicSampler, input.uv).xyz, 2.2); // convert to linear from sRGB
