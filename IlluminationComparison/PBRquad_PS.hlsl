@@ -151,7 +151,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
 	float3 gWorldPos = cameraPosition - input.viewRay * (depth / viewZDist);
-	gWorldPos = mul(float4(gWorldPos, 1.0), invView).xyz;
+	// gWorldPos = mul(float4(gWorldPos, 1.0), invView).xyz;
 
 	// return depth.xxxx;
 	// return float4(gWorldPos, 1.0f);
