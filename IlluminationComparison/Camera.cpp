@@ -11,7 +11,7 @@ Camera::Camera(int width, int height)
 	yRot = 0;
 	zFar = 100.0f;
 
-	SetProjectionMatrix(&projection, 0.25f * 3.1415926535f, (float)width / height, 0.1f, zFar);
+	SetProjectionMatrix(&projection, 0.25f * 3.1415926535f, (float)width / height, zNear, zFar);
 	SetInverseMatrix(&invProjection, &projection);
 #ifdef WITH_DX
 	SetTransposeMatrix(&projection, &GetMatrix(&projection));

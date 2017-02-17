@@ -31,7 +31,7 @@ private:
 	VEC3 position;
 	VEC3 direction;
 	FLOAT zFar;
-	FLOAT zNear = 0.0f;
+	FLOAT zNear = 0.1f;
 	FLOAT xRot;
 	FLOAT yRot;
 
