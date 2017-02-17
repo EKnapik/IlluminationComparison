@@ -1,6 +1,9 @@
 #pragma once
-
+#include <DirectXMath.h>
 #include "GameMath.h"
+
+#define CAM_DIR XMFLOAT3(0, 0, 1)
+#define CAM_UP XMFLOAT3(0, 1, 0)
 
 class Camera {
 public:
@@ -19,7 +22,19 @@ public:
 	FLOAT GetFarPlane() { return zFar; }
 	VEC2  GetProjectionConsts();
 
-	void RotateXY(FLOAT x, FLOAT y);
+	void Forward(float amount);
+	void Backward(float amount);
+	void StrafeRight(float amount);
+	void StrafeLeft(float amount);
+	void MoveUp(float amount) { position.y = position.y + amount; }
+	void MoveDown(float amount) { MoveUp(-amount); }
+
+	void AddXRot(float amount) { xRot = xRot + amount; }
+	void SubXRot(float amount) { AddXRot(-amount); }
+	void AddYRot(float amount) { yRot = yRot + amount; }
+	void SubYRot(float amount) { AddYRot(-amount); }
+
+	void ResetCamera();
 
 private:	
 	///<summary>
@@ -37,8 +52,8 @@ private:
 
 	MAT4X4 projection;
 	MAT4X4 invProjection;
-
-
 	FLOAT speed = 5;
 
+	void UpdateDirection();
+	void UpdateViewMat();
 };

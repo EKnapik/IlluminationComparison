@@ -138,64 +138,6 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 	}
 	O_toggle = currO;
-	/*
-	if (currShift)
-	{
-		if (currO && !O_toggle)
-		{
-			if (renderer->PostProcessing == true)
-			{
-				renderer->PostProcessing = false;
-			} else
-			{
-				renderer->PostProcessing = true;
-				renderer->Blur = false;
-				renderer->Bloom = false;
-				renderer->EdgeDetect = false;
-				renderer->Emboss = false;
-				renderer->BlurWithKernel = false;
-				renderer->Sharpness = false;
-				renderer->BottomSobel = false;
-				renderer->ASCII = false;
-				postProcessChoice = 0;
-			}
-		}
-		O_toggle = currO;
-
-		if (currTab && !prevTab)
-			postProcessChoice = (postProcessChoice + 1) % 8;
-		prevTab = currTab;
-
-		switch (postProcessChoice)
-		{
-		case 0: renderer->ASCII = false;
-				renderer->Blur = true;
-				break;
-		case 1: renderer->Blur = false;
-				renderer->Bloom = true;
-				break;
-		case 2: renderer->Bloom = false;
-				renderer->EdgeDetect = true;
-				break;
-		case 3: renderer->EdgeDetect = false;
-				renderer->Emboss = true;
-				break;
-		case 4: renderer->Emboss = false;
-				renderer->BlurWithKernel = true;
-				break;
-		case 5: renderer->BlurWithKernel = false;
-				renderer->Sharpness = true;
-				break;
-		case 6: renderer->Sharpness = false;
-				renderer->BottomSobel = true;
-				break;
-		case 7: renderer->BottomSobel = false;
-				renderer->ASCII = true;
-				break;
-		}
-	}
-
-	*/
 
 	if (gameManager.EntitiesDirty)
 	{
@@ -268,8 +210,9 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 {
 	if (mouseDown)
 	{
-		FLOAT scalar = .005;
-		camera->RotateXY((y - prevMousePos.y) * scalar, (x - prevMousePos.x) * scalar);
+		FLOAT scalar = 0.005;
+		camera->AddYRot((x - prevMousePos.x)*scalar);
+		camera->AddXRot((y - prevMousePos.y)*scalar);
 	}
 
 	// Save the previous mouse position, so we have it for the future

@@ -147,7 +147,7 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	float3 viewRay = input.viewRay;
+	float3 viewRay = normalize(input.viewRay);
 	float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
 	float3 gWorldPos = cameraPosition - input.viewRay * (depth / viewZDist);

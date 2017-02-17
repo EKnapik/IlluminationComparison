@@ -1,15 +1,16 @@
 #include "Camera.h"
 #include <Windows.h>
-
+#include <stdio.h>
 using namespace GMath;
+using namespace DirectX;
 
 Camera::Camera(int width, int height)
 {
 	SetVector3(&position, 0, 1, -10);
-	SetVector3(&direction, 0, 0, 1);
 	xRot = 0;
 	yRot = 0;
 	zFar = 100.0f;
+	UpdateDirection();
 
 	SetProjectionMatrix(&projection, 0.25f * 3.1415926535f, (float)width / height, zNear, zFar);
 	SetInverseMatrix(&invProjection, &projection);
@@ -17,8 +18,6 @@ Camera::Camera(int width, int height)
 	SetTransposeMatrix(&projection, &GetMatrix(&projection));
 	SetTransposeMatrix(&invProjection, &GetMatrix(&invProjection));
 #endif // WITH_DX
-
-	
 }
 
 Camera::~Camera()
@@ -27,78 +26,32 @@ Camera::~Camera()
 
 void Camera::Update(FLOAT dt)
 {
-	VEC3 forward(0, 0, 1);
-	VEC3 up(0, 1, 0);
-	VEC3 rot(xRot, yRot, 0);
-	MATRIX rotation = CreateRotationMatrix(&rot);
-	VECTOR look = Vector3Transform(&forward, &rotation);
-	StoreVector(&direction, &look);
-	SetMatrixLookTo(&view, &position, &look, &up);
-	SetInverseMatrix(&invView, &view);
-#ifdef WITH_DX
-	SetTransposeMatrix(&view, &GetMatrix(&view));
-	SetTransposeMatrix(&invView, &GetMatrix(&invView));
-#endif // WITH_DX
-	
-	if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
+	UpdateDirection();
+	if (GetAsyncKeyState('W') & 0x8000)
 	{
-		if (GetAsyncKeyState('W') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&look), dt * speed));
-		}
-		else if (GetAsyncKeyState('S') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&look), dt * -speed));
-		}
-
-		if (GetAsyncKeyState('A') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&VectorCross(&look, &GetVector(&up))), dt * -speed));
-		}
-		else if (GetAsyncKeyState('D') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&VectorCross(&GetVector(&up), &look)), dt * speed));
-		}
-
-		if (GetAsyncKeyState(' ') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&GetVector(&up), dt* speed));
-		}
-
-		else if (GetAsyncKeyState('X') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&GetVector(&up), -dt* speed));
-		}
+		Forward(dt * speed);
 	}
-	else
+	else if (GetAsyncKeyState('S') & 0x8000)
 	{
-		if (GetAsyncKeyState('W') & 0x8000)
-		{
-			
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(0, 0, 1))), dt * speed));
-		}
-		else if (GetAsyncKeyState('S') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(0, 0, 1))), dt * -speed));
-		}
+		Backward(dt * speed);
+	}
 
-		if (GetAsyncKeyState('D') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(1, 0, 0))), dt * speed));
-		}
-		else if (GetAsyncKeyState('A') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(1, 0, 0))), dt * -speed));
-		}
+	if (GetAsyncKeyState('D') & 0x8000)
+	{
+		StrafeRight(dt * speed);
+	}
+	else if (GetAsyncKeyState('A') & 0x8000)
+	{
+		StrafeLeft(dt * speed);
+	}
 
-		if (GetAsyncKeyState('E') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(0, 1, 0))), dt * speed));
-		}
-		else if (GetAsyncKeyState('Q') & 0x8000)
-		{
-			AddVec3(&position, &position, VectorScale(&Vec3Normalize(&GetVector(&VEC3(0, 1, 0))), dt * -speed));
-		}
+	if (GetAsyncKeyState('E') & 0x8000)
+	{
+		MoveUp(dt * speed);
+	}
+	else if (GetAsyncKeyState('Q') & 0x8000)
+	{
+		MoveDown(dt * speed);
 	}
 }
 
@@ -129,8 +82,75 @@ VEC2 Camera::GetProjectionConsts()
 	return VEC2(projA, projB);
 }
 
-void Camera::RotateXY(FLOAT x, FLOAT y)
-{
-	xRot += x;
-	yRot += y;
+// updates the current camera direction
+// normaized direction of the camera
+void Camera::UpdateDirection() {
+	XMFLOAT3 dir = CAM_DIR;
+	XMVECTOR curDir = XMLoadFloat3(&dir);
+	XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(xRot, yRot, 0);
+	curDir = XMVector3Normalize(XMVector3Transform(curDir, rotMat));
+	XMStoreFloat3(&direction, curDir);
+
+	UpdateViewMat();
+}
+
+
+// could use the GetDir function but I would be creating
+// the rotation matrix twice, once for up vector and once for direction
+//
+// Returns a column ordering view matrix of this camera
+void Camera::UpdateViewMat() {
+	XMFLOAT3 up = CAM_UP;
+	XMVECTOR curPos = XMLoadFloat3(&position);
+	XMVECTOR curDir = XMLoadFloat3(&direction);
+	XMVECTOR curUp = XMLoadFloat3(&up);
+	XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(xRot, yRot, 0);
+	curUp = XMVector3Transform(curUp, rotMat);
+
+	// saves the transposed into column ordering view matrix
+	XMStoreFloat4x4(&view, XMMatrixLookToLH(curPos, curDir, curUp));
+	SetInverseMatrix(&invView, &view); // Also update the inverse view matrix
+	// Tranpose both
+	SetTransposeMatrix(&view, &GetMatrix(&view));
+	SetTransposeMatrix(&invView, &GetMatrix(&invView));
+}
+
+void Camera::Forward(float amount) {
+	position.x = position.x + (direction.x*amount);
+	position.y = position.y + (direction.y*amount);
+	position.z = position.z + (direction.z*amount);
+}
+
+void Camera::Backward(float amount) {
+	Forward(-amount);
+}
+
+
+void Camera::StrafeRight(float amount) {
+	XMFLOAT3 right;
+	XMFLOAT3 up = CAM_UP;
+	XMVECTOR curRight;
+	XMVECTOR curDir = XMLoadFloat3(&direction);
+	XMVECTOR curUp = XMLoadFloat3(&up);
+	XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(xRot, yRot, 0);
+	curUp = XMVector3Transform(curUp, rotMat);
+
+	curRight = XMVector3Normalize(XMVector3Cross(curUp, curDir));
+	curRight = curRight * amount;
+	XMStoreFloat3(&right, curRight);
+
+	position.x = position.x + right.x;
+	position.y = position.y + right.y;
+	position.z = position.z + right.z;
+}
+
+
+void Camera::StrafeLeft(float amount) {
+	StrafeRight(-amount);
+}
+
+void Camera::ResetCamera() {
+	position = XMFLOAT3(0, 0, -5);
+	xRot = 0;
+	yRot = 0;
 }
