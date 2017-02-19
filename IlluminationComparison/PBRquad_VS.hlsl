@@ -40,7 +40,7 @@ VertexToPixel main( VertexShaderInput input )
 	// float3 wsPosition = mul(output.position, mul(invView, invProjection)).xyz;
 	float3 wsPosition = mul(output.position, mul(invView, invProjection)).xyz;
 	output.viewRay = wsPosition - cameraPosition;
-	// output.viewRay = float3(wsPosition.xy / wsPosition.z, 1.0f);
+	output.viewRay = float3(wsPosition.xy / wsPosition.z, 1.0f);
 
 	output.uv = input.uv;
 

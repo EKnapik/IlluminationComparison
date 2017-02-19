@@ -150,12 +150,12 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 viewRay = normalize(input.viewRay);
 	float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
-	float3 gWorldPos = cameraPosition - input.viewRay * (depth / viewZDist);
+	float3 gWorldPos = cameraPosition + input.viewRay * depth;
+	gWorldPos = cameraPosition + input.viewRay * (depth / viewZDist);
+	// gWorldPos = cameraPosition + input.viewRay * depth;
+
+	// float3 gWorldPos = cameraPosition + input.viewRay * (depth / viewZDist);
 	// gWorldPos = mul(float4(gWorldPos, 1.0), invView).xyz;
-
-	// return depth.xxxx;
-	// return float4(gWorldPos, 1.0f);
-
 
 	// need to unpack normal
 	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
@@ -164,15 +164,11 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float metalness = PBR.x;
 	float roughness = PBR.y;
 
-	// Check for clip
-	// CLIPPING MIGHT NOT BE THE BEST CHOICE BUT IT IS A CHOICE
-	// clip(surfaceColor.a + -0.01);
-
 	// L = direction toward light from world position
 	// V = direction toward camera from world position
 	float3 L = normalize(dirLight.Direction);
 	float3 V = normalize(gWorldPos - cameraPosition);
-	float3 R = reflect(-V, N);
+	// float3 R = reflect(-V, N);
 	float3 H = normalize(V + L);
 
 	// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
