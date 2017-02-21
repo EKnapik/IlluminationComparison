@@ -384,7 +384,7 @@ void PostProcesser::SetUpSSAO()
 	std::default_random_engine generator;
 	std::vector<VEC4> ssaoNoise(randomTextureSize * randomTextureSize);
 	for (unsigned int i = 0; i < randomTextureSize * randomTextureSize; i++)
-		ssaoNoise[i] = VEC4(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f, 1.0f);
+		ssaoNoise[i] = VEC4(randomFloats(generator), randomFloats(generator), 0.0f, 1.0f);
 
 	ID3D11Texture2D* noiseTexture;
 	// Set up texture

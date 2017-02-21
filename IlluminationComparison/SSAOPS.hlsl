@@ -17,7 +17,7 @@ cbuffer externalData : register(b0)
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
-	float3 viewRay		: VRAY;
+	float4 viewRay		: VRAY;
 	float2 uv			: TEXCOORD;
 };
 
@@ -25,7 +25,7 @@ struct VertexToPixel
 // parameters 
 static int kernelSize = 64;
 static float radius = 0.5;
-static float bias = 0.025;
+static float bias = 0.0; // 0.025
 
 
 
@@ -96,30 +96,32 @@ static float3 samples[] = {
 	float3(0.42734, -0.203034, 0.0267325)
 };
 
+
+/// Derived from http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
+/// and https://learnopengl.com/#!Advanced-Lighting/SSAO
 float main(VertexToPixel input) : SV_TARGET
 {
 	// tiles the 4x4 noise texture
 	const float2 noiseScale = float2(width / 4.0, height / 4.0);
 
-	float3 viewRay = normalize(input.viewRay);
+	float3 viewRay = normalize(input.viewRay).xyz;
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
-	float3 gWorldPos = cameraPosition + viewRay * depth * zFar;
+	float3 vsPosition = viewRay * depth;
 
     // Get input for SSAO algorithm
-    float3 fragPos = mul(float4(gWorldPos, 1.0), view).xyz;
-	float3 normal = gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f;
-	float3 randomVec = normalize(texNoise.Sample(basicSampler, input.uv * noiseScale).xyz);
+	float3 normal = normalize(gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f);
+	float3 randomVec = texNoise.Sample(basicSampler, input.uv * noiseScale).xyz * 2.0f - 1.0f;
     // Create TBN change-of-basis matrix: from tangent-space to view-space
 	float3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
 	float3 bitangent = cross(normal, tangent);
     float3x3 TBN = float3x3(tangent, bitangent, normal);
     // Iterate over the sample kernel and calculate occlusion factor
     float occlusion = 0.0;
-    for(int i = 0; i < 64; ++i)
+    for(int i = 0; i < kernelSize; ++i)
     {
         // get sample position
 		float3 samplePos = mul(samples[i], TBN); // From tangent to view-space
-		samplePos = fragPos + samplePos * radius;
+		samplePos = vsPosition + samplePos * radius;
         
         // project sample position (to sample texture) (to get position on screen/texture)
 		float4 offset = float4(samplePos, 1.0);
@@ -131,8 +133,8 @@ float main(VertexToPixel input) : SV_TARGET
         float sampleDepth = gDepth.Sample(basicSampler, offset.xy).x; // Get depth value of kernel sample
         
         // range check & accumulate
-        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(depth - sampleDepth));
-        occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
+        float rangeCheck = abs(depth - sampleDepth) < radius ? 1.0: 0.0;
+        occlusion += (sampleDepth <= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
     occlusion = 1.0 - (occlusion / kernelSize);
     

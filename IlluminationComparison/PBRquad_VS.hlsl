@@ -19,7 +19,7 @@ struct VertexShaderInput
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
-	float3 viewRay		: VRAY;
+	float4 viewRay		: VRAY;
 	float2 uv			: TEXCOORD;
 };
 
@@ -33,7 +33,8 @@ VertexToPixel main( VertexShaderInput input )
 	output.position = float4(input.position.xyz, 1.0f);
 
 	float4 wsPosition = mul(float4(output.position.xy, 0.0f, 1.0f), invViewProj);
-	output.viewRay = wsPosition - cameraPosition;
+	output.viewRay = wsPosition;
+	output.viewRay = wsPosition - float4(cameraPosition, 0.0f);
 
 	output.uv = input.uv;
 

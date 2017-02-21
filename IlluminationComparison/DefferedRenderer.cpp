@@ -117,7 +117,7 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	descPositionTexture.Height = height;
 	descPositionTexture.MipLevels = 1;
 	descPositionTexture.ArraySize = 1;
-	descPositionTexture.Format = DXGI_FORMAT_R16_FLOAT;
+	descPositionTexture.Format = DXGI_FORMAT_R32_FLOAT;
 	descPositionTexture.SampleDesc.Count = 1;
 	descPositionTexture.SampleDesc.Quality = 0;
 	descPositionTexture.Usage = D3D11_USAGE_DEFAULT;

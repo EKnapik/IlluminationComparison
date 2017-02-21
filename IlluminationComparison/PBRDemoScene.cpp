@@ -2,63 +2,97 @@
 
 PBRDemoScene::PBRDemoScene()
 {
-	Ball* ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "goldScuffed"));
-	ball->kinematics->SetPosition(VEC3(-5, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "ironRusted4"));
-	ball->kinematics->SetPosition(VEC3(-4, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "aluminumScuffed"));
-	ball->kinematics->SetPosition(VEC3(-3, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "copperScuffed"));
-	ball->kinematics->SetPosition(VEC3(-2, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "graniteSmooth"));
-	ball->kinematics->SetPosition(VEC3(-1, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "greasyMetal"));
-	// ball->entity->Scale(VEC3(1.0f, 1.0f, 1.0f));
-	ball->kinematics->SetPosition(VEC3(0, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "rust"));
-	ball->kinematics->SetPosition(VEC3(1, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "bluePlastic"));
-	ball->kinematics->SetPosition(VEC3(2, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "redPlastic"));
-	ball->kinematics->SetPosition(VEC3(3, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "metalTest"));
-	ball->kinematics->SetPosition(VEC3(4, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "roughTest"));
-	ball->kinematics->SetPosition(VEC3(5, 4, 0));
-	balls.push_back(ball);
-	GameObjects.push_back(ball);
-
+	Ball* ball;
+	int depthNum = 5;
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "goldScuffed"));
+		ball->kinematics->SetPosition(VEC3(-5, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "ironRusted4"));
+		ball->kinematics->SetPosition(VEC3(-4, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "aluminumScuffed"));
+		ball->kinematics->SetPosition(VEC3(-3, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "copperScuffed"));
+		ball->kinematics->SetPosition(VEC3(-2, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "graniteSmooth"));
+		ball->kinematics->SetPosition(VEC3(-1, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "greasyMetal"));
+		// ball->entity->Scale(VEC3(1.0f, 1.0f, 1.0f));
+		ball->kinematics->SetPosition(VEC3(0, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "rust"));
+		ball->kinematics->SetPosition(VEC3(1, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "bluePlastic"));
+		ball->kinematics->SetPosition(VEC3(2, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "redPlastic"));
+		ball->kinematics->SetPosition(VEC3(3, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "metalTest"));
+		ball->kinematics->SetPosition(VEC3(4, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
+	for (int i = 0; i < depthNum; i++)
+	{
+		ball = new Ball();
+		ball->SetEntity(new GameEntity("sphere", "roughTest"));
+		ball->kinematics->SetPosition(VEC3(5, 4, i));
+		balls.push_back(ball);
+		GameObjects.push_back(ball);
+	}
 
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));

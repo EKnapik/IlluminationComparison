@@ -9,7 +9,7 @@ Camera::Camera(int width, int height)
 	SetVector3(&position, 0, 1, -10);
 	xRot = 0;
 	yRot = 0;
-	zFar = 30.0f;
+	zFar = 100.0f;
 	UpdateDirection();
 
 	SetProjectionMatrix(&projection, 0.25f * 3.1415926535f, (float)width / height, zNear, zFar);
