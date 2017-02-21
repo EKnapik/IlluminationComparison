@@ -7,6 +7,7 @@ class PostProcesser;
 
 class DefferedRenderer : public Renderer
 {
+	friend class PostProcesser;
 public:
 	DefferedRenderer(Camera *camera, ID3D11DeviceContext *context, ID3D11Device* device,
 		ID3D11RenderTargetView* backBufferRTV, ID3D11DepthStencilView* depthStencilView, int width, int height);
@@ -20,12 +21,9 @@ private:
 	void directionalLightRender();
 	void DrawOpaqueMaterials();
 	void DrawTransparentMaterials();
-	void DrawSSAO();
 
 	// Post Processing System, IF RENDERING BLACK POST PROCESSOR MAY HAVE NOT BEEN INITALIZED;
 	PostProcesser* postProcesser;
-	ID3D11RenderTargetView *	unfinalizedBackRTV;
-	ID3D11ShaderResourceView*	unfinalizedBackSRV;
 	bool postProcessingInit = false;
 
 	// Albedo
@@ -47,7 +45,11 @@ private:
 	// PBR (metallic, roughness)
 	ID3D11RenderTargetView *	PBR_RTV;
 	ID3D11ShaderResourceView*	PBR_SRV;
-	
+
+	// SSAO
+	ID3D11RenderTargetView *	ssaoRTV;
+	ID3D11ShaderResourceView*	ssaoSRV;
+
 	ID3D11SamplerState* simpleSampler;
 
 	ID3D11BlendState* blendState;

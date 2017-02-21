@@ -156,6 +156,13 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	// Don't need the actual depth texture
 	PositionTexture->Release();
 
+	// SSAO
+	ID3D11Texture2D* SSAOTexture;
+	hr = device->CreateTexture2D(&descPositionTexture, NULL, &SSAOTexture);
+	hr = device->CreateRenderTargetView(SSAOTexture, &PositionRTVDesc, &ssaoRTV);
+	hr = device->CreateShaderResourceView(SSAOTexture, &PositionSRVDesc, &ssaoSRV);
+	SSAOTexture->Release();
+
 	// PBR (metallic, roughness)
 	D3D11_TEXTURE2D_DESC descPBRTexture;
 	ID3D11Texture2D* PBRTexture;
@@ -268,6 +275,10 @@ DefferedRenderer::~DefferedRenderer()
 	// PBR
 	PBR_RTV->Release();
 	PBR_SRV->Release();
+	
+	// SSAO
+	ssaoRTV->Release();
+	ssaoSRV->Release();
 
 	simpleSampler->Release();
 	blendState->Release();
@@ -288,7 +299,6 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	context->ClearRenderTargetView(NormalRTV, black);
 	context->ClearRenderTargetView(DepthRTV, black);
 	context->ClearRenderTargetView(PBR_RTV, black);
-	context->ClearRenderTargetView(postProcessRTV, black);
 	context->ClearDepthStencilView(depthStencilView,
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f, 0);
@@ -296,6 +306,7 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	SortObjects();
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	gBufferRender(deltaTime, totalTime);
+	postProcesser->ssao(ssaoRTV); // render into ssao texture
 
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
 	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
@@ -418,6 +429,7 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
 	pixelShader->SetShaderResourceView("gDepth", DepthSRV);
 	pixelShader->SetShaderResourceView("gPBR", PBR_SRV);
+	pixelShader->SetShaderResourceView("SSAO", ssaoSRV);
 	// pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
 	pixelShader->SetShaderResourceView("Sky", GetCubeMaterial("japanFiltered")->GetSRV());
 
@@ -444,6 +456,7 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetShaderResourceView("gNormal", 0);
 	pixelShader->SetShaderResourceView("gDepth", 0);
 	pixelShader->SetShaderResourceView("gPBR", 0);
+	pixelShader->SetShaderResourceView("SSAO", 0);
 	context->OMSetBlendState(0, factors, 0xFFFFFFFF);
 	return;
 }
@@ -538,41 +551,3 @@ void DefferedRenderer::DrawTransparentMaterials()
 
 	context->OMSetBlendState(0, factors, 0xFFFFFFFF);
 }
-
-
-/// TODO: FIX SSAO TO WORK
-void DefferedRenderer::DrawSSAO()
-{
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	Mesh* meshTmp = GetMesh("quad");
-	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-
-	const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	context->ClearRenderTargetView(ssaoRTV, white);
-
-	context->OMSetRenderTargets(1, &ssaoRTV, 0);
-	GetVertexShader("quad")->SetShader();
-
-	GetPixelShader("ssao")->SetShader();
-	GetPixelShader("ssao")->SetMatrix4x4("view", *camera->GetView());
-	GetPixelShader("ssao")->SetMatrix4x4("projection", *camera->GetProjection());
-	GetPixelShader("ssao")->SetFloat("width", float(width));
-	GetPixelShader("ssao")->SetFloat("height", float(height));
-
-	GetPixelShader("ssao")->SetShaderResourceView("texNoise", postProcessSRV);
-	GetPixelShader("ssao")->SetShaderResourceView("gNormal", NormalSRV);
-	GetPixelShader("ssao")->SetShaderResourceView("gPosition", DepthSRV);
-	GetPixelShader("ssao")->SetSamplerState("Sampler", GetSampler("default"));
-	GetPixelShader("ssao")->CopyAllBufferData();
-	// Now actually draw
-	context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
-	context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-	context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
-
-	GetPixelShader("ssao")->SetShaderResourceView("texNoise", 0);
-	GetPixelShader("ssao")->SetShaderResourceView("gNormal", 0);
-	GetPixelShader("ssao")->SetShaderResourceView("gPosition", 0);
-}
-
-

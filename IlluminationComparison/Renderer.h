@@ -81,18 +81,6 @@ public:
 	void SetPointLights(std::vector<ScenePointLight*>* pointLights) { this->pointLights = pointLights; }
 	void SetParticleEmitters(std::vector<ParticleEmitter*>* particleEmitters) { this->particleEmitters = particleEmitters; }
 
-	// This section is the Post Process Boolean section.
-	/*
-	BOOL PostProcessing = false;
-	BOOL Blur = false;
-	BOOL EdgeDetect = false;
-	BOOL Bloom = false;
-	BOOL Emboss = false;
-	BOOL BlurWithKernel = false;
-	BOOL Sharpness = false;
-	BOOL BottomSobel = false;
-	BOOL ASCII = false;
-	*/
 
 protected:
 	void SortObjects();
@@ -108,18 +96,10 @@ protected:
 	std::vector<ParticleEmitter*>* particleEmitters;
 
 	ID3D11RenderTargetView* backBufferRTV;
-	ID3D11RenderTargetView* postProcessRTV;
-	ID3D11RenderTargetView* ssaoRTV;
-	ID3D11RenderTargetView* bloomExtractRTV; // will also be used for blurring
-	ID3D11RenderTargetView* bloomHorizonatalRTV;
 	ID3D11DepthStencilView* depthStencilView;
 	ID3D11DepthStencilView* shadowDSV;
 	ID3D11ShaderResourceView* shadowSRV;
 	ID3D11ShaderResourceView* randomSRV;
-	ID3D11ShaderResourceView* postProcessSRV;
-	ID3D11ShaderResourceView* ssaoSRV;
-	ID3D11ShaderResourceView* bloomExtractSRV; // will also be used for blurring
-	ID3D11ShaderResourceView* bloomHorizonatalSRV;
 	ID3D11RasterizerState* shadowRasterizer;
 	ID3D11Texture1D* randomTexture;
 	std::vector<VEC3> ssaoKernel;

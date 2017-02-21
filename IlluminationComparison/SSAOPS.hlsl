@@ -8,8 +8,10 @@ cbuffer externalData : register(b0)
 {
 	matrix view;
 	matrix projection;
+	float3 cameraPosition;
 	float width;
 	float height;
+	float zFar;
 }
 
 struct VertexToPixel
@@ -24,6 +26,9 @@ struct VertexToPixel
 static int kernelSize = 64;
 static float radius = 0.5;
 static float bias = 0.025;
+
+
+
 static float3 samples[] = {
 	float3(0.0497709, -0.0067993, 0.057973),
 	float3(0.00741524, -0.00494675, 0.0454325),
@@ -93,12 +98,15 @@ static float3 samples[] = {
 
 float main(VertexToPixel input) : SV_TARGET
 {
-	return 1.0;
-	// tile noise texture over screen based on screen dimensions divided by noise size
-	const float2 noiseScale = float2(width / 100, height / 100);
+	// tiles the 4x4 noise texture
+	const float2 noiseScale = float2(width / 4.0, height / 4.0);
+
+	float3 viewRay = normalize(input.viewRay);
+	float depth = gDepth.Sample(basicSampler, input.uv).x;
+	float3 gWorldPos = cameraPosition + viewRay * depth * zFar;
 
     // Get input for SSAO algorithm
-    float3 fragPos = mul(float4(gDepth.Sample(basicSampler, input.uv).xyz, 1.0), view).xyz;
+    float3 fragPos = mul(float4(gWorldPos, 1.0), view).xyz;
 	float3 normal = gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f;
 	float3 randomVec = normalize(texNoise.Sample(basicSampler, input.uv * noiseScale).xyz);
     // Create TBN change-of-basis matrix: from tangent-space to view-space
@@ -107,7 +115,7 @@ float main(VertexToPixel input) : SV_TARGET
     float3x3 TBN = float3x3(tangent, bitangent, normal);
     // Iterate over the sample kernel and calculate occlusion factor
     float occlusion = 0.0;
-    for(int i = 0; i < kernelSize; ++i)
+    for(int i = 0; i < 64; ++i)
     {
         // get sample position
 		float3 samplePos = mul(samples[i], TBN); // From tangent to view-space
@@ -115,19 +123,18 @@ float main(VertexToPixel input) : SV_TARGET
         
         // project sample position (to sample texture) (to get position on screen/texture)
 		float4 offset = float4(samplePos, 1.0);
-        offset = mul(offset, projection); // from view to clip-space
-        offset.xyz /= offset.w; // perspective divide
-        offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
+        offset = mul(offset, projection);
+        offset.xyz /= offset.w;
+        offset.xyz = offset.xyz * 0.5 + 0.5;
         
         // get sample depth
-        float sampleDepth = mul(float4(gDepth.Sample(basicSampler, offset.xy).xyz, 1.0), view).z; // Get depth value of kernel sample
+        float sampleDepth = gDepth.Sample(basicSampler, offset.xy).x; // Get depth value of kernel sample
         
         // range check & accumulate
-        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
+        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(depth - sampleDepth));
         occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
     occlusion = 1.0 - (occlusion / kernelSize);
     
-	//return 0.0;
     return occlusion;
 }

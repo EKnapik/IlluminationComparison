@@ -59,7 +59,7 @@ void Game::Init()
 	Game::SetCamera(camera);
 	// TODO: Renderer should only take the context and then create the buffers it needs
 	renderer = new DefferedRenderer(camera, context, device, backBufferRTV, depthStencilView, width, height);
-
+	renderer->AddPostProcessSystem(new PostProcesser(renderer));
 
 	LoadShaders();
 	LoadMeshes();
@@ -277,6 +277,7 @@ void Game::LoadShaders()
 	renderer->AddPixelShader("linearBlur", L"LinearBlurPS.cso");
 	renderer->AddPixelShader("bloomCombine", L"BloomCombinePS.cso");
 	renderer->AddPixelShader("ascii", L"AsciiPS.cso");
+	renderer->AddPixelShader("passThrough", L"PassThrough_PS.cso");
 	renderer->AddPixelShader("ssao", L"SSAOPS.cso");
 }
 

@@ -15,7 +15,7 @@
 #include "Lights.h"
 
 #include "GameManager.h"
-#include "Renderer.h"
+#include "DefferedRenderer.h"
 
 #include "ParticleEmitter.h"
 
@@ -78,9 +78,9 @@ private:
 
 	std::vector<GameEntity*> entities;
 
+	DefferedRenderer* renderer;
 	GameManager gameManager;
-	Renderer* renderer;
-
+	
 	// Keeps track of the old mouse position.  Useful for 
 	// determining how far the mouse moved in a single frame.
 	POINT prevMousePos;

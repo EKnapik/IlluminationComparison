@@ -3,8 +3,9 @@ Texture2D gAlbedo			: register(t0);
 Texture2D gNormal			: register(t1);
 Texture2D gDepth			: register(t2);
 Texture2D gPBR				: register(t3);
+Texture2D SSAO				: register(t4);
 
-TextureCube Sky				: register(t4);
+TextureCube Sky				: register(t5);
 SamplerState basicSampler	: register(s0);
 
 struct DirectionalLight
@@ -199,8 +200,9 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// return float4(lightAmount, lightAmount, lightAmount, 1.0f);
 
 	// ambient lighting, will be replaced with environment lighting IBL
-	float3 ambient = SpecularIBL(albedo, roughness, N, V);
+	float3 ambient = SpecularIBL(albedo, roughness, N, V) * SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
+	return SSAO.Sample(basicSampler, input.uv).x;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));
