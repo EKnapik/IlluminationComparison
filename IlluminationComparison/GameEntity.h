@@ -44,7 +44,7 @@ public:
 	void SetRotation(VEC3 vec) { rotation = vec; };
 
 	///<summary>
-	/// Sets the rotation to a new value.
+	/// Sets the scale to a new value.
 	///</summary>
 	void Scale(VEC3 offset) { GMath::AddVec3(&scale, &scale, &offset); };
 

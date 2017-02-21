@@ -16,7 +16,6 @@ struct DirectionalLight
 
 cbuffer externalData	: register(b0)
 {
-	matrix invView;
 	DirectionalLight dirLight;
 	float3 cameraPosition;
 	float3 cameraForward;
@@ -148,14 +147,12 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 float4 main(VertexToPixel input) : SV_TARGET
 {
 	float3 viewRay = normalize(input.viewRay);
-	float viewZDist = dot(cameraForward, viewRay);
+	// float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
-	float3 gWorldPos = cameraPosition + input.viewRay * depth;
-	gWorldPos = cameraPosition + input.viewRay * (depth / viewZDist);
-	// gWorldPos = cameraPosition + input.viewRay * depth;
+	float3 gWorldPos = cameraPosition + viewRay * depth * zFar;
 
-	// float3 gWorldPos = cameraPosition + input.viewRay * (depth / viewZDist);
-	// gWorldPos = mul(float4(gWorldPos, 1.0), invView).xyz;
+    // return depth.xxxx;
+	// return float4(gWorldPos.x, 0, 0, 1.0f);
 
 	// need to unpack normal
 	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;

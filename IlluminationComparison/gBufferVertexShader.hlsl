@@ -5,8 +5,6 @@ cbuffer externalData : register(b0)
 	matrix world;
 	matrix view;
 	matrix projection;
-	float2 projectionConst;
-	float  zFar;
 };
 
 // Struct representing a single vertex worth of data
@@ -22,7 +20,7 @@ struct VertexShaderInput
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
-	float  depth		: DEPTH;
+	float3 positionVS	: DEPTH;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float2 uv			: TEXCOORD0;
@@ -46,9 +44,7 @@ VertexToPixel main( VertexShaderInput input )
 	// The result is essentially the position (XY) of the vertex on our 2D 
 	// screen and the distance (Z) from the camera (the "depth" of the pixel)
 	output.position = mul(float4(input.position, 1.0f), worldViewProj);
-	float3 positionVS = mul(float4(input.position, 1.0f), worldView).xyz;
-	float depth = positionVS.z;
-	output.depth = projectionConst.y / (depth - projectionConst.x);
+	output.positionVS = mul(float4(input.position, 1.0f), worldView).xyz;
 
 	// transform normal
 	output.normal = mul(input.normal, (float3x3)world);

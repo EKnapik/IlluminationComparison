@@ -356,7 +356,6 @@ void DefferedRenderer::pointLightRender()
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
 	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
-	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat("width", width);
 	pixelShader->SetFloat("height", height);
@@ -407,10 +406,9 @@ void DefferedRenderer::directionalLightRender() {
 
 	// Send G buffers to pixel shader
 	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
-	vertexShader->SetMatrix4x4("invView", *camera->GetInvView());
+	vertexShader->SetMatrix4x4("invViewProj", *camera->GetInvViewProj());
 	vertexShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	vertexShader->CopyAllBufferData();
-	pixelShader->SetMatrix4x4("invView", *camera->GetInvView());
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
 	pixelShader->SetFloat("zFar", camera->GetFarPlane());
@@ -463,8 +461,8 @@ void DefferedRenderer::DrawOpaqueMaterials()
 	SceneDirectionalLight* firstDirectionalLight = &directionalLights->at(0);
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
-	vertexShader->SetFloat2("projectionConst", camera->GetProjectionConsts());
-	vertexShader->SetFloat("zFar", camera->GetFarPlane());
+	pixelShader->SetFloat2("projectionConst", camera->GetProjectionConsts());
+	pixelShader->SetFloat("zFar", camera->GetFarPlane());
 
 	for (int i = 0; i < opaque.size(); i++)
 	{

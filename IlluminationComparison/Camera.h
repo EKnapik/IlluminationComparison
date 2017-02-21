@@ -13,7 +13,7 @@ public:
 	void Update(FLOAT dt);
 
 	MAT4X4* GetView();
-	MAT4X4* GetInvView();
+	MAT4X4* GetInvViewProj();
 	MAT4X4* GetProjection();
 	MAT4X4* GetInvProjection();
 
@@ -41,12 +41,12 @@ private:
 	/// This is a LOOK TO view matrix.
 	///</summary>
 	MAT4X4 view;
-	MAT4X4 invView;
+	MAT4X4 invViewProj;
 
 	VEC3 position;
 	VEC3 direction;
 	FLOAT zFar;
-	FLOAT zNear = 0.001f;
+	FLOAT zNear = 0.01f;
 	FLOAT xRot;
 	FLOAT yRot;
 

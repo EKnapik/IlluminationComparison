@@ -29,6 +29,7 @@ PBRDemoScene::PBRDemoScene()
 	GameObjects.push_back(ball);
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("sphere", "greasyMetal"));
+	// ball->entity->Scale(VEC3(1.0f, 1.0f, 1.0f));
 	ball->kinematics->SetPosition(VEC3(0, 4, 0));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
@@ -55,6 +56,14 @@ PBRDemoScene::PBRDemoScene()
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("sphere", "roughTest"));
 	ball->kinematics->SetPosition(VEC3(5, 4, 0));
+	balls.push_back(ball);
+	GameObjects.push_back(ball);
+
+
+	ball = new Ball();
+	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
+	ball->entity->Scale(VEC3(3.0f, 3.0f, 3.0f));
+	ball->kinematics->SetPosition(VEC3(0.0, 0.0f, 5.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 

@@ -10,7 +10,7 @@ SamplerState basicSampler	: register(s0);
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
-	float  depth		: DEPTH;
+	float3 positionVS   : DEPTH;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float2 uv			: TEXCOORD0;
@@ -18,8 +18,10 @@ struct VertexToPixel
 
 cbuffer externalData : register(b0)
 {
+	float2 projectionConst;
 	float metallic;
 	float roughness;
+	float zFar;
 }
 
 
@@ -55,8 +57,9 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	// Set the depth
 	// http://stackoverflow.com/questions/28066906/reconstructing-world-position-from-linear-depth
 	// https://mynameismjp.wordpress.com/2009/03/10/reconstructing-position-from-depth/
-	output.Depth.x = input.depth;
-	// output.Depth.x = length(input.positionVS);
+	// output.Depth.x = -input.Depth / zFar;
+	// output.Depth.x = projectionConst.y / (output.Depth.x - projectionConst.x);
+	output.Depth.x = input.positionVS.z / zFar;
 
 	// Set the PBR Values
 	output.PBR.r = metalMap.Sample(basicSampler, input.uv).r + metallic;

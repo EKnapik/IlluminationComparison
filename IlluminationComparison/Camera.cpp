@@ -9,7 +9,7 @@ Camera::Camera(int width, int height)
 	SetVector3(&position, 0, 1, -10);
 	xRot = 0;
 	yRot = 0;
-	zFar = 100.0f;
+	zFar = 30.0f;
 	UpdateDirection();
 
 	SetProjectionMatrix(&projection, 0.25f * 3.1415926535f, (float)width / height, zNear, zFar);
@@ -60,9 +60,9 @@ MAT4X4 * Camera::GetView()
 	return &view;
 }
 
-MAT4X4 * Camera::GetInvView()
+MAT4X4 * Camera::GetInvViewProj()
 {
-	return &invView;
+	return &invViewProj;
 }
 
 MAT4X4 * Camera::GetProjection()
@@ -108,11 +108,15 @@ void Camera::UpdateViewMat() {
 	curUp = XMVector3Transform(curUp, rotMat);
 
 	// saves the transposed into column ordering view matrix
-	XMStoreFloat4x4(&view, XMMatrixLookToLH(curPos, curDir, curUp));
-	SetInverseMatrix(&invView, &view); // Also update the inverse view matrix
+	XMMATRIX viewMat = XMMatrixLookToLH(curPos, curDir, curUp);
+	XMMATRIX projMat = XMLoadFloat4x4(&projection);
+	projMat = XMMatrixTranspose(projMat); // untranspose the matrix
+	XMStoreFloat4x4(&view, viewMat);
+	XMMATRIX viewProj = viewMat * projMat;
+	SetInverseMatrix(&invViewProj, &viewProj); // Also update the inverse view matrix
 	// Tranpose both
 	SetTransposeMatrix(&view, &GetMatrix(&view));
-	SetTransposeMatrix(&invView, &GetMatrix(&invView));
+	SetTransposeMatrix(&invViewProj, &GetMatrix(&invViewProj));
 }
 
 void Camera::Forward(float amount) {
