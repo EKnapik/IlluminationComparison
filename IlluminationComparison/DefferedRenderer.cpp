@@ -57,6 +57,13 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	AlbedoTexture->Release();
 
 
+	// unfinalized holding buffer
+	ID3D11Texture2D* unfinalizedTexture;
+	device->CreateTexture2D(&descAlbedoTexture, NULL, &unfinalizedTexture);
+	hr = device->CreateRenderTargetView(unfinalizedTexture, &albedoRTVDesc, &unfinalizedRTV);
+	hr = device->CreateShaderResourceView(unfinalizedTexture, &albedoSRVDesc, &unfinalizedSRV);
+	unfinalizedTexture->Release();
+
 	// Normal.
 	// Create the normal texture.
 	D3D11_TEXTURE2D_DESC descNormalTexture;
@@ -279,6 +286,10 @@ DefferedRenderer::~DefferedRenderer()
 	// SSAO
 	ssaoRTV->Release();
 	ssaoSRV->Release();
+
+	// holding buffer
+	unfinalizedRTV->Release();
+	unfinalizedSRV->Release();
 
 	simpleSampler->Release();
 	blendState->Release();

@@ -19,10 +19,11 @@ public:
 	void blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void ascii(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void ssao(ID3D11RenderTargetView* writeTo);
-
-private:
 	/// Moves readFrom into writeTo
 	void passThrough(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
+
+private:
+	
 	void SetUpSSAO();
 
 private:
@@ -31,12 +32,11 @@ private:
 	DefferedRenderer* renderer;
 	PostProcessFunction currentFunction = DEFAULT;
 
-	ID3D11RenderTargetView* unfinalizedFrameRTV;
-	// ID3D11RenderTargetView* bloomExtractRTV; // will also be used for blurring
-	// ID3D11RenderTargetView* bloomHorizonatalRTV;
+	ID3D11RenderTargetView* bloomExtractRTV; // will also be used for blurring
+	ID3D11RenderTargetView* bloomHorizonatalRTV;
 
-	ID3D11ShaderResourceView* unfinalizedFrameSRV;
 	ID3D11ShaderResourceView* noiseSRV;
-	// ID3D11ShaderResourceView* bloomExtractSRV; // will also be used for blurring
-	// ID3D11ShaderResourceView* bloomHorizonatalSRV;
+	ID3D11ShaderResourceView* asciiSRV;
+	ID3D11ShaderResourceView* bloomExtractSRV; // will also be used for blurring
+	ID3D11ShaderResourceView* bloomHorizonatalSRV;
 };

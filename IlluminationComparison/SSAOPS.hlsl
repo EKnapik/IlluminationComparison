@@ -23,7 +23,7 @@ struct VertexToPixel
 
 
 // parameters 
-static int kernelSize = 64;
+static int kernelSize = 32;
 static float radius = 0.5;
 static float bias = 0.0; // 0.025
 

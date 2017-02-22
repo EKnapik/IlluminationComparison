@@ -57,12 +57,10 @@ PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 
-	ID3D11Texture2D* ppTexture;
-	// ID3D11Texture2D* bloomExtractTexture;
-	// ID3D11Texture2D* bloomHorizontalTexture;
-	HRESULT result = renderer->device->CreateTexture2D(&textureDesc, 0, &ppTexture);
-	// result = renderer->device->CreateTexture2D(&textureDesc, 0, &bloomExtractTexture);
-	// result = renderer->device->CreateTexture2D(&textureDesc, 0, &bloomHorizontalTexture);
+	ID3D11Texture2D* bloomExtractTexture;
+	ID3D11Texture2D* bloomHorizontalTexture;
+	HRESULT result = renderer->device->CreateTexture2D(&textureDesc, 0, &bloomExtractTexture);
+	result = renderer->device->CreateTexture2D(&textureDesc, 0, &bloomHorizontalTexture);
 
 	// It is also going to need its own render Target View so we can go 
 	// ahead and set that up too.
@@ -71,9 +69,8 @@ PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
 	rtvDesc.Texture2D.MipSlice = 0;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
-	renderer->device->CreateRenderTargetView(ppTexture, &rtvDesc, &unfinalizedFrameRTV);
-	// renderer->device->CreateRenderTargetView(bloomExtractTexture, &rtvDesc, &bloomExtractRTV);
-	// renderer->device->CreateRenderTargetView(bloomHorizontalTexture, &rtvDesc, &bloomHorizonatalRTV);
+	renderer->device->CreateRenderTargetView(bloomExtractTexture, &rtvDesc, &bloomExtractRTV);
+	renderer->device->CreateRenderTargetView(bloomHorizontalTexture, &rtvDesc, &bloomHorizonatalRTV);
 
 	//Lastly create a Shader Resource View For it.
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -82,24 +79,27 @@ PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 
-	renderer->device->CreateShaderResourceView(ppTexture, &srvDesc, &unfinalizedFrameSRV);
-	// renderer->device->CreateShaderResourceView(bloomExtractTexture, &srvDesc, &bloomExtractSRV);
-	// renderer->device->CreateShaderResourceView(bloomHorizontalTexture, &srvDesc, &bloomHorizonatalSRV);
+	renderer->device->CreateShaderResourceView(bloomExtractTexture, &srvDesc, &bloomExtractSRV);
+	renderer->device->CreateShaderResourceView(bloomHorizontalTexture, &srvDesc, &bloomHorizonatalSRV);
 
 	// Release the texture because it is now stored on the GPU.
-	ppTexture->Release();
-	// bloomExtractTexture->Release();
-	// bloomHorizontalTexture->Release();
+	bloomExtractTexture->Release();
+	bloomHorizontalTexture->Release();
 
+	CreateWICTextureFromFile(renderer->device, renderer->context, L"Assets/Textures/asciiTexture.png", 0, &asciiSRV);
 	SetUpSSAO();
 }
 
 PostProcesser::~PostProcesser()
 {
-	unfinalizedFrameRTV->Release();
-	unfinalizedFrameSRV->Release();
+	bloomExtractRTV->Release();
+	bloomExtractSRV->Release();
+
+	bloomHorizonatalRTV->Release();
+	bloomHorizonatalSRV->Release();
 
 	noiseSRV->Release();
+	asciiSRV->Release();
 }
 
 
@@ -135,7 +135,6 @@ void PostProcesser::renderKernel(FLOAT kernel[9], ID3D11ShaderResourceView* read
 
 void PostProcesser::bloom(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
 {
-	/*
 	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	renderer->context->ClearRenderTargetView(bloomExtractRTV, black);
 	renderer->context->ClearRenderTargetView(bloomHorizonatalRTV, black);
@@ -154,7 +153,7 @@ void PostProcesser::bloom(ID3D11ShaderResourceView* readFrom, ID3D11RenderTarget
 	pixelShader = renderer->GetPixelShader("bloomExtract");
 	pixelShader->SetShader();
 	pixelShader->SetShaderResourceView("Pixels", 0);
-	pixelShader->SetShaderResourceView("Pixels", postProcessSRV);
+	pixelShader->SetShaderResourceView("Pixels", readFrom);
 	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
 	pixelShader->SetFloat("threshold", intensityThreshold);
 	pixelShader->CopyAllBufferData();
@@ -201,37 +200,36 @@ void PostProcesser::bloom(ID3D11ShaderResourceView* readFrom, ID3D11RenderTarget
 
 	// additively blend to back buffer
 	// bloomExtract now holds the blurred bright pixels
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
-	// renderer->context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	renderer->context->OMSetRenderTargets(1, &writeTo, 0);
 	pixelShader = renderer->GetPixelShader("bloomCombine");
 	pixelShader->SetShader();
-	pixelShader->SetShaderResourceView("Source", postProcessSRV);
+	pixelShader->SetShaderResourceView("Source", readFrom);
 	pixelShader->SetShaderResourceView("Blurred", bloomExtractSRV);
 	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
 	pixelShader->CopyAllBufferData();
 	renderer->context->Draw(3, 0);
 	pixelShader->SetShaderResourceView("Source", 0);
 	pixelShader->SetShaderResourceView("Blurred", 0);
-	*/
+	
 }
 
 void PostProcesser::blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
 {
-	/*
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
-	// renderer->context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	renderer->context->OMSetRenderTargets(1, &writeTo, 0);
 	// Set up post process shader
-	renderer->GetVertexShader("blur")->SetShader();
+	SimpleVertexShader* vertexShader = renderer->GetVertexShader("blur");
+	SimplePixelShader* pixelShader = renderer->GetPixelShader("blur");
+	vertexShader->SetShader();
+	pixelShader->SetShader();
 
-	renderer->GetPixelShader("blur")->SetShader();
-	renderer->GetPixelShader("blur")->SetShaderResourceView("Pixels", postProcessSRV);
-	renderer->GetPixelShader("blur")->SetSamplerState("Sampler", renderer->GetSampler("default"));
-	renderer->GetPixelShader("blur")->SetInt("blurAmount", 1);
-	renderer->GetPixelShader("blur")->SetFloat("pixelWidth", 1.0f / renderer->width);
-	renderer->GetPixelShader("blur")->SetFloat("pixelHeight", 1.0f / renderer->height);
-	renderer->GetPixelShader("blur")->CopyAllBufferData();
+	pixelShader->SetShaderResourceView("Pixels", readFrom);
+	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	pixelShader->SetInt("blurAmount", 1);
+	pixelShader->SetFloat("pixelWidth", 1.0f / renderer->width);
+	pixelShader->SetFloat("pixelHeight", 1.0f / renderer->height);
+	pixelShader->CopyAllBufferData();
 
 	// Now actually draw
 	ID3D11Buffer* nothing = 0;
@@ -240,15 +238,12 @@ void PostProcesser::blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetV
 
 	renderer->context->Draw(3, 0);
 
-	renderer->GetPixelShader("blur")->SetShaderResourceView("Pixels", 0);
-	*/
+	pixelShader->SetShaderResourceView("Pixels", 0);
+	
 }
 
 void PostProcesser::ascii(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
 {
-	// Place pixels into the post process srv
-	passThrough(readFrom, unfinalizedFrameRTV);
-
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Mesh* meshTmp = renderer->GetMesh("quad");
@@ -265,9 +260,8 @@ void PostProcesser::ascii(ID3D11ShaderResourceView* readFrom, ID3D11RenderTarget
 	pixelShader->SetFloat("height", float(renderer->height));
 	pixelShader->SetFloat("pixelWidth", 1.0f / renderer->width);
 	pixelShader->SetFloat("pixelHeight", 1.0f / renderer->height);
-	pixelShader->SetShaderResourceView("Pixels", unfinalizedFrameSRV);
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#!#!#########!
-	// renderer->GetPixelShader("ascii")->SetShaderResourceView("ASCII", renderer->GetMaterial("ascii")->GetSRV());
+	pixelShader->SetShaderResourceView("Pixels", readFrom);
+	renderer->GetPixelShader("ascii")->SetShaderResourceView("ASCII", asciiSRV);
 	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
 	pixelShader->CopyAllBufferData();
 	// Now actually draw

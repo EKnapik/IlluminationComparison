@@ -116,7 +116,7 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 {
 	float3 SpecularLighting = 0;
 
-	const uint NumSamples = 5;
+	const uint NumSamples = 1;
 	for (uint i = 0; i < NumSamples; i++)
 	{
 		float2 Xi = Hammersley(i, NumSamples);
@@ -199,7 +199,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
 	// return float4(lightAmount, lightAmount, lightAmount, 1.0f);
 
-	// ambient lighting, will be replaced with environment lighting IBL
 	float3 ambient = SpecularIBL(albedo, roughness, N, V) * SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
 

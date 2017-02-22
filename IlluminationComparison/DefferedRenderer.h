@@ -50,6 +50,10 @@ private:
 	ID3D11RenderTargetView *	ssaoRTV;
 	ID3D11ShaderResourceView*	ssaoSRV;
 
+	// Unfinalized holding buffer
+	ID3D11RenderTargetView *	unfinalizedRTV;
+	ID3D11ShaderResourceView*	unfinalizedSRV;
+
 	ID3D11SamplerState* simpleSampler;
 
 	ID3D11BlendState* blendState;
