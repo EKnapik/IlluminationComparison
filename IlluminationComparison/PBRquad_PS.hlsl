@@ -27,7 +27,7 @@ cbuffer externalData	: register(b0)
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
-	float4 viewRay		: VRAY;
+	noperspective float3 viewRay		: VRAY;
 	float2 uv			: TEXCOORD;
 };
 
@@ -147,7 +147,8 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	float3 viewRay = normalize(input.viewRay).xyz;
+	float3 viewRay = normalize(input.viewRay);
+	// return float4(viewRay, 1.0f);
 	// float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
 	float3 gWorldPos = cameraPosition + viewRay * depth * zFar;
@@ -202,7 +203,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 ambient = SpecularIBL(albedo, roughness, N, V) * SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
 
-	// return SSAO.Sample(basicSampler, input.uv).x;
+	return SSAO.Sample(basicSampler, input.uv).x;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));
