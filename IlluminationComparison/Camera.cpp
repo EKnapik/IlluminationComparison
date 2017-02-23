@@ -26,7 +26,6 @@ Camera::~Camera()
 
 void Camera::Update(FLOAT dt)
 {
-	UpdateDirection();
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
 		Forward(dt * speed);
@@ -53,6 +52,7 @@ void Camera::Update(FLOAT dt)
 	{
 		MoveDown(dt * speed);
 	}
+	UpdateDirection();
 }
 
 MAT4X4 * Camera::GetView()
