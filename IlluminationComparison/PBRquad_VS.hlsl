@@ -18,9 +18,9 @@ struct VertexShaderInput
 // Struct representing the data we're sending down the pipeline
 struct VertexToPixel
 {
-	float4 position		: SV_POSITION;
+	float4 position						: SV_POSITION;
 	noperspective float3 viewRay		: VRAY;
-	float2 uv			: TEXCOORD;
+	float2 uv							: TEXCOORD;
 };
 
 // --------------------------------------------------------

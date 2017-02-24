@@ -16,15 +16,15 @@ cbuffer externalData : register(b0)
 
 struct VertexToPixel
 {
-	float4 position		: SV_POSITION;
-	float4 viewRay		: VRAY;
-	float2 uv			: TEXCOORD;
+	float4 position						: SV_POSITION;
+	noperspective float3 viewRay		: VRAY;
+	float2 uv							: TEXCOORD;
 };
 
 
 // parameters 
 static int kernelSize = 32;
-static float radius = 0.5;
+static float radius = 10;
 static float bias = 0.0; // 0.025
 
 
@@ -104,8 +104,8 @@ float main(VertexToPixel input) : SV_TARGET
 	// tiles the 4x4 noise texture
 	const float2 noiseScale = float2(width / 4.0, height / 4.0);
 
-	float3 viewRay = normalize(input.viewRay).xyz;
-	float depth = gDepth.Sample(basicSampler, input.uv).x;
+	float3 viewRay = normalize(mul(float4(input.viewRay.xyz, 1.0f), view).xyz);
+	float depth = -gDepth.Sample(basicSampler, input.uv).x;
 	float3 vsPosition = viewRay * depth;
 
     // Get input for SSAO algorithm
@@ -130,11 +130,12 @@ float main(VertexToPixel input) : SV_TARGET
         offset.xyz = offset.xyz * 0.5 + 0.5;
         
         // get sample depth
-        float sampleDepth = gDepth.Sample(basicSampler, offset.xy).x; // Get depth value of kernel sample
+        float sampleDepth = -gDepth.Sample(basicSampler, offset.xy).x; // Get depth value of kernel sample
         
         // range check & accumulate
-        float rangeCheck = abs(depth - sampleDepth) < radius ? 1.0: 0.0;
-        occlusion += (sampleDepth <= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
+        // float rangeCheck = abs(depth - sampleDepth) < radius ? 1.0: 0.0;
+		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(vsPosition.z - sampleDepth));
+        occlusion += (sampleDepth < samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
     occlusion = 1.0 - (occlusion / kernelSize);
     
