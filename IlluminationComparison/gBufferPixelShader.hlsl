@@ -59,7 +59,7 @@ GBufferOutput main(VertexToPixel input) : SV_TARGET
 	// https://mynameismjp.wordpress.com/2009/03/10/reconstructing-position-from-depth/
 	// output.Depth.x = -input.Depth / zFar;
 	// output.Depth.x = projectionConst.y / (output.Depth.x - projectionConst.x);
-	output.Depth.x =  -input.positionVS.z / zFar;
+	output.Depth.x =  input.positionVS.z / zFar;
 	// output.Depth.x = projectionConst.y / (output.Depth.x - projectionConst.x);
 
 	// Set the PBR Values

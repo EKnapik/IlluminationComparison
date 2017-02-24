@@ -145,16 +145,22 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 	return SpecularLighting / NumSamples;
 }
 
+
+float3 getPositionWS(in float3 viewRay, in float2 uv)
+{
+	// float viewZDist = dot(cameraForward, viewRay);
+	float depth = gDepth.Sample(basicSampler, uv).x;
+	return cameraPosition + (viewRay * depth * zFar);
+}
+
 float4 main(VertexToPixel input) : SV_TARGET
 {
 	float3 viewRay = normalize(input.viewRay);
-	// return float4(viewRay, 1.0f);
-	// float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
-	float3 gWorldPos = cameraPosition + viewRay * depth * zFar;
+	float3 gWorldPos = getPositionWS(viewRay, input.uv);
 
     // return depth.xxxx;
-	// return float4(gWorldPos.x, 0, 0, 1.0f);
+	// return float4(gWorldPos.y, 0, 0, 1.0f);
 
 	// need to unpack normal
 	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
@@ -166,7 +172,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// L = direction toward light from world position
 	// V = direction toward camera from world position
 	float3 L = normalize(dirLight.Direction);
-	float3 V = normalize(gWorldPos - cameraPosition);
+	float3 V = normalize(cameraPosition - gWorldPos);
 	// float3 R = reflect(-V, N);
 	float3 H = normalize(V + L);
 
@@ -200,10 +206,10 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
 	// return float4(lightAmount, lightAmount, lightAmount, 1.0f);
 
-	float3 ambient = SpecularIBL(albedo, roughness, N, V) * SSAO.Sample(basicSampler, input.uv).x;
+	float3 ambient = SpecularIBL(albedo, roughness, N, V);// *SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
 
-	return SSAO.Sample(basicSampler, input.uv).x;
+	// return SSAO.Sample(basicSampler, input.uv).x;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));
