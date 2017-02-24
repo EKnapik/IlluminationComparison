@@ -160,7 +160,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 gWorldPos = getPositionWS(viewRay, input.uv);
 
     // return depth.xxxx;
-	// return float4(gWorldPos.y, 0, 0, 1.0f);
+	// return float4(gWorldPos.x, 0, 0, 1.0f);
 
 	// need to unpack normal
 	float3 N = (gNormal.Sample(basicSampler, input.uv).xyz * 2.0f) - 1.0f;
@@ -209,7 +209,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 ambient = SpecularIBL(albedo, roughness, N, V);// *SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
 
-	// return SSAO.Sample(basicSampler, input.uv).x;
+	return SSAO.Sample(basicSampler, input.uv).x;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));

@@ -388,7 +388,7 @@ void PostProcesser::SetUpSSAO()
 	textureDesc.ArraySize = 1;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	textureDesc.CPUAccessFlags = 0;
-	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	textureDesc.MipLevels = 1;
 	textureDesc.MiscFlags = 0;
 	textureDesc.SampleDesc.Count = 1;
@@ -399,8 +399,8 @@ void PostProcesser::SetUpSSAO()
 	ZeroMemory(&initData, sizeof(D3D11_SUBRESOURCE_DATA));
 	
 	initData.pSysMem = (void*)&ssaoNoise[0];
-	initData.SysMemPitch = randomTextureSize * randomTextureSize * sizeof(float) * 4;
-	initData.SysMemSlicePitch = 0;
+	initData.SysMemPitch = randomTextureSize * sizeof(float) * 4;
+	initData.SysMemSlicePitch = randomTextureSize * randomTextureSize * sizeof(float) * 4;
 	renderer->device->CreateTexture2D(&textureDesc, &initData, &noiseTexture);
 
 	// Set up SRV for texture
