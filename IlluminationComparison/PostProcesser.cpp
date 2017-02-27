@@ -280,7 +280,7 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	UINT offset = 0;
 	Mesh* meshTmp = renderer->GetMesh("quad");
 	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-	SimpleVertexShader* vertexShader = renderer->GetVertexShader("quadPBR");
+	SimpleVertexShader* vertexShader = renderer->GetVertexShader("postprocess");
 	SimplePixelShader* pixelShader = renderer->GetPixelShader("ssao");
 
 	const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -288,15 +288,9 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	renderer->context->OMSetRenderTargets(1, &writeTo, 0);
 
 	vertexShader->SetShader();
-	vertexShader->SetMatrix4x4("invProjection", *renderer->camera->GetInvProjection());
-	vertexShader->SetMatrix4x4("invViewProj", *renderer->camera->GetInvViewProj());
-	vertexShader->SetFloat3("cameraPosition", *renderer->camera->GetPosition());
 	vertexShader->CopyAllBufferData();
 
 	pixelShader->SetShader();
-	pixelShader->SetMatrix4x4("view", *renderer->camera->GetView());
-	pixelShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
-	pixelShader->SetFloat3("cameraPosition", *renderer->camera->GetPosition());
 	pixelShader->SetFloat("width", float(renderer->width));
 	pixelShader->SetFloat("height", float(renderer->height));
 	pixelShader->SetFloat("zFar", renderer->camera->GetFarPlane());
@@ -340,34 +334,6 @@ void PostProcesser::passThrough(ID3D11ShaderResourceView* readFrom, ID3D11Render
 	pixelShader->SetShaderResourceView("Pixels", 0);
 }
 
-/*
-SetUpPostProcessing()
-{
-    // Sample kernel for ssao
-	std::uniform_real_distribution<FLOAT> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-	std::default_random_engine generator;
-	for (INT i = 0; i < 64; ++i)
-	{
-		VEC3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
-
-		VECTOR vec = GMath::GetVector(&sample);
-		vec = GMath::Vec3Normalize(&vec);
-		DirectX::XMStoreFloat3(&sample, vec);
-
-		sample.x *= randomFloats(generator);
-		sample.y *= randomFloats(generator);
-		sample.z *= randomFloats(generator);
-		FLOAT scale = FLOAT(i) / 64.0;
-
-		// Scale samples s.t. they're more aligned to center of kernel
-		scale = lerp(0.1f, 1.0f, scale * scale);
-		sample.x *= scale;
-		sample.y *= scale;
-		sample.z *= scale;
-		ssaoKernel.push_back(sample);
-	}
-}
-*/
 void PostProcesser::SetUpSSAO()
 {
 	// Set up "random" stuff -------------------------------------
