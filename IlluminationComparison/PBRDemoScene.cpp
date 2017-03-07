@@ -94,6 +94,13 @@ PBRDemoScene::PBRDemoScene()
 		GameObjects.push_back(ball);
 	}
 
+
+	ball = new Ball();
+	ball->SetEntity(new GameEntity("sphere", "bluePlastic"));
+	ball->kinematics->SetPosition(VEC3(0, 6, 0));
+	balls.push_back(ball);
+	GameObjects.push_back(ball);
+
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
 	ball->entity->Scale(VEC3(3.0f, 3.0f, 3.0f));
