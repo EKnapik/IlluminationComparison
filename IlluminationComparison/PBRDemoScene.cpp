@@ -96,8 +96,9 @@ PBRDemoScene::PBRDemoScene()
 
 
 	ball = new Ball();
-	ball->SetEntity(new GameEntity("sphere", "bluePlastic"));
-	ball->kinematics->SetPosition(VEC3(0, 6, 0));
+	ball->SetEntity(new GameEntity("cave", "bluePlastic"));
+	ball->entity->SetRotation(VEC3(90, 0, 0));
+	ball->kinematics->SetPosition(VEC3(0, 6, 20.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 

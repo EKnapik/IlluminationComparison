@@ -288,6 +288,7 @@ void Game::LoadMeshes()
 	// renderer->AddMesh("cylinder", "Assets/cylinder.obj");
 	// renderer->AddMesh("helix", "Assets/helix.obj");
 	renderer->AddMesh("sphere", "Assets/sphere.obj");
+	renderer->AddMesh("cave", "Assets/CuevasCanariosBandamaDecimated02.obj");
 	// renderer->AddMesh("torus", "Assets/torus.obj");
 	// renderer->AddMesh("court", "Assets/Court.obj");
 	// renderer->AddMesh("panel", "Assets/Panel.obj");
