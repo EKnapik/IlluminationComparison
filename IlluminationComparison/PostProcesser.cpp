@@ -280,7 +280,7 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	UINT offset = 0;
 	Mesh* meshTmp = renderer->GetMesh("quad");
 	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-	SimpleVertexShader* vertexShader = renderer->GetVertexShader("postprocess");
+	SimpleVertexShader* vertexShader = renderer->GetVertexShader("quadPBR");
 	SimplePixelShader* pixelShader = renderer->GetPixelShader("ssao");
 
 	const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -291,6 +291,9 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	vertexShader->CopyAllBufferData();
 
 	pixelShader->SetShader();
+	pixelShader->SetMatrix4x4("Projection", *renderer->camera->GetProjection());
+	pixelShader->SetMatrix4x4("View", *renderer->camera->GetView());
+	pixelShader->SetFloat3("camPos", *renderer->camera->GetPosition());
 	pixelShader->SetFloat("width", float(renderer->width));
 	pixelShader->SetFloat("height", float(renderer->height));
 	pixelShader->SetFloat("zFar", renderer->camera->GetFarPlane());

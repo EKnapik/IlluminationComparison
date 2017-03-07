@@ -6,6 +6,9 @@ SamplerState basicSampler	: register(s0);
 
 cbuffer externalData : register(b0)
 {
+	matrix Projection;
+	matrix View;
+	float3 camPos;
 	float width;
 	float height;
 	float zFar;
@@ -14,6 +17,7 @@ cbuffer externalData : register(b0)
 struct VertexToPixel
 {
 	float4 position						: SV_POSITION;
+	noperspective float3 viewRay		: VRAY;
 	float2 uv							: TEXCOORD;
 };
 
@@ -30,12 +34,15 @@ static float3 samples[] = {
 
 // parameters 
 static int kernelSize = 16;
-static float radius = 0.0002;
+static float radius = 6.0;
 
-static float total_strength = 1.0;
-static float base = 0.4;
-static float area = 0.0075;
-static float falloff = 0.000001;
+
+float3 getPositionWS(in float3 viewRay, in float2 uv)
+{
+	// float viewZDist = dot(cameraForward, viewRay);
+	float depth = gDepth.Sample(basicSampler, uv).x;
+	return camPos + (viewRay * depth * zFar);
+}
 
 /// Derived from http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
 /// and https://learnopengl.com/#!Advanced-Lighting/SSAO
@@ -45,28 +52,41 @@ float main(VertexToPixel input) : SV_TARGET
 {
 	// tiles the 4x4 noise texture
 	const float2 noiseScale = float2(width / 4.0, height / 4.0);
-	
-    // Get input for SSAO algorithm
+	float3 viewRay = normalize(input.viewRay);
+
 	float depth = gDepth.Sample(basicSampler, input.uv).x * zFar;
-	float3 position = float3(input.uv, depth);
+	float3 positionVS = camPos + (viewRay * depth);
+	positionVS = mul(float4(positionVS, 1.0f), View).xyz;
+
 	float3 normal = normalize(gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f);
 	float3 random = texNoise.Sample(basicSampler, input.uv * noiseScale).xyz * 2.0f - 1.0f;
 
-	float radius_depth = radius / depth;
+	float3 tangent = normalize(random - normal * dot(random, normal));
+	float3 bitangent = cross(normal, tangent);
+	float3x3 tbn = float3x3(tangent, bitangent, normal);
+
+	float4x4 viewProj = mul(View, Projection);
+
 	float occlusion = 0.0;
 	for (int i = 0; i < kernelSize; i++) {
 
-		float3 ray = radius_depth * reflect(samples[i], random);
-		float3 hemi_ray = position + sign(dot(ray, normal)) * ray;
+		float3 ray = mul(samples[i], tbn) * radius;
+		float3 newPos = positionVS +  ray; // sign ensures hemispace
 
-		float occ_depth = gDepth.Sample(basicSampler, saturate(hemi_ray.xy)).x * zFar;
-		float difference = depth - occ_depth;
+		float4 offset = float4(newPos, 1.0f);
+		offset = mul(offset, Projection);
+		offset.xy /= offset.w;
+		offset.xy = offset.xy * 0.5 + 0.5;
 
-		occlusion += step(falloff, difference) * (1.0 - smoothstep(falloff, area, difference));
+		float occ_depth = gDepth.Sample(basicSampler, offset.xy).x * zFar;
+		float rangeCheck = abs(positionVS.z - occ_depth) < radius ? 1.0 : 0.0;
+
+		occlusion += (occ_depth <= newPos.z ? 1.0 : 0.0) * rangeCheck;
+		// occlusion += step(falloff, difference) * (1.0 - smoothstep(falloff, area, difference));
 	}
 
-	float ao = total_strength * occlusion * (1.0 / kernelSize);
-	occlusion = saturate(ao + base);
+	float ao =  1.0 - (occlusion / kernelSize);
+	// occlusion = saturate(ao + base);
 
-    return occlusion;
+    return ao;
 }
