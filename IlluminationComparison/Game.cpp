@@ -329,6 +329,10 @@ void Game::LoadMaterials()
 		L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-normal.png",
 		L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-metal.png",
 		L"Assets/PBR_Textures/greasy-metal-pan1-Unreal-Engine/greasy-metal-pan1-roughness.png");
+	renderer->AddMaterial("caveTexture", L"Assets/PBR_Textures/CuevasCanariosBandama.jpg",
+		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-normal.png",
+		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-metal.png",
+		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-roughness.png");
 	renderer->AddMaterial("rust", L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-basecolor.png",
 		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-normal.png",
 		L"Assets/PBR_Textures/rust-coated-metal-Unreal-Engine/rust-coated-metal.png",
