@@ -48,7 +48,7 @@ float3 getPositionWS(in float3 viewRay, in float2 uv)
 /// Derived from http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
 /// and https://learnopengl.com/#!Advanced-Lighting/SSAO
 /// http://theorangeduck.com/page/pure-depth-ssao
-/// http://www.iquilezles.org/www/articles/multiresaocc/multiresaocc.htm
+/// http://www.eng.utah.edu/~cs5610/lectures/SSAO.pdf
 float main(VertexToPixel input) : SV_TARGET
 {
 	// tiles the 4x4 noise texture
