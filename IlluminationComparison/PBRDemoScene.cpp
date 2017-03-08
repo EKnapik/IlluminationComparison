@@ -97,8 +97,9 @@ PBRDemoScene::PBRDemoScene()
 
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cave", "caveTexture"));
+	ball->entity->Scale(VEC3(3.0f, 3.0f, 3.0f));
 	ball->entity->SetRotation(VEC3(90, 0, 0));
-	ball->kinematics->SetPosition(VEC3(0, 6, 20.0f));
+	ball->kinematics->SetPosition(VEC3(0, 6, 50));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 

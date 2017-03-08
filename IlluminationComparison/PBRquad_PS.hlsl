@@ -209,7 +209,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 ambient = SpecularIBL(albedo, roughness, N, V) * SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
 
-	// return SSAO.Sample(basicSampler, input.uv).x;
+	return SSAO.Sample(basicSampler, input.uv).x;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));

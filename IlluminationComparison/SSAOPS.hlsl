@@ -34,7 +34,8 @@ static float3 samples[] = {
 
 // parameters 
 static int kernelSize = 16;
-static float radius = 6.0;
+static float radius = 18.0;
+static float bias = 0.2;
 
 
 float3 getPositionWS(in float3 viewRay, in float2 uv)
@@ -79,9 +80,9 @@ float main(VertexToPixel input) : SV_TARGET
 		offset.xy = offset.xy * 0.5 + 0.5;
 
 		float occ_depth = gDepth.Sample(basicSampler, offset.xy).x * zFar;
-		float rangeCheck = abs(positionVS.z - occ_depth) < radius ? 1.0 : 0.0;
-
-		occlusion += (occ_depth <= newPos.z ? 1.0 : 0.0) * rangeCheck;
+		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(positionVS.z - occ_depth));
+		
+		occlusion += (occ_depth <= newPos.z + bias ? 1.0 : 0.0) * rangeCheck;
 		// occlusion += step(falloff, difference) * (1.0 - smoothstep(falloff, area, difference));
 	}
 
