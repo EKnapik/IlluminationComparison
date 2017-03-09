@@ -11,7 +11,7 @@ cbuffer externalData : register(b0)
 	float3 camPos;
 	float width;
 	float height;
-	float zFar;
+	float radius;
 }
 
 struct VertexToPixel
@@ -34,15 +34,16 @@ static float3 samples[] = {
 
 // parameters 
 static int kernelSize = 16;
-static float radius = 18.0;
-static float bias = 0.2;
+// static float radius = 18.0;
+static float bias = 0.0002;
+static float base = 0.2;
 
 
 float3 getPositionWS(in float3 viewRay, in float2 uv)
 {
 	// float viewZDist = dot(cameraForward, viewRay);
 	float depth = gDepth.Sample(basicSampler, uv).x;
-	return camPos + (viewRay * depth * zFar);
+	return camPos + (viewRay * depth);
 }
 
 /// Derived from http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
@@ -55,9 +56,9 @@ float main(VertexToPixel input) : SV_TARGET
 	const float2 noiseScale = float2(width / 4.0, height / 4.0);
 	float3 viewRay = normalize(input.viewRay);
 
-	float depth = gDepth.Sample(basicSampler, input.uv).x * zFar;
-	float3 positionVS = camPos + (viewRay * depth);
-	positionVS = mul(float4(positionVS, 1.0f), View).xyz;
+	float depth = gDepth.Sample(basicSampler, input.uv).x;
+	float3 positionWS = camPos + (viewRay * depth);
+	float3 positionVS = mul(float4(positionWS, 1.0f), View).xyz;
 
 	float3 normal = normalize(gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f);
 	float3 random = texNoise.Sample(basicSampler, input.uv * noiseScale).xyz * 2.0f - 1.0f;
@@ -72,22 +73,20 @@ float main(VertexToPixel input) : SV_TARGET
 	for (int i = 0; i < kernelSize; i++) {
 
 		float3 ray = mul(samples[i], tbn) * radius;
-		float3 newPos = positionVS +  ray; // sign ensures hemispace
-
+		float3 newPos = positionVS + (sign(dot(ray, normal)) * ray); // sign ensures hemispace
 		float4 offset = float4(newPos, 1.0f);
 		offset = mul(offset, Projection);
 		offset.xy /= offset.w;
 		offset.xy = offset.xy * 0.5 + 0.5;
 
-		float occ_depth = gDepth.Sample(basicSampler, offset.xy).x * zFar;
-		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(positionVS.z - occ_depth));
+		float occ_depth = gDepth.Sample(basicSampler, offset.xy).x;
+		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(depth - occ_depth));
 		
-		occlusion += (occ_depth <= newPos.z + bias ? 1.0 : 0.0) * rangeCheck;
-		// occlusion += step(falloff, difference) * (1.0 - smoothstep(falloff, area, difference));
+		occlusion += (occ_depth <= length(newPos) + bias ? 1.0 : 0.0) * rangeCheck;
 	}
 
 	float ao =  1.0 - (occlusion / kernelSize);
-	// occlusion = saturate(ao + base);
+	ao = saturate(ao + base);
 
     return ao;
 }

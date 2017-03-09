@@ -111,6 +111,17 @@ void Game::Update(float deltaTime, float totalTime)
 		gameManager.SetActiveScene(new PBRDemoScene());
 	}
 
+	if (GetAsyncKeyState('M') & 0x8000)
+	{
+		renderer->postProcesser->ssaoRadius += 0.001;
+	}
+
+	if (GetAsyncKeyState('N') & 0x8000)
+	{
+		renderer->postProcesser->ssaoRadius -= 0.001;
+	}
+
+
 	/*
 	if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
 	{

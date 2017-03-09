@@ -23,7 +23,9 @@ private:
 	void DrawTransparentMaterials();
 
 	// Post Processing System, IF RENDERING BLACK POST PROCESSOR MAY HAVE NOT BEEN INITALIZED;
+public:
 	PostProcesser* postProcesser;
+private:
 	bool postProcessingInit = false;
 
 	// Albedo

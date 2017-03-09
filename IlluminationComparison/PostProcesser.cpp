@@ -296,7 +296,7 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	pixelShader->SetFloat3("camPos", *renderer->camera->GetPosition());
 	pixelShader->SetFloat("width", float(renderer->width));
 	pixelShader->SetFloat("height", float(renderer->height));
-	pixelShader->SetFloat("zFar", renderer->camera->GetFarPlane());
+	pixelShader->SetFloat("radius", ssaoRadius);
 
 	pixelShader->SetShaderResourceView("texNoise", noiseSRV);
 	pixelShader->SetShaderResourceView("gNormal", renderer->NormalSRV);

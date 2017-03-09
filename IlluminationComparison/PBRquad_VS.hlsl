@@ -2,7 +2,6 @@
 // Constant Buffer
 cbuffer externalData : register(b0)
 {
-	matrix invProjection;
 	matrix invViewProj;
 	float3 cameraPosition;
 };

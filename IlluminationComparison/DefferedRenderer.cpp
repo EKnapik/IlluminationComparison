@@ -427,13 +427,11 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetShader();
 
 	// Send G buffers to pixel shader
-	vertexShader->SetMatrix4x4("invProjection", *camera->GetInvProjection());
 	vertexShader->SetMatrix4x4("invViewProj", *camera->GetInvViewProj());
 	vertexShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	pixelShader->SetFloat("zFar", camera->GetFarPlane());
 
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
@@ -486,7 +484,7 @@ void DefferedRenderer::DrawOpaqueMaterials()
 	vertexShader->SetMatrix4x4("view", *camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *camera->GetProjection());
 	pixelShader->SetFloat2("projectionConst", camera->GetProjectionConsts());
-	pixelShader->SetFloat("zFar", camera->GetFarPlane());
+	pixelShader->SetFloat3("cameraPos", *camera->GetPosition());
 
 	for (int i = 0; i < opaque.size(); i++)
 	{
