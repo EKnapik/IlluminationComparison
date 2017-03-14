@@ -29,10 +29,10 @@ public:
 	void MoveUp(float amount) { position.y = position.y + amount; }
 	void MoveDown(float amount) { MoveUp(-amount); }
 
-	void AddXRot(float amount) { xRot = xRot + amount; }
-	void SubXRot(float amount) { AddXRot(-amount); }
-	void AddYRot(float amount) { yRot = yRot + amount; }
-	void SubYRot(float amount) { AddYRot(-amount); }
+	void AddXRot(float amount) { xRot = xRot + amount; UpdateDirection();}
+	void SubXRot(float amount) { AddXRot(-amount); UpdateDirection();}
+	void AddYRot(float amount) { yRot = yRot + amount; UpdateDirection();}
+	void SubYRot(float amount) { AddYRot(-amount); UpdateDirection();}
 
 	void ResetCamera();
 

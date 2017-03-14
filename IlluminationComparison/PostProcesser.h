@@ -40,6 +40,8 @@ private:
 	ID3D11ShaderResourceView* bloomExtractSRV; // will also be used for blurring
 	ID3D11ShaderResourceView* bloomHorizonatalSRV;
 
+	ID3D11SamplerState* ssaoSampler;
+
 public:
-	float ssaoRadius = 1.0f;
+	float ssaoRadius = 0.5f;
 };

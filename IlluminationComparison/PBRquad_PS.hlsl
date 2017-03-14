@@ -159,7 +159,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 gWorldPos = getPositionWS(viewRay, input.uv);
 
     // return depth.xxxx / 100.0f;
-	// return float4(gWorldPos.x, 0, 0, 1.0f);
+	// return float4(gWorldPos, 1.0f);
 	// float val = 1.0f - dot(cameraForward, viewRay * dot(cameraForward, viewRay));
 	// return val.xxxx;
 

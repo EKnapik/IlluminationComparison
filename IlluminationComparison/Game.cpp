@@ -113,12 +113,12 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (GetAsyncKeyState('M') & 0x8000)
 	{
-		renderer->postProcesser->ssaoRadius += 0.001;
+		renderer->postProcesser->ssaoRadius += 0.01;
 	}
 
 	if (GetAsyncKeyState('N') & 0x8000)
 	{
-		renderer->postProcesser->ssaoRadius -= 0.001;
+		renderer->postProcesser->ssaoRadius -= 0.01;
 	}
 
 

@@ -10,7 +10,6 @@ Camera::Camera(int width, int height)
 	xRot = 0;
 	yRot = 0;
 	zFar = 100.0f;
-	UpdateDirection();
 
 	SetProjectionMatrix(&projection, 0.25f * 3.1415926535f, (float)width / height, zNear, zFar);
 	SetInverseMatrix(&invProjection, &projection);
@@ -52,6 +51,7 @@ void Camera::Update(FLOAT dt)
 	{
 		MoveDown(dt * speed);
 	}
+	
 	UpdateDirection();
 }
 
@@ -157,4 +157,5 @@ void Camera::ResetCamera() {
 	position = XMFLOAT3(0, 0, -5);
 	xRot = 0;
 	yRot = 0;
+	UpdateDirection();
 }

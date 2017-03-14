@@ -87,6 +87,19 @@ PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
 	bloomHorizontalTexture->Release();
 
 	CreateWICTextureFromFile(renderer->device, renderer->context, L"Assets/Textures/asciiTexture.png", 0, &asciiSRV);
+
+
+	// create sampler
+	D3D11_SAMPLER_DESC sampleDesc = {};
+	sampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampleDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampleDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampleDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	renderer->device->CreateSamplerState(&sampleDesc, &ssaoSampler);
+
+
+
 	SetUpSSAO();
 }
 
@@ -100,6 +113,8 @@ PostProcesser::~PostProcesser()
 
 	noiseSRV->Release();
 	asciiSRV->Release();
+
+	ssaoSampler->Release();
 }
 
 
@@ -301,7 +316,7 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	pixelShader->SetShaderResourceView("texNoise", noiseSRV);
 	pixelShader->SetShaderResourceView("gNormal", renderer->NormalSRV);
 	pixelShader->SetShaderResourceView("gDepth", renderer->DepthSRV);
-	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
+	pixelShader->SetSamplerState("Sampler", ssaoSampler);
 	pixelShader->CopyAllBufferData();
 	// Now actually draw
 	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
