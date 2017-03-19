@@ -1,42 +1,5 @@
 #include "PostProcesser.h"
 
-
-FLOAT edgeDetectKernel[] = {
-	-1, -1, -1,
-	-1, 8, -1,
-	-1, -1, -1
-};
-
-FLOAT embossKernel[] = {
-	-2, -1, 0,
-	-1, 1, 1,
-	0, 1, 2
-};
-
-FLOAT blurKernel[] = {
-	-1, 2, 1,
-	2, 4, 2,
-	1, 2, 1
-};
-
-FLOAT sharpnessKernel[] = {
-	-1, -1, -1,
-	-1, 9, -1,
-	-1, -1, -1
-};
-
-FLOAT bottomSobelKernel[] = {
-	-1, -2, -1,
-	0, 0, 0,
-	1, 2, 1
-};
-
-FLOAT defaultKernel[] = {
-	0, 0, 0,
-	0, 1, 0,
-	0, 0, 0
-};
-
 using namespace DirectX;
 
 PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
@@ -119,7 +82,7 @@ PostProcesser::~PostProcesser()
 
 
 
-void PostProcesser::renderKernel(FLOAT kernel[9], ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
+void PostProcesser::renderKernel(FLOAT* kernel, float weight, ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
 {
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -134,7 +97,7 @@ void PostProcesser::renderKernel(FLOAT kernel[9], ID3D11ShaderResourceView* read
 	renderer->GetPixelShader("kernel")->SetFloat3("kernelA", VEC3(kernel[0], kernel[1], kernel[2]));
 	renderer->GetPixelShader("kernel")->SetFloat3("kernelB", VEC3(kernel[3], kernel[4], kernel[5]));
 	renderer->GetPixelShader("kernel")->SetFloat3("kernelC", VEC3(kernel[6], kernel[7], kernel[8]));
-	renderer->GetPixelShader("kernel")->SetFloat("kernelWeight", 1);
+	renderer->GetPixelShader("kernel")->SetFloat("kernelWeight", weight);
 	renderer->GetPixelShader("kernel")->CopyAllBufferData();
 
 	// Now actually draw

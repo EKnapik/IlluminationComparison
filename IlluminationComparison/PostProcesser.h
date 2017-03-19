@@ -14,7 +14,7 @@ public:
 	PostProcesser(DefferedRenderer* renderingSystem);
 	~PostProcesser();
 
-	void renderKernel(FLOAT kernel[9], ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
+	void renderKernel(FLOAT* kernel, float weight, ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void bloom(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void ascii(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
@@ -44,4 +44,40 @@ private:
 
 public:
 	float ssaoRadius = 0.5f;
+
+	FLOAT edgeDetectKernel[9] = {
+		-1, -1, -1,
+		-1, 8, -1,
+		-1, -1, -1
+	};
+
+	FLOAT embossKernel[9] = {
+		-2, -1, 0,
+		-1, 1, 1,
+		0, 1, 2
+	};
+
+	FLOAT blurKernel[9] = {
+		-1, 2, 1,
+		2, 4, 2,
+		1, 2, 1
+	};
+
+	FLOAT sharpnessKernel[9] = {
+		-1, -1, -1,
+		-1, 9, -1,
+		-1, -1, -1
+	};
+
+	FLOAT bottomSobelKernel[9] = {
+		-1, -2, -1,
+		0, 0, 0,
+		1, 2, 1
+	};
+
+	FLOAT defaultKernel[9] = {
+		0, 0, 0,
+		0, 1, 0,
+		0, 0, 0
+	};
 };

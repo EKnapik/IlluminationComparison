@@ -94,19 +94,20 @@ PBRDemoScene::PBRDemoScene()
 		GameObjects.push_back(ball);
 	}
 
-
+	/*
 	ball = new Ball();
-	ball->SetEntity(new GameEntity("cave", "caveTexture"));
+	ball->SetEntity(new GameEntity("mountains", "caveTexture"));
 	ball->entity->Scale(VEC3(3.0f, 3.0f, 3.0f));
 	ball->entity->SetRotation(VEC3(90, 0, 0));
 	ball->kinematics->SetPosition(VEC3(0, 6, 50));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
+	*/
 
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
-	ball->entity->Scale(VEC3(3.0f, 3.0f, 3.0f));
-	ball->kinematics->SetPosition(VEC3(0.0, 0.0f, 5.0f));
+	ball->entity->Scale(VEC3(10.0f, 3.0f, 8.0f));
+	ball->kinematics->SetPosition(VEC3(0.0, 1.5f, 3.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 

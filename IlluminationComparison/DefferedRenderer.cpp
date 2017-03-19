@@ -56,14 +56,6 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 	// Don't need the actual texture anymore
 	AlbedoTexture->Release();
 
-
-	// unfinalized holding buffer
-	ID3D11Texture2D* unfinalizedTexture;
-	device->CreateTexture2D(&descAlbedoTexture, NULL, &unfinalizedTexture);
-	hr = device->CreateRenderTargetView(unfinalizedTexture, &albedoRTVDesc, &unfinalizedRTV);
-	hr = device->CreateShaderResourceView(unfinalizedTexture, &albedoSRVDesc, &unfinalizedSRV);
-	unfinalizedTexture->Release();
-
 	// Normal.
 	// Create the normal texture.
 	D3D11_TEXTURE2D_DESC descNormalTexture;
@@ -165,10 +157,18 @@ DefferedRenderer::DefferedRenderer(Camera *camera, ID3D11DeviceContext *context,
 
 	// SSAO
 	ID3D11Texture2D* SSAOTexture;
-	hr = device->CreateTexture2D(&descPositionTexture, NULL, &SSAOTexture);
-	hr = device->CreateRenderTargetView(SSAOTexture, &PositionRTVDesc, &ssaoRTV);
-	hr = device->CreateShaderResourceView(SSAOTexture, &PositionSRVDesc, &ssaoSRV);
+	hr = device->CreateTexture2D(&descAlbedoTexture, NULL, &SSAOTexture);
+	hr = device->CreateRenderTargetView(SSAOTexture, &albedoRTVDesc, &ssaoRTV);
+	hr = device->CreateShaderResourceView(SSAOTexture, &albedoSRVDesc, &ssaoSRV);
 	SSAOTexture->Release();
+
+	// unfinalized holding buffer
+	ID3D11Texture2D* unfinalizedTexture;
+	device->CreateTexture2D(&descAlbedoTexture, NULL, &unfinalizedTexture);
+	hr = device->CreateRenderTargetView(unfinalizedTexture, &albedoRTVDesc, &unfinalizedRTV);
+	hr = device->CreateShaderResourceView(unfinalizedTexture, &albedoSRVDesc, &unfinalizedSRV);
+	unfinalizedTexture->Release();
+
 
 	// PBR (metallic, roughness)
 	D3D11_TEXTURE2D_DESC descPBRTexture;
@@ -318,6 +318,8 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	gBufferRender(deltaTime, totalTime);
 	postProcesser->ssao(ssaoRTV); // render into ssao texture
+	postProcesser->passThrough(ssaoSRV, unfinalizedRTV);
+	postProcesser->renderKernel(postProcesser->blurKernel, 14, unfinalizedSRV, ssaoRTV);
 
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
 	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
