@@ -1,5 +1,4 @@
 // Texture info
-Texture2D texNoise			: register(t0);
 Texture2D gNormal			: register(t1);
 Texture2D gDepth			: register(t2);
 SamplerState basicSampler	: register(s0);
@@ -36,12 +35,20 @@ static float3 samples[] = {
 static int kernelSize = 16;
 // static float radius = 18.0;
 static float bias = 0.025;
-static float base = 0.2;
+static float base = 0.4;
 
 float3 reconstructNormalVS(float3 positionVS) {
 	return normalize(cross(ddx(positionVS), ddy(positionVS)));
 }
 
+
+float3 randVec(in float2 uv)
+{
+	float noiseX = (frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453));
+	float noiseY = (frac(sin(dot(uv, float2(12.9898, 78.233) * 2.0)) * 43758.5453));
+	float noiseZ = sqrt(1 - noiseX * noiseY);
+	return float3(noiseX, noiseY, noiseZ);
+}
 
 float3 getPositionWS(in float3 viewRay, in float2 uv)
 {
@@ -65,31 +72,32 @@ float main(VertexToPixel input) : SV_TARGET
 	float3 positionVS = mul(float4(positionWS, 1.0f), View).xyz;
 
 	float3 normalVS = reconstructNormalVS(mul(float4(gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f, 1.0f), View).xyz);
-	float3 random = texNoise.Sample(basicSampler, input.uv * noiseScale).xyz * 2.0f - 1.0f;
+	float3 normal = gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f;
+	float3 random = randVec(input.uv);// *2.0f - 1.0f;
 
-	float3 tangent = normalize(random - normalVS * dot(random, normalVS));
-	float3 bitangent = cross(normalVS, tangent);
-	float3x3 tbn = float3x3(tangent, bitangent, normalVS);
+	float3 tangent = normalize(random - normal * dot(random, normal));
+	float3 bitangent = cross(normal, tangent);
+	float3x3 tbn = float3x3(tangent, bitangent, normal);
 
 	float4x4 viewProj = mul(View, Projection);
 
 	float occlusion = 0.0;
 	for (int i = 0; i < kernelSize; i++) {
 
-		float3 ray = mul(samples[i], tbn) * radius;
-		float3 newPos = positionVS + (sign(dot(ray, normalVS)) * ray); // sign ensures hemispace
+		float3 ray = reflect(samples[i], random) * radius;
+		float3 newPos = positionWS + (sign(dot(ray, normal)) * ray); // sign ensures hemispace
 		float4 offset = float4(newPos, 1.0f);
-		offset = mul(offset, Projection);
+		offset = mul(offset, viewProj);
 		offset.xy /= offset.w;
 		offset.xy = offset.xy * 0.5 + 0.5;
 
 		float occ_depth = gDepth.Sample(basicSampler, offset.xy).x;
 		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(depth - occ_depth));
 		
-		occlusion += (occ_depth <= length(newPos) + bias ? 1.0 : 0.0) * rangeCheck;
+		occlusion += (occ_depth >= length(newPos - camPos) + bias ? 1.0 : 0.0) * rangeCheck;
 	}
 
-	float ao =  1.0 - (occlusion / kernelSize);
+	float ao = (occlusion / (kernelSize));
 	ao = saturate(ao + base);
 
     return ao;

@@ -16,7 +16,7 @@ public:
 
 	void renderKernel(FLOAT* kernel, float weight, ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void bloom(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
-	void blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
+	void blur(float blurAmount, ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void ascii(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 	void ssao(ID3D11RenderTargetView* writeTo);
 	/// Moves readFrom into writeTo
@@ -43,7 +43,7 @@ private:
 	ID3D11SamplerState* ssaoSampler;
 
 public:
-	float ssaoRadius = 0.5f;
+	float ssaoRadius = 3.0f;
 
 	FLOAT edgeDetectKernel[9] = {
 		-1, -1, -1,

@@ -191,7 +191,7 @@ void PostProcesser::bloom(ID3D11ShaderResourceView* readFrom, ID3D11RenderTarget
 	
 }
 
-void PostProcesser::blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
+void PostProcesser::blur(float blurAmount, ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo)
 {
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -204,7 +204,7 @@ void PostProcesser::blur(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetV
 
 	pixelShader->SetShaderResourceView("Pixels", readFrom);
 	pixelShader->SetSamplerState("Sampler", renderer->GetSampler("default"));
-	pixelShader->SetInt("blurAmount", 1);
+	pixelShader->SetInt("blurAmount", blurAmount);
 	pixelShader->SetFloat("pixelWidth", 1.0f / renderer->width);
 	pixelShader->SetFloat("pixelHeight", 1.0f / renderer->height);
 	pixelShader->CopyAllBufferData();

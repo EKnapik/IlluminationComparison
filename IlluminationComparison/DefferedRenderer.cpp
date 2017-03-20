@@ -319,7 +319,7 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	gBufferRender(deltaTime, totalTime);
 	postProcesser->ssao(ssaoRTV); // render into ssao texture
 	postProcesser->passThrough(ssaoSRV, unfinalizedRTV);
-	postProcesser->renderKernel(postProcesser->blurKernel, 14, unfinalizedSRV, ssaoRTV);
+	postProcesser->blur(2, unfinalizedSRV, ssaoRTV);
 
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
 	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
