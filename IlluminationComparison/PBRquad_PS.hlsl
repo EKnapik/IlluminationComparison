@@ -20,6 +20,7 @@ cbuffer externalData	: register(b0)
 	DirectionalLight dirLight;
 	float3 cameraPosition;
 	float3 cameraForward;
+	bool drawSSAO;
 }
 
 
@@ -158,6 +159,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float depth = gDepth.Sample(basicSampler, input.uv).x;
 	float3 gWorldPos = getPositionWS(viewRay, input.uv);
 
+	if (drawSSAO)
+		return SSAO.Sample(basicSampler, input.uv).x;
     // return depth.xxxx / 100.0f;
 	// return float4(gWorldPos, 1.0f);
 	// float val = 1.0f - dot(cameraForward, viewRay * dot(cameraForward, viewRay));
@@ -209,8 +212,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	float3 ambient = SpecularIBL(albedo, roughness, N, V) * SSAO.Sample(basicSampler, input.uv).x;
 	float3 color = ambient + Lo;
-
-	// return SSAO.Sample(basicSampler, input.uv).x;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));

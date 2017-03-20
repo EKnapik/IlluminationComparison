@@ -61,9 +61,6 @@ PostProcesser::PostProcesser(DefferedRenderer* renderingSystem)
 	sampleDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	renderer->device->CreateSamplerState(&sampleDesc, &ssaoSampler);
 
-
-
-	SetUpSSAO();
 }
 
 PostProcesser::~PostProcesser()
@@ -74,7 +71,6 @@ PostProcesser::~PostProcesser()
 	bloomHorizonatalRTV->Release();
 	bloomHorizonatalSRV->Release();
 
-	noiseSRV->Release();
 	asciiSRV->Release();
 
 	ssaoSampler->Release();
@@ -276,7 +272,6 @@ void PostProcesser::ssao(ID3D11RenderTargetView* writeTo)
 	pixelShader->SetFloat("height", float(renderer->height));
 	pixelShader->SetFloat("radius", ssaoRadius);
 
-	pixelShader->SetShaderResourceView("texNoise", noiseSRV);
 	pixelShader->SetShaderResourceView("gNormal", renderer->NormalSRV);
 	pixelShader->SetShaderResourceView("gDepth", renderer->DepthSRV);
 	pixelShader->SetSamplerState("Sampler", ssaoSampler);
@@ -313,50 +308,4 @@ void PostProcesser::passThrough(ID3D11ShaderResourceView* readFrom, ID3D11Render
 
 	renderer->context->Draw(3, 0);
 	pixelShader->SetShaderResourceView("Pixels", 0);
-}
-
-void PostProcesser::SetUpSSAO()
-{
-	// Set up "random" stuff -------------------------------------
-	unsigned int randomTextureSize = 4;
-
-	// Random data for the noise texture
-	std::uniform_real_distribution<FLOAT> randomFloats(0.0, 1.0); // generates floats
-	std::default_random_engine generator;
-	std::vector<VEC4> ssaoNoise(randomTextureSize * randomTextureSize);
-	for (unsigned int i = 0; i < randomTextureSize * randomTextureSize; i++)
-		ssaoNoise[i] = VEC4(randomFloats(generator), randomFloats(generator), 0.0f, 1.0f);
-
-	ID3D11Texture2D* noiseTexture;
-	// Set up texture
-	D3D11_TEXTURE2D_DESC textureDesc;
-	textureDesc.Width = randomTextureSize;
-	textureDesc.Height = randomTextureSize;
-	textureDesc.ArraySize = 1;
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	textureDesc.MipLevels = 1;
-	textureDesc.MiscFlags = 0;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	
-	D3D11_SUBRESOURCE_DATA initData;
-	ZeroMemory(&initData, sizeof(D3D11_SUBRESOURCE_DATA));
-	
-	initData.pSysMem = (void*)&ssaoNoise[0];
-	initData.SysMemPitch = randomTextureSize * sizeof(float) * 4;
-	initData.SysMemSlicePitch = randomTextureSize * randomTextureSize * sizeof(float) * 4;
-	renderer->device->CreateTexture2D(&textureDesc, &initData, &noiseTexture);
-
-	// Set up SRV for texture
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	srvDesc.Format = textureDesc.Format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture1D.MipLevels = 1;
-	srvDesc.Texture1D.MostDetailedMip = 0;
-	renderer->device->CreateShaderResourceView(noiseTexture, &srvDesc, &noiseSRV);
-
-    noiseTexture->Release();
 }

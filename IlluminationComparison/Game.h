@@ -88,6 +88,7 @@ private:
 	DirectionalLight light;
 
 	bool O_toggle = false;
+	bool P_toggle = false;
 	bool prevTab = false;
 	int skyboxChoice = 0;
 };

@@ -23,10 +23,6 @@ public:
 	void passThrough(ID3D11ShaderResourceView* readFrom, ID3D11RenderTargetView* writeTo);
 
 private:
-	
-	void SetUpSSAO();
-
-private:
 	enum PostProcessFunction {DEFAULT, BLOOM, BLUR, ASCII, EDGE, EMBOSS, BLUR_K, SHARPNESS, SOBEL};
 
 	DefferedRenderer* renderer;
@@ -35,7 +31,6 @@ private:
 	ID3D11RenderTargetView* bloomExtractRTV; // will also be used for blurring
 	ID3D11RenderTargetView* bloomHorizonatalRTV;
 
-	ID3D11ShaderResourceView* noiseSRV;
 	ID3D11ShaderResourceView* asciiSRV;
 	ID3D11ShaderResourceView* bloomExtractSRV; // will also be used for blurring
 	ID3D11ShaderResourceView* bloomHorizonatalSRV;

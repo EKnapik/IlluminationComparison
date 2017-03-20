@@ -434,6 +434,7 @@ void DefferedRenderer::directionalLightRender() {
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
+	pixelShader->SetFloat("drawSSAO", drawSSAO);
 
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);

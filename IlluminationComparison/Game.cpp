@@ -121,6 +121,10 @@ void Game::Update(float deltaTime, float totalTime)
 		renderer->postProcesser->ssaoRadius -= 0.01;
 	}
 
+	bool currP = (GetAsyncKeyState('P') & 0x8000) != 0;
+	if (currP && !P_toggle)
+		renderer->drawSSAO = !renderer->drawSSAO;
+	P_toggle = currP;
 
 	/*
 	if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
@@ -299,7 +303,7 @@ void Game::LoadMeshes()
 	// renderer->AddMesh("cylinder", "Assets/cylinder.obj");
 	// renderer->AddMesh("helix", "Assets/helix.obj");
 	renderer->AddMesh("sphere", "Assets/sphere.obj");
-	// renderer->AddMesh("mountains", "Assets/mountains.obj");
+	renderer->AddMesh("mountains", "Assets/mountains.obj");
 	// renderer->AddMesh("torus", "Assets/torus.obj");
 	// renderer->AddMesh("court", "Assets/Court.obj");
 	// renderer->AddMesh("panel", "Assets/Panel.obj");

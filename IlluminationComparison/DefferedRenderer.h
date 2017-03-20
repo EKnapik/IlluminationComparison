@@ -25,8 +25,11 @@ private:
 	// Post Processing System, IF RENDERING BLACK POST PROCESSOR MAY HAVE NOT BEEN INITALIZED;
 public:
 	PostProcesser* postProcesser;
+	bool drawSSAO = false;
+
 private:
 	bool postProcessingInit = false;
+	
 
 	// Albedo
 	ID3D11RenderTargetView *	AlbedoRTV;
