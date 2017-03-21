@@ -92,7 +92,8 @@ float main(VertexToPixel input) : SV_TARGET
 		offset.xy = offset.xy * 0.5 + 0.5;
 
 		float occ_depth = gDepth.Sample(basicSampler, offset.xy).x;
-		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(depth - occ_depth));
+		float3 newPosWS = camPos + (viewRay * occ_depth);
+		float rangeCheck = smoothstep(0.0, 1.0, radius / length(newPosWS - positionWS));
 		
 		occlusion += (occ_depth >= length(newPos - camPos) + bias ? 1.0 : 0.0) * rangeCheck;
 	}
