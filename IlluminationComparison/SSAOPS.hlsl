@@ -59,7 +59,7 @@ float3 getPositionWS(in float3 viewRay, in float2 uv)
 
 float3 getNormal(in float2 uv)
 {
-	return mul(float4(gNormal.Sample(basicSampler, input.uv).rgb * 2.0f - 1.0f, 1.0f), View).xyz;
+	return mul(float4(gNormal.Sample(basicSampler, uv).rgb * 2.0f - 1.0f, 1.0f), View).xyz;
 }
 
 /// Derived from http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
