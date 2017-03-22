@@ -139,6 +139,7 @@
     <ClCompile Include="PostProcesser.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SimpleShader.cpp" />
+    <ClCompile Include="SparseVoxelOctree.cpp" />
     <ClCompile Include="Start.cpp" />
     <ClCompile Include="Win.cpp" />
   </ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SimpleShader.h" />
+    <ClInclude Include="SparseVoxelOctree.h" />
     <ClInclude Include="Start.h" />
     <ClInclude Include="tiny_obj_loader.h" />
     <ClInclude Include="Vertex.h" />
