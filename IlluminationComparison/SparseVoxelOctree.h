@@ -42,6 +42,7 @@ struct {
 Render conservative Geometry appending to Node List max size of 512x512x512 available.
 	This requires an atomic number to know where to place the next node at the end
 	InterlockedAdd()
+	RWStructured Buffer for storing
 For Send a compute thread per voxel in the list.
 	This first goes to atomically allocate and create SVO structure.
 		Uses an integer to the last index of the buffer so a thread can 'allocate' the next tile chuck pointer
