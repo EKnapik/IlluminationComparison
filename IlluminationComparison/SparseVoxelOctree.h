@@ -1,9 +1,29 @@
 #pragma once
+
+#include <DirectXMath.h>
+#include "DXMathImpl.h"
+#include "SimpleShader.h"
+
 class SparseVoxelOctree
 {
 public:
 	SparseVoxelOctree();
 	~SparseVoxelOctree();
+
+	void initSVO();
+	void initVoxelList();
+	void initOctree();
+	void createVoxelList(int mode); // 0 to count 1 to store
+	void deleteVoxelList();
+	void createOctree(int mode); // 0 to allocate 1 to store
+	void mipMapUpOctree();
+
+private:
+	ID3D11UnorderedAccessView *voxelListUAV;
+	ID3D11ShaderResourceView  *voxelListSRV;
+	ID3D11UnorderedAccessView *octreeUAV;
+	ID3D11ShaderResourceView  *octreeSRV;
+
 };
 
 /*
@@ -38,6 +58,7 @@ struct {
 	float3 color;
 	float  padding; // ensures the 128 bit allignment
 }
+globallycoherent RWStructuredBuffer<> myBuffer;
 
 Render conservative Geometry appending to Node List max size of 512x512x512 available.
 	This requires an atomic number to know where to place the next node at the end
