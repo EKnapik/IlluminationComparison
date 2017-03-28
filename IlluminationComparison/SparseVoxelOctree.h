@@ -7,18 +7,24 @@
 class SparseVoxelOctree
 {
 public:
-	SparseVoxelOctree();
+	SparseVoxelOctree(ID3D11Device *device);
 	~SparseVoxelOctree();
 
 	void initSVO();
-	void initVoxelList();
+	void initVoxelCounter();
+	void initVoxelList(int numElements);
 	void initOctree();
-	void createVoxelList(int mode); // 0 to count 1 to store
+	void voxelizeGeometry(int mode); // 0 to count 1 to store
 	void deleteVoxelList();
 	void createOctree(int mode); // 0 to allocate 1 to store
 	void mipMapUpOctree();
 
 private:
+	ID3D11Device *device;
+	bool initialized = false;
+	int	voxelDim = 512; // 512*512*512 + mip mapped octree for memory size
+	ID3D11Buffer			  *counter;
+	ID3D11UnorderedAccessView *counterUAV;
 	ID3D11UnorderedAccessView *voxelListUAV;
 	ID3D11ShaderResourceView  *voxelListSRV;
 	ID3D11UnorderedAccessView *octreeUAV;
@@ -26,6 +32,24 @@ private:
 
 };
 
+
+struct Voxel
+{
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 normal;
+	DirectX::XMFLOAT3 color;
+	DirectX::XMFLOAT3 padding; // ensures the 128 bit allignment
+};
+
+struct Node
+{
+	INT32             flagBits;
+	INT32             childPointer; // pointer to child 8 tile chunch of the octree, an offset index
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 normal;
+	DirectX::XMFLOAT3 color;
+	INT32			  padding; // ensures the 128 bit allignment
+};
 /*
 Needs:
 Node List 
@@ -56,7 +80,7 @@ struct {
 	float3 position;    // might not be needed can be computed on the fly
 	float3 normal;
 	float3 color;
-	float  padding; // ensures the 128 bit allignment
+	int    padding; // ensures the 128 bit allignment
 }
 globallycoherent RWStructuredBuffer<> myBuffer;
 
