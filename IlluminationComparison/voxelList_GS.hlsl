@@ -68,8 +68,8 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	// Next enlarge the triangle to enable conservative rasterization
 	// Outlined in Chapter 22 of opengl insights
 	float4 AABB;
-	float2 hPixel = float2(1.0 / u_width, 1.0 / u_height);
-	float pl = 1.4142135637309 / u_width;
+	float2 hPixel = float2(1.0 / width, 1.0 / height);
+	float pl = 1.4142135637309 / width;
 
 	//calculate AABB of this triangle
 	AABB.xy = pos[0].xy;
