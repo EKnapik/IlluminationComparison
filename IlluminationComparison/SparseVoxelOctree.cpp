@@ -106,10 +106,30 @@ void SparseVoxelOctree::initVoxelList(int numElements)
 
 void SparseVoxelOctree::initOctree()
 {
+	/*
+	//Calculate the maximum possilbe node number
+	int totalNode = 1;
+	int nTmp = 1;
+	for (int i = 1; i <= octreeLevel; ++i)
+	{
+		nTmp *= 8;
+		totalNode += nTmp;
+	}
+	cout << "Max possible node: " << totalNode << endl;
+	*/
+	// TODO:
+	// INITIALLY I WANT TO MAKE THE BUFFER JUST LARGE ENOUGH TO WORK THEN THE INTENTION IS TO DO AN AVERAGE
+	// OF VALUES IF THEIR FINAL NODE RESULTS IN A COLLISION BECAUSE OF SIZE RESTRICTION
+
 }
 
 void SparseVoxelOctree::voxelizeGeometry(int mode)
 {
+	// dissable cull and depth test
+	// Set everything to render through the vs -> gs -> ps
+	// if 1 bind voxelList buffer for setting data
+		// This one will count down that counter at an available index
+
 }
 
 void SparseVoxelOctree::deleteVoxelList()
@@ -122,8 +142,12 @@ void SparseVoxelOctree::deleteVoxelList()
 
 void SparseVoxelOctree::createOctree(int mode)
 {
+	// For each node in the node list execute a compute shader to first 'allocate'
+		// The allocation helps with avoiding moving data around and can tell when collisions happen for after
+	// For each node in the node list execute a compute shader to set and store the data
 }
 
 void SparseVoxelOctree::mipMapUpOctree()
 {
+	// For each octree level execute an averaging 
 }

@@ -49,6 +49,9 @@
     <Filter Include="Shaders\Deffered\Math">
       <UniqueIdentifier>{151fffa3-ff12-415f-8253-f94969455d06}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\SVO">
+      <UniqueIdentifier>{fd744094-bf5c-4d09-af57-7fdfae7041c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -276,6 +279,21 @@
     </FxCompile>
     <FxCompile Include="PassThrough_PS.hlsl">
       <Filter>Shaders\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelList_GS.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelList_VS.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelList_PS.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
+    <FxCompile Include="constructSVO.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
+    <FxCompile Include="mipMapSVO.hlsl">
+      <Filter>Shaders\SVO</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
