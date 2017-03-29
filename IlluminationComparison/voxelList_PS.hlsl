@@ -26,7 +26,7 @@ struct Voxel
 	float3 padding; // ensures the 128 bit allignment
 };
 
-// globallycoherent RWStructuredBuffer<Voxel> voxelList : register(t3);
+// globallycoherent RWStructuredBuffer<Voxel> voxelList : register(u0);
 RWStructuredBuffer<Voxel> voxelList : register(u0);
 
 // atomic counter 

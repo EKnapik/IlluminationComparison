@@ -241,5 +241,7 @@ void SparseVoxelOctree::createOctree(int mode)
 
 void SparseVoxelOctree::mipMapUpOctree()
 {
-	// For each octree level execute an averaging 
+	// Set 8 compute shader values to traverse down the octree for their respective levels
+	// averaging as they move back up.
+	// IS IT POSSIBLE TO MAKE RECURSIVE COMPUTE SHADER CALLS?
 }

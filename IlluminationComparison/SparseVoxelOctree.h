@@ -43,11 +43,11 @@ struct Voxel
 
 struct Node
 {
-	INT32             flagBits;
-	INT32             childPointer; // pointer to child 8 tile chunch of the octree, an offset index
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT3 color;
+	INT32             flagBits;
+	INT32             childPointer; // pointer to child 8 tile chunch of the octree, an offset index
 	INT32			  padding; // ensures the 128 bit allignment
 };
 /*
