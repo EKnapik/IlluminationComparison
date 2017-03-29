@@ -13,7 +13,7 @@ cbuffer externalData : register(b0)
 
 struct VStoGS
 {
-	float3 position     : SV_POSITION;
+	float4 position     : SV_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
 };
@@ -22,7 +22,7 @@ struct VStoGS
 struct GStoPS
 {
 	float4 AABB			: BOUNDING_BOX;
-	float3 pos			: SV_POSITION;
+	float4 pos			: SV_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
 	int	   axis			: AXIS_CHOOSEN;
@@ -37,8 +37,8 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	float NdotZAxis = abs(faceNormal.z);
 	matrix proj;
 	matrix MVPx = mul(World, ViewProjX);
-	matrix MVPy = mul(World, ViewProjy);
-	matrix MVPz = mul(World, ViewProjz);
+	matrix MVPy = mul(World, ViewProjY);
+	matrix MVPz = mul(World, ViewProjZ);
 	int axis;
 
 	//Find the axis the maximize the projected area of this triangle
@@ -61,9 +61,9 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	float4 pos[3];
 
 	//transform vertices to clip space
-	pos[0] = mul(float4(input[0].position, 1.0f), proj);
-	pos[1] = mul(float4(input[1].position, 1.0f), proj)
-	pos[2] = mul(float4(input[2].position, 1.0f), proj)
+	pos[0] = mul(input[0].position, proj);
+	pos[1] = mul(input[1].position, proj);
+	pos[2] = mul(input[2].position, proj);
 
 	// Next enlarge the triangle to enable conservative rasterization
 	// Outlined in Chapter 22 of opengl insights
