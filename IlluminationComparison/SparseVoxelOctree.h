@@ -11,6 +11,8 @@ public:
 	~SparseVoxelOctree();
 
 	void initSVO();
+
+private:
 	void initVoxelCounter();
 	void initVoxelList(int numElements);
 	void initOctree();
@@ -18,8 +20,8 @@ public:
 	void deleteVoxelList();
 	void createOctree(int mode); // 0 to allocate 1 to store
 	void mipMapUpOctree();
+	int  getCount();
 
-private:
 	ID3D11Device *device;
 	bool initialized = false;
 	int	voxelDim = 512; // 512*512*512 + mip mapped octree for memory size

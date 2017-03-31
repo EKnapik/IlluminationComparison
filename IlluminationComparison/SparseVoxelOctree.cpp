@@ -42,7 +42,7 @@ void SparseVoxelOctree::initVoxelCounter()
 	bufDesc.Usage = D3D11_USAGE_DEFAULT;
 	bufDesc.ByteWidth = sizeof(INT32);
 	bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-	bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	bufDesc.CPUAccessFlags = 0;
 	bufDesc.StructureByteStride = sizeof(INT32);
 	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
@@ -244,4 +244,36 @@ void SparseVoxelOctree::mipMapUpOctree()
 	// Set 8 compute shader values to traverse down the octree for their respective levels
 	// averaging as they move back up.
 	// IS IT POSSIBLE TO MAKE RECURSIVE COMPUTE SHADER CALLS?
+}
+
+int SparseVoxelOctree::getCount()
+{
+	// Make a staging buffer for copying
+	D3D11_BUFFER_DESC stagingDesc;
+	memset(&stagingDesc, 0, sizeof(stagingDesc));
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.ByteWidth = sizeof(INT32);
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	stagingDesc.StructureByteStride = sizeof(INT32);
+	stagingDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+	ID3D11Buffer* stagingBuffer;
+	device->CreateBuffer(&stagingDesc, 0, &stagingBuffer);
+
+	// Copy the final data to the staging buffer
+	context->CopyResource(stagingBuffer, counter);
+
+	// Map for reading
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	unsigned int srIndex = D3D11CalcSubresource(0, 0, 0);
+	HRESULT hr = context->Map(stagingBuffer, srIndex, D3D11_MAP_READ, 0, &mapped);
+
+	// Copy data and unmap
+	int finalCount;
+	memcpy(&finalCount, mapped.pData, sizeof(INT32));
+	context->Unmap(stagingBuffer, srIndex);
+	stagingBuffer->Release();
+
+	return finalCount;
 }
