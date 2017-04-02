@@ -17,12 +17,12 @@ private:
 	void initOctree(ID3D11Device* device);
 	void voxelizeGeometry(Renderer* renderer, int mode); // 0 to count 1 to store
 	void deleteVoxelList();
-	void createOctree(int mode); // 0 to allocate 1 to store
-	void mipMapUpOctree();
+	void createOctree(Renderer* renderer, int mode); // 0 to allocate 1 to store
+	void mipMapUpOctree(Renderer* renderer);
 	int  getCount(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	int voxelCount = 0;
-	int	voxelDim = 512; // 512*512*512 + mip mapped octree for memory size
+	int	voxelDim = 256; // 256*256*256 + mip mapped octree for memory size
 	ID3D11Buffer			  *counter;
 	ID3D11UnorderedAccessView *counterUAV;
 	ID3D11UnorderedAccessView *voxelListUAV;

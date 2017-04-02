@@ -11,12 +11,13 @@ SparseVoxelOctree::SparseVoxelOctree(Renderer* const renderer)
 	voxelizeGeometry(renderer, 1);
 
 	initOctree(renderer->device);
-	createOctree(0);
-	createOctree(1);
-	mipMapUpOctree();
+	createOctree(renderer, 0);
+	createOctree(renderer, 1);
+	mipMapUpOctree(renderer);
 
 	deleteVoxelList(); // also will delete the counter
 }
+
 
 SparseVoxelOctree::~SparseVoxelOctree()
 {
@@ -111,7 +112,17 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	// TODO:
 	// INITIALLY I WANT TO MAKE THE BUFFER JUST LARGE ENOUGH TO WORK THEN THE INTENTION IS TO DO AN AVERAGE
 	// OF VALUES IF THEIR FINAL NODE RESULTS IN A COLLISION BECAUSE OF SIZE RESTRICTION
-	int numOctreeNodes = 0;
+
+	// 256*256*256 + mip mapped octree for memory size
+	int totalLeafNodes = voxelDim*voxelDim*voxelDim;
+	int numOctreeNodes = totalLeafNodes;
+	int octreeLevels = 1;
+	while (totalLeafNodes > 8)
+	{
+		totalLeafNodes /= 8;
+		numOctreeNodes += totalLeafNodes;
+		octreeLevels++;
+	}
 
 	ID3D11Buffer *octreeBuffer;
 
@@ -151,6 +162,7 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	// release the cpu buffer
 	octreeBuffer->Release();
 }
+
 
 void SparseVoxelOctree::voxelizeGeometry(Renderer* renderer, int mode)
 {
@@ -252,6 +264,7 @@ void SparseVoxelOctree::voxelizeGeometry(Renderer* renderer, int mode)
 	renderer->context->RSSetState(0); // reset state
 }
 
+
 void SparseVoxelOctree::deleteVoxelList()
 {
 	counter->Release();
@@ -260,19 +273,39 @@ void SparseVoxelOctree::deleteVoxelList()
 	voxelListSRV->Release();
 }
 
-void SparseVoxelOctree::createOctree(int mode)
+
+// 0 to count and allocate 1 to store
+void SparseVoxelOctree::createOctree(Renderer* renderer, int mode)
 {
 	// For each node in the node list execute a compute shader to first 'allocate'
 		// The allocation helps with avoiding moving data around and can tell when collisions happen for after
 	// For each node in the node list execute a compute shader to set and store the data
+	SimpleComputeShader* computeShader;
+
+	int squareDim = ceil(sqrt(voxelCount));
+
+	computeShader->SetInt("numThreadRows", squareDim);
+	computeShader->SetInt("MaxVoxelIndex", voxelCount);
+	computeShader->SetInt("store", mode);
+	computeShader->SetInt("wvWidth", 25);
+	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
+	computeShader->SetUnorderedAccessView("octree", octreeUAV);
+	computeShader->CopyAllBufferData();
+	computeShader->DispatchByThreads(squareDim, squareDim, 1);
+
+	// Unbind the UAV and SRV
+	computeShader->SetShaderResourceView("voxelList", 0);
+	computeShader->SetUnorderedAccessView("octree", 0);
 }
 
-void SparseVoxelOctree::mipMapUpOctree()
+
+void SparseVoxelOctree::mipMapUpOctree(Renderer* renderer)
 {
 	// Set 8 compute shader values to traverse down the octree for their respective levels
 	// averaging as they move back up.
 	// IS IT POSSIBLE TO MAKE RECURSIVE COMPUTE SHADER CALLS?
 }
+
 
 int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* context)
 {
