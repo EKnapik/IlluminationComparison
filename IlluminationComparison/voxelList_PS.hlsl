@@ -28,10 +28,10 @@ struct Voxel
 
 // atomic counter 
 // uniform atomic_uint u_voxelFragCount;
-globallycoherent RWStructuredBuffer<int> atomicCounter : register(u0);
+globallycoherent RWStructuredBuffer<int> atomicCounter : register(u1);
 
 // globallycoherent RWStructuredBuffer<Voxel> voxelList : register(u0);
-RWStructuredBuffer<Voxel> voxelList : register(u1);
+RWStructuredBuffer<Voxel> voxelList : register(u2);
 
 
 float main(GStoPS input) : SV_TARGET

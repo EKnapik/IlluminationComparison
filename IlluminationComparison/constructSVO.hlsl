@@ -22,7 +22,7 @@ struct Node
 	float3			color;
 	int             flagBits;
 	int             childPointer;	// pointer to child 8 tile chunch of the octree, an offset index
-	int				padding;		// ensures the 128 bit allignment
+	uint			padding;		// ensures the 128 bit allignment
 };
 
 
@@ -32,7 +32,9 @@ StructuredBuffer<Voxel> voxelList : register(t0);
 globallycoherent RWStructuredBuffer<Node> octree : register(u0);
 
 // The last memory position of the octree
-globallycoherent static int LastMemoryPos = 8; 
+// octree[0].padding
+// Below is desired but does not work
+// globallycoherent static int LastMemoryPos = 8;
 
 // OCTREE STRUCTURE
 // look top down on a LH xz grid and follow the normal counter clockwise 4 quadrant orientation
@@ -101,6 +103,9 @@ void main( uint3 DTid : SV_DispatchThreadID )
 	int voxelIndex = (DTid.y * numThreadRows) + DTid.x;
 	if (voxelIndex > MaxVoxelIndex)
 		return;
+	if (voxelIndex = 0)
+		octree[0].padding = 8;
+	DeviceMemoryBarrier(); // Ensure all threads start with the next available memory
 
 	Voxel curVoxel = voxelList[voxelIndex];
 	// Go to position in octree node chunk
@@ -116,15 +121,22 @@ void main( uint3 DTid : SV_DispatchThreadID )
 	{
 		// ALLOCATE AND follow pointer to next octree level
 		if (store == 0)
-			InterlockedAdd(LastMemoryPos, 8, octree[currOctreeIndex].childPointer);
+			InterlockedAdd(octree[0].padding, 8, octree[currOctreeIndex].childPointer);
 		currOctreeIndex = octree[currOctreeIndex].childPointer;
 		currLevel++;
 		// get to new position by moving then check again
-		curVoxel.position -= float3(octaveIndex.yzw) * (curVoxelWidth / 2);
+		curVoxelWidth /= 2.0f;
+		curVoxel.position -= float3(octaveIndex.yzw) * curVoxelWidth;
 		octaveIndex = GetOctaveIndex(curVoxel.position);
 		currOctreeIndex += octaveIndex.x;
 		InterlockedCompareExchange(octree[currOctreeIndex].flagBits, 0, 1, checkValue);
 	}
 
 	// Store if needed
+	if (store == 1)
+	{
+		octree[currOctreeIndex].position = voxelList[voxelIndex].position;
+		octree[currOctreeIndex].normal = voxelList[voxelIndex].position;
+		octree[currOctreeIndex].color = voxelList[voxelIndex].position;
+	}
 }
