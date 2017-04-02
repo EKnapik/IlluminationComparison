@@ -26,12 +26,12 @@ struct Voxel
 	float3 padding; // ensures the 128 bit allignment
 };
 
-// globallycoherent RWStructuredBuffer<Voxel> voxelList : register(u0);
-RWStructuredBuffer<Voxel> voxelList : register(u0);
-
 // atomic counter 
 // uniform atomic_uint u_voxelFragCount;
-globallycoherent RWStructuredBuffer<int> atomicCounter : register(u1);
+globallycoherent RWStructuredBuffer<int> atomicCounter : register(u0);
+
+// globallycoherent RWStructuredBuffer<Voxel> voxelList : register(u0);
+RWStructuredBuffer<Voxel> voxelList : register(u1);
 
 
 float main(GStoPS input) : SV_TARGET

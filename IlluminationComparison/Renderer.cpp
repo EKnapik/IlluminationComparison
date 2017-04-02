@@ -347,6 +347,11 @@ bool backToFront(GameEntity* s1, GameEntity* s2)
 }
 
 
+std::vector<GameEntity*> Renderer::GetStaticObjects()
+{
+	return opaque;
+}
+
 void Renderer::SortObjects()
 {
 	opaque.clear();

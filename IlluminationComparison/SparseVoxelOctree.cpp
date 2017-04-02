@@ -1,40 +1,30 @@
 #include "SparseVoxelOctree.h"
+using namespace DirectX;
 
-
-SparseVoxelOctree::SparseVoxelOctree(ID3D11Device * device)
+SparseVoxelOctree::SparseVoxelOctree(Renderer* const renderer)
 {
-	this->device = device;
-}
+	initVoxelCounter(renderer->device);
+	voxelizeGeometry(renderer, 0);
+	// get count of voxels
+	voxelCount = getCount(renderer->device, renderer->context);
+	initVoxelList(renderer->device, voxelCount);
+	voxelizeGeometry(renderer, 1);
 
-SparseVoxelOctree::~SparseVoxelOctree()
-{
-	if (initialized)
-	{
-		octreeUAV->Release();
-		octreeSRV->Release();
-	}
-}
-
-
-void SparseVoxelOctree::initSVO()
-{
-	initVoxelCounter();
-	voxelizeGeometry(0);
-	// GET VALUE FROM COUNTER TO PASS INTO INIT VOXEL LIST !!!!!!!!!!!!!!!!!!!!!!!!!!
-	initVoxelList(0);
-	voxelizeGeometry(1);
-
-	initOctree();
+	initOctree(renderer->device);
 	createOctree(0);
 	createOctree(1);
 	mipMapUpOctree();
 
 	deleteVoxelList(); // also will delete the counter
-	initialized = true;
 }
 
+SparseVoxelOctree::~SparseVoxelOctree()
+{
+	octreeUAV->Release();
+	octreeSRV->Release();
+}
 
-void SparseVoxelOctree::initVoxelCounter()
+void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 {
 	// Create VoxelList Counter
 	D3D11_BUFFER_DESC bufDesc;
@@ -63,7 +53,7 @@ void SparseVoxelOctree::initVoxelCounter()
 }
 
 
-void SparseVoxelOctree::initVoxelList(int numElements)
+void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 {
 	ID3D11Buffer *voxelListBuffer;
 
@@ -104,7 +94,8 @@ void SparseVoxelOctree::initVoxelList(int numElements)
 	voxelListBuffer->Release();
 }
 
-void SparseVoxelOctree::initOctree()
+
+void SparseVoxelOctree::initOctree(ID3D11Device* device)
 {
 	/*
 	//Calculate the maximum possilbe node number
@@ -161,18 +152,57 @@ void SparseVoxelOctree::initOctree()
 	octreeBuffer->Release();
 }
 
-void SparseVoxelOctree::voxelizeGeometry(int mode)
+void SparseVoxelOctree::voxelizeGeometry(Renderer* renderer, int mode)
 {
 	ID3D11RasterizerState *voxelRastState;
 	D3D11_RASTERIZER_DESC voxelRastDesc = {};
 	voxelRastDesc.FillMode = D3D11_FILL_SOLID;
 	voxelRastDesc.CullMode = D3D11_CULL_NONE;
 	voxelRastDesc.DepthClipEnable = false;
-	device->CreateRasterizerState(&voxelRastDesc, &voxelRastState);
+	renderer->device->CreateRasterizerState(&voxelRastDesc, &voxelRastState);
 
-	// context->OMSetRenderTargets(1, 0, 0);
-	// context->OMSetDepthStencilState(0, 0);
-	// context->RSSetState(voxelRastState);
+	// Setup Matricies
+	MAT4X4 viewProjX;
+	MAT4X4 viewProjY;
+	MAT4X4 viewProjZ;
+
+	XMFLOAT3 eye = XMFLOAT3(2, 0, 0);
+	XMFLOAT3 focus = XMFLOAT3(0, 0, 0);
+	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
+
+	MATRIX Ortho = XMMatrixOrthographicLH(2.0f, 2.0f, 1.0f, 3.0f);
+	XMVECTOR Eye = XMLoadFloat3(&eye);
+	XMVECTOR Focus = XMLoadFloat3(&focus);
+	XMVECTOR Up = XMLoadFloat3(&up);
+	MATRIX ViewProj = XMMatrixLookAtLH(Eye, Focus, Up) * Ortho;
+	// save X transpose
+	DirectX::XMStoreFloat4x4(&viewProjX, DirectX::XMMatrixTranspose(ViewProj));
+
+	eye = XMFLOAT3(0, 2, 0);
+	focus = XMFLOAT3(0, 0, 0);
+	up = XMFLOAT3(0, 0, -1);
+	Eye = XMLoadFloat3(&eye);
+	Focus = XMLoadFloat3(&focus);
+	Up = XMLoadFloat3(&up);
+	ViewProj = XMMatrixLookAtLH(Eye, Focus, Up) * Ortho;
+	// save Y transpose
+	DirectX::XMStoreFloat4x4(&viewProjY, DirectX::XMMatrixTranspose(ViewProj));
+
+	eye = XMFLOAT3(0, 0, 2);
+	focus = XMFLOAT3(0, 0, 0);
+	up = XMFLOAT3(0, 1, 0);
+	Eye = XMLoadFloat3(&eye);
+	Focus = XMLoadFloat3(&focus);
+	Up = XMLoadFloat3(&up);
+	ViewProj = XMMatrixLookAtLH(Eye, Focus, Up) * Ortho;
+	// save Z transpose
+	DirectX::XMStoreFloat4x4(&viewProjZ, DirectX::XMMatrixTranspose(ViewProj));
+
+	// Render Geometry
+	renderer->context->RSSetState(voxelRastState);
+	ID3D11UnorderedAccessView* UAViews[2] = {counterUAV, voxelListUAV};
+	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(0, 0, 0, 0, 2, UAViews, 0);
+
 	SimpleVertexShader*   vertexShader;
 	SimpleGeometryShader* geomShader;
 	SimplePixelShader*    pixelShader;
@@ -180,24 +210,22 @@ void SparseVoxelOctree::voxelizeGeometry(int mode)
 	vertexShader->CopyAllBufferData();
 
 	geomShader->SetShader();
-	// TODO FIX THESE MATRICIES ******************************************
-	geomShader->SetMatrix4x4("ViewProjX", 0);
-	geomShader->SetMatrix4x4("ViewProjY", 0);
-	geomShader->SetMatrix4x4("ViewProjZ", 0);
+	geomShader->SetMatrix4x4("ViewProjX", viewProjX);
+	geomShader->SetMatrix4x4("ViewProjY", viewProjY);
+	geomShader->SetMatrix4x4("ViewProjZ", viewProjZ);
 	geomShader->SetInt("height", voxelDim);
 	geomShader->SetInt("width", voxelDim);
 
 	pixelShader->SetShader();
 	pixelShader->SetInt("store", mode); // 0 to count 1 to store
-	pixelShader->SetUnorderedAccessView("voxelList", voxelListUAV);
-	pixelShader->SetUnorderedAccessView("atomicCounter", counterUAV);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Mesh* meshTmp;
-	for (int i = 0; i < opaque.size(); i++)
+	std::vector<GameEntity*> staticObjects = renderer->GetStaticObjects();
+	for (int i = 0; i < staticObjects.size(); i++)
 	{
-		PBRMaterial* material = GetMaterial(opaque.at(i)->GetMaterial());
+		PBRMaterial* material = renderer->GetMaterial(staticObjects.at(i)->GetMaterial());
 		// Send texture Info
 		pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
 		pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
@@ -209,19 +237,19 @@ void SparseVoxelOctree::voxelizeGeometry(int mode)
 		pixelShader->CopyAllBufferData();
 
 		// Send Geometry
-		geomShader->SetMatrix4x4("World", *opaque.at(i)->GetWorld());
+		geomShader->SetMatrix4x4("World", *staticObjects.at(i)->GetWorld());
 		geomShader->CopyAllBufferData();
 		
-		meshTmp = GetMesh(opaque.at(i)->GetMesh());
+		meshTmp = renderer->GetMesh(staticObjects.at(i)->GetMesh());
 		ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-		context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
-		context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-		context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
+		renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
+		renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+		renderer->context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
 	}
 
 	// RESET STATES
-	// renderer->context->GSSetShader(0, 0, 0); // unset geometry shader
-	// context->RSSetState(0); // reset state
+	renderer->context->GSSetShader(0, 0, 0); // unset geometry shader
+	renderer->context->RSSetState(0); // reset state
 }
 
 void SparseVoxelOctree::deleteVoxelList()
@@ -246,7 +274,7 @@ void SparseVoxelOctree::mipMapUpOctree()
 	// IS IT POSSIBLE TO MAKE RECURSIVE COMPUTE SHADER CALLS?
 }
 
-int SparseVoxelOctree::getCount()
+int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	// Make a staging buffer for copying
 	D3D11_BUFFER_DESC stagingDesc;

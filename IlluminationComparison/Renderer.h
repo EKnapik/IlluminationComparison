@@ -81,6 +81,7 @@ public:
 	void SetPointLights(std::vector<ScenePointLight*>* pointLights) { this->pointLights = pointLights; }
 	void SetParticleEmitters(std::vector<ParticleEmitter*>* particleEmitters) { this->particleEmitters = particleEmitters; }
 
+	std::vector<GameEntity*> GetStaticObjects();
 
 protected:
 	void SortObjects();
