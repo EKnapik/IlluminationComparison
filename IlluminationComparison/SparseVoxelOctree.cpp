@@ -10,7 +10,7 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	voxelListSRV->Release();
 	voxelListUAV->Release();
 	voxelCount = getCount(renderer->device, renderer->context);
-	initVoxelList(renderer->device, voxelCount);
+	initVoxelList(renderer->device, 1000000);
 	voxelizeGeometry(renderer, 1);
 
 	initOctree(renderer->device);
@@ -33,7 +33,7 @@ void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
 	bufDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufDesc.ByteWidth = sizeof(INT32);
+	bufDesc.ByteWidth = sizeof(INT32) * 4; // must be multiple of 16
 	bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 	bufDesc.CPUAccessFlags = 0;
 	bufDesc.StructureByteStride = sizeof(INT32);
@@ -46,7 +46,7 @@ void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 	memset(&uavDesc, 0, sizeof(uavDesc));
 	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
 	uavDesc.Buffer.FirstElement = 0;
-	uavDesc.Buffer.NumElements = 1;
+	uavDesc.Buffer.NumElements = 4;
 	uavDesc.Buffer.Flags = 0;
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 
@@ -230,7 +230,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	geomShader->SetMatrix4x4("ViewProjZ", viewProjZ);
 	geomShader->SetInt("height", voxelDim);
 	geomShader->SetInt("width", voxelDim);
-
+	
 	pixelShader->SetShader();
 	pixelShader->SetInt("store", mode); // 0 to count 1 to store
 
@@ -263,6 +263,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	}
 
 	// RESET STATES
+	voxelRastState->Release();
 	renderer->context->GSSetShader(0, 0, 0); // unset geometry shader
 	renderer->context->RSSetState(0); // reset state
 }
@@ -327,7 +328,7 @@ int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* conte
 	D3D11_BUFFER_DESC stagingDesc;
 	memset(&stagingDesc, 0, sizeof(stagingDesc));
 	stagingDesc.Usage = D3D11_USAGE_STAGING;
-	stagingDesc.ByteWidth = sizeof(INT32);
+	stagingDesc.ByteWidth = sizeof(INT32) * 4; // must be multiple of 16
 	stagingDesc.BindFlags = 0;
 	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 	stagingDesc.StructureByteStride = sizeof(INT32);
@@ -345,10 +346,10 @@ int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* conte
 	HRESULT hr = context->Map(stagingBuffer, srIndex, D3D11_MAP_READ, 0, &mapped);
 
 	// Copy data and unmap
-	int finalCount;
-	memcpy(&finalCount, mapped.pData, sizeof(INT32));
+	int finalCount[4];
+	memcpy(&finalCount, mapped.pData, sizeof(INT32)*4);
 	context->Unmap(stagingBuffer, srIndex);
 	stagingBuffer->Release();
 
-	return finalCount;
+	return finalCount[0];
 }

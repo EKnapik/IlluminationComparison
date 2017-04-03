@@ -170,7 +170,8 @@ bool ISimpleShader::LoadShaderFile(LPCWSTR shaderFile)
 		newBuffDesc.CPUAccessFlags = 0;
 		newBuffDesc.MiscFlags = 0;
 		newBuffDesc.StructureByteStride = 0;
-		device->CreateBuffer(&newBuffDesc, 0, &constantBuffers[b].ConstantBuffer);
+		HRESULT result = device->CreateBuffer(&newBuffDesc, 0, &constantBuffers[b].ConstantBuffer);
+		assert(result == S_OK);
 
 		// Set up the data buffer for this constant buffer
 		constantBuffers[b].Size = bufferDesc.Size;

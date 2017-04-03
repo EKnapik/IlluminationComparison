@@ -16,5 +16,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 {
 	return float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	// Ray Trace for each pixel to intersect SVO
+	// Knowing first interstion with primary ray because of gBuffer
+	// ray march toward all lights calculating light contribution
+	// Optionally can increase the steps for cone tracing
 }

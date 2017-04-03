@@ -3,8 +3,9 @@
 // GET PBR TEXTURE INFO
 // GET APPROPRIATE OBJECT COLOR
 
-cbuffer externalData : register(b0)
+cbuffer voxelExternalData : register(b0)
 {
+	float3 padding;
 	int store;
 }
 
@@ -28,7 +29,7 @@ struct Voxel
 
 // atomic counter 
 // uniform atomic_uint u_voxelFragCount;
-globallycoherent RWStructuredBuffer<int> atomicCounter : register(u1);
+globallycoherent RWBuffer<int> atomicCounter : register(u1);
 
 // globallycoherent RWStructuredBuffer<Voxel> voxelList : register(u0);
 RWStructuredBuffer<Voxel> voxelList : register(u2);
