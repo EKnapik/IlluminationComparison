@@ -322,6 +322,7 @@ void SparseVoxelOctree::mipMapUpOctree(DefferedRenderer* renderer)
 }
 
 
+/// http://web.eecs.utk.edu/~smarz1/projects/dc5.0/
 int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	// Make a staging buffer for copying
@@ -339,15 +340,16 @@ int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* conte
 
 	// Copy the final data to the staging buffer
 	context->CopyResource(stagingBuffer, counter);
+	context->Flush();
 
 	// Map for reading
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	unsigned int srIndex = D3D11CalcSubresource(0, 0, 0);
-	HRESULT hr = context->Map(stagingBuffer, srIndex, D3D11_MAP_READ, 0, &mapped);
+	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
 
 	// Copy data and unmap
-	int finalCount[4];
-	memcpy(&finalCount, mapped.pData, sizeof(INT32)*4);
+	INT32 finalCount[4];
+	memcpy(finalCount, mapped.pData, sizeof(INT32)*4);
 	context->Unmap(stagingBuffer, srIndex);
 	stagingBuffer->Release();
 
