@@ -1,7 +1,7 @@
 #include "SparseVoxelOctree.h"
 using namespace DirectX;
 
-SparseVoxelOctree::SparseVoxelOctree(Renderer* const renderer)
+SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 {
 	initVoxelCounter(renderer->device);
 	voxelizeGeometry(renderer, 0);
@@ -10,10 +10,10 @@ SparseVoxelOctree::SparseVoxelOctree(Renderer* const renderer)
 	initVoxelList(renderer->device, voxelCount);
 	voxelizeGeometry(renderer, 1);
 
-	initOctree(renderer->device);
-	createOctree(renderer, 0);
-	createOctree(renderer, 1);
-	mipMapUpOctree(renderer);
+	//initOctree(renderer->device);
+	//createOctree(renderer, 0);
+	//createOctree(renderer, 1);
+	//mipMapUpOctree(renderer);
 
 	deleteVoxelList(); // also will delete the counter
 }
@@ -164,7 +164,7 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 }
 
 
-void SparseVoxelOctree::voxelizeGeometry(Renderer* renderer, int mode)
+void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 {
 	ID3D11RasterizerState *voxelRastState;
 	D3D11_RASTERIZER_DESC voxelRastDesc = {};
@@ -213,11 +213,11 @@ void SparseVoxelOctree::voxelizeGeometry(Renderer* renderer, int mode)
 	// Render Geometry
 	renderer->context->RSSetState(voxelRastState);
 	ID3D11UnorderedAccessView* UAViews[2] = {counterUAV, voxelListUAV};
-	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(0, 0, 0, 0, 2, UAViews, 0);
+	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderer->backBufferRTV, 0, 1, 2, UAViews, 0);
 
-	SimpleVertexShader*   vertexShader;
-	SimpleGeometryShader* geomShader;
-	SimplePixelShader*    pixelShader;
+	SimpleVertexShader*   vertexShader = renderer->GetVertexShader("voxelList");
+	SimpleGeometryShader* geomShader = renderer->GetGeometryShader("voxelList");
+	SimplePixelShader*    pixelShader = renderer->GetPixelShader("voxelList");
 	vertexShader->SetShader();
 	vertexShader->CopyAllBufferData();
 
@@ -275,12 +275,9 @@ void SparseVoxelOctree::deleteVoxelList()
 
 
 // 0 to count and allocate 1 to store
-void SparseVoxelOctree::createOctree(Renderer* renderer, int mode)
+void SparseVoxelOctree::createOctree(DefferedRenderer* renderer, int mode)
 {
-	// For each node in the node list execute a compute shader to first 'allocate'
-		// The allocation helps with avoiding moving data around and can tell when collisions happen for after
-	// For each node in the node list execute a compute shader to set and store the data
-	SimpleComputeShader* computeShader;
+	SimpleComputeShader* computeShader = renderer->GetComputeShader("constructSVO");
 
 	int squareDim = ceil(sqrt(voxelCount));
 
@@ -299,11 +296,12 @@ void SparseVoxelOctree::createOctree(Renderer* renderer, int mode)
 }
 
 
-void SparseVoxelOctree::mipMapUpOctree(Renderer* renderer)
+void SparseVoxelOctree::mipMapUpOctree(DefferedRenderer* renderer)
 {
 	// Set 8 compute shader values to traverse down the octree for their respective levels
 	// averaging as they move back up.
 	// IS IT POSSIBLE TO MAKE RECURSIVE COMPUTE SHADER CALLS?
+	// SimpleComputeShader* computeShader = renderer->GetComputeShader("mipMapSVO");
 }
 
 

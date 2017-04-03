@@ -74,6 +74,7 @@ void Game::Init()
 
 	gameManager.SetActiveScene(new PBRDemoScene());
 	renderer->SetSkyBox("japan");
+	renderer->AddVoxelOctree(new SparseVoxelOctree(renderer));
 }
 
 // --------------------------------------------------------
@@ -294,6 +295,14 @@ void Game::LoadShaders()
 	renderer->AddPixelShader("ascii", L"AsciiPS.cso");
 	renderer->AddPixelShader("passThrough", L"PassThrough_PS.cso");
 	renderer->AddPixelShader("ssao", L"SSAOPS.cso");
+
+	// Add Shaders for SVO
+	renderer->AddComputeShader("constructSVO", L"constructSVO.cso");
+	renderer->AddComputeShader("mipMapSVO", L"mipMapSVO.cso");
+	renderer->AddVertexShader("voxelList", L"voxelList_VS.cso");
+	renderer->AddGeometryShader("voxelList", L"voxelList_GS.cso");
+	renderer->AddPixelShader("voxelList", L"voxelList_PS.cso");
+	renderer->AddPixelShader("quadVoxelTrace", L"voxelRayTracing_PS.cso");
 }
 
 void Game::LoadMeshes()

@@ -122,7 +122,10 @@ void main( uint3 DTid : SV_DispatchThreadID )
 		// ALLOCATE AND follow pointer to next octree level
 		if (store == 0)
 			InterlockedAdd(octree[0].padding, 8, octree[currOctreeIndex].childPointer);
-		currOctreeIndex = octree[currOctreeIndex].childPointer;
+		if (octree[currOctreeIndex].childPointer != 0)
+			currOctreeIndex = octree[currOctreeIndex].childPointer;
+		else
+			break; // IF FOR SOME REASON THERE WILL BE A DATA OVERWRITE JUST LET IT HAPPEN
 		currLevel++;
 		// get to new position by moving then check again
 		curVoxelWidth /= 2.0f;

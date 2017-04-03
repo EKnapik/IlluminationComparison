@@ -295,6 +295,9 @@
     <FxCompile Include="mipMapSVO.hlsl">
       <Filter>Shaders\SVO</Filter>
     </FxCompile>
+    <FxCompile Include="voxelRayTracing_PS.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

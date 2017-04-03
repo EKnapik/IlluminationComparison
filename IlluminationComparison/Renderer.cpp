@@ -62,6 +62,11 @@ Renderer::~Renderer()
 		delete iterator->second;
 	}
 
+	typedef std::map<std::string, SimpleComputeShader*>::iterator compute_type;
+	for (compute_type iterator = ComputeShaderDictionary.begin(); iterator != ComputeShaderDictionary.end(); iterator++) {
+		delete iterator->second;
+	}
+
 	typedef std::map<std::string, ID3D11SamplerState*>::iterator sampler_type;
 	for (sampler_type iterator = SamplerDictionary.begin(); iterator != SamplerDictionary.end(); iterator++) {
 		iterator->second->Release();
@@ -317,6 +322,18 @@ void Renderer::AddGeometryShader(std::string name, std::wstring path, bool useSt
 	GeometryShaderDictionary.insert(std::pair<std::string, SimpleGeometryShader*>(name, geometryShader));
 }
 
+void Renderer::AddComputeShader(std::string name, std::wstring path)
+{
+	std::wstring debug = L"Debug/";
+	debug += path;
+	SimpleComputeShader* computeShader = new SimpleComputeShader(device, context);
+	if (!computeShader->LoadShaderFile(debug.c_str()))
+	{
+		computeShader->LoadShaderFile(path.c_str());
+	}
+	ComputeShaderDictionary.insert(std::pair<std::string, SimpleComputeShader*>(name, computeShader));
+}
+
 void Renderer::AddSampler(std::string name, D3D11_SAMPLER_DESC * sampleDesc)
 {
 	ID3D11SamplerState* samplerState;
@@ -530,6 +547,11 @@ SimplePixelShader * Renderer::GetPixelShader(std::string name)
 SimpleGeometryShader * Renderer::GetGeometryShader(std::string name)
 {
 	return GeometryShaderDictionary.at(name);
+}
+
+SimpleComputeShader * Renderer::GetComputeShader(std::string name)
+{
+	return ComputeShaderDictionary.at(name);
 }
 
 

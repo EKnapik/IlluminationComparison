@@ -266,6 +266,8 @@ DefferedRenderer::~DefferedRenderer()
 {
 	if (postProcessingInit)
 		delete postProcesser;
+	if (svoInit)
+		delete octree;
 
 	// Albedo
 	AlbedoRTV->Release();
@@ -334,10 +336,45 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	DrawParticleEmitters(deltaTime, totalTime);
 }
 
+void DefferedRenderer::RayTraceRender(FLOAT deltaTime, FLOAT totalTime)
+{
+	const float clearColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	context->ClearRenderTargetView(backBufferRTV, black);
+	// clear all the render targets
+	context->ClearRenderTargetView(AlbedoRTV, black);
+	context->ClearRenderTargetView(NormalRTV, black);
+	context->ClearRenderTargetView(DepthRTV, black);
+	context->ClearRenderTargetView(PBR_RTV, black);
+	context->ClearDepthStencilView(depthStencilView,
+		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+		1.0f, 0);
+
+	SortObjects();
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	gBufferRender(deltaTime, totalTime);
+	// Render Scene using raytracing for lighting
+	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	rayTraceLighting();
+
+	// Render Skybox
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	context->OMSetDepthStencilState(0, 0);
+	DrawSkyBox();
+}
+
 void DefferedRenderer::AddPostProcessSystem(PostProcesser * newPostProcesser)
 {
 	this->postProcesser = newPostProcesser;
 	postProcessingInit = true;
+}
+
+
+void DefferedRenderer::AddVoxelOctree(SparseVoxelOctree * newOctree)
+{
+	this->octree = newOctree;
+	svoInit = true;
 }
 
 
@@ -355,7 +392,6 @@ void DefferedRenderer::gBufferRender(FLOAT deltaTime, FLOAT totalTime)
 	DrawOpaqueMaterials();
 	// DrawTransparentMaterials();
 	// ########################################################!!!!!!!!!!!!!!!!!!!!!##################################################
-	// DrawSSAO();
 }
 
 
@@ -442,7 +478,6 @@ void DefferedRenderer::directionalLightRender() {
 	pixelShader->SetShaderResourceView("gDepth", DepthSRV);
 	pixelShader->SetShaderResourceView("gPBR", PBR_SRV);
 	pixelShader->SetShaderResourceView("SSAO", ssaoSRV);
-	// pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
 	pixelShader->SetShaderResourceView("Sky", GetCubeMaterial("japanFiltered")->GetSRV());
 
 	UINT stride = sizeof(Vertex);
@@ -562,4 +597,62 @@ void DefferedRenderer::DrawTransparentMaterials()
 	}
 
 	context->OMSetBlendState(0, factors, 0xFFFFFFFF);
+}
+
+
+// Renders the final using ray tracing through the SVO for lighting
+void DefferedRenderer::rayTraceLighting()
+{
+}
+
+
+// Ray Traces the SVO to just render the voxels
+void DefferedRenderer::rayTraceVoxel()
+{
+	SimpleVertexShader* vertexShader = GetVertexShader("quadPBR");
+	SimplePixelShader* pixelShader = GetPixelShader("quadVoxelTrace");
+	vertexShader->SetShader();
+	pixelShader->SetShader();
+
+	// Send G buffers to pixel shader
+	vertexShader->SetMatrix4x4("invViewProj", *camera->GetInvViewProj());
+	vertexShader->SetFloat3("cameraPosition", *camera->GetPosition());
+	vertexShader->CopyAllBufferData();
+	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
+	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
+	pixelShader->SetFloat("drawSSAO", drawSSAO);
+
+	pixelShader->SetSamplerState("basicSampler", simpleSampler);
+	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
+	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
+	pixelShader->SetShaderResourceView("gDepth", DepthSRV);
+	pixelShader->SetShaderResourceView("gPBR", PBR_SRV);
+	pixelShader->SetShaderResourceView("SSAO", ssaoSRV);
+	pixelShader->SetShaderResourceView("Sky", GetCubeMaterial("japanFiltered")->GetSRV());
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	Mesh* meshTmp = GetMesh("quad");
+	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
+	DirectionalLight light;
+	for (int i = 0; i < directionalLights->size(); i++) {
+		// Send light info to pixel shader
+		light.AmbientColor = directionalLights->at(i).AmbientColor;
+		light.DiffuseColor = directionalLights->at(i).DiffuseColor;
+		light.Direction = directionalLights->at(i).Direction;
+		pixelShader->SetData("dirLight", &light, sizeof(DirectionalLight));
+		pixelShader->CopyAllBufferData();
+
+		context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
+		context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+		context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
+	}
+
+	// RESET STATES
+	pixelShader->SetShaderResourceView("gAlbedo", 0);
+	pixelShader->SetShaderResourceView("gNormal", 0);
+	pixelShader->SetShaderResourceView("gDepth", 0);
+	pixelShader->SetShaderResourceView("gPBR", 0);
+	pixelShader->SetShaderResourceView("SSAO", 0);
+	return;
 }

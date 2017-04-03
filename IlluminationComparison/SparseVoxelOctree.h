@@ -3,22 +3,24 @@
 #include <DirectXMath.h>
 #include "DXMathImpl.h"
 #include "SimpleShader.h"
-#include "Renderer.h"
+#include "DefferedRenderer.h"
+
+class DefferedRenderer;
 
 class SparseVoxelOctree
 {
 public:
-	SparseVoxelOctree(Renderer* const renderer);
+	SparseVoxelOctree(DefferedRenderer* const renderer);
 	~SparseVoxelOctree();
 
 private:
 	void initVoxelCounter(ID3D11Device* device);
 	void initVoxelList(ID3D11Device* device, int numElements);
 	void initOctree(ID3D11Device* device);
-	void voxelizeGeometry(Renderer* renderer, int mode); // 0 to count 1 to store
+	void voxelizeGeometry(DefferedRenderer* renderer, int mode); // 0 to count 1 to store
 	void deleteVoxelList();
-	void createOctree(Renderer* renderer, int mode); // 0 to allocate 1 to store
-	void mipMapUpOctree(Renderer* renderer);
+	void createOctree(DefferedRenderer* renderer, int mode); // 0 to allocate 1 to store
+	void mipMapUpOctree(DefferedRenderer* renderer);
 	int  getCount(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	int voxelCount = 0;

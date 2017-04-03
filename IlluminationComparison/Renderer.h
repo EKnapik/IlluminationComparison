@@ -58,12 +58,14 @@ public:
 	void AddPixelShader(std::string name, std::wstring path);
 	void AddGeometryShader(std::string name, std::wstring path);
 	void AddGeometryShader(std::string name, std::wstring path, bool useStreamOut, bool allowStreamOutRasterization);
+	void AddComputeShader(std::string name, std::wstring path);
 
 	void AddSampler(std::string name, D3D11_SAMPLER_DESC* sampleDesc);
 	ID3D11SamplerState* GetSampler(std::string name);
 	SimpleVertexShader* GetVertexShader(std::string name);
 	SimplePixelShader* GetPixelShader(std::string name);
 	SimpleGeometryShader* GetGeometryShader(std::string name);
+	SimpleComputeShader* GetComputeShader(std::string name);
 
 	void SetSkyBox(std::string name);
 
@@ -111,6 +113,7 @@ protected:
 	std::map<std::string, SimpleVertexShader*>	VertexShaderDictionary;
 	std::map<std::string, SimplePixelShader*>	PixelShaderDictionary;
 	std::map<std::string, SimpleGeometryShader*>GeometryShaderDictionary;
+	std::map<std::string, SimpleComputeShader*> ComputeShaderDictionary;
 	std::map<std::string, ID3D11SamplerState*>  SamplerDictionary;
 
 	CubeMap* skyBox = nullptr;
