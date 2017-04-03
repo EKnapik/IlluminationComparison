@@ -4,15 +4,17 @@ using namespace DirectX;
 SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 {
 	initVoxelCounter(renderer->device);
+	initVoxelList(renderer->device, 16); // DirectX requires VoxelList to exist
 	voxelizeGeometry(renderer, 0);
 	// get count of voxels
+	voxelListSRV->Release();
+	voxelListUAV->Release();
 	voxelCount = getCount(renderer->device, renderer->context);
 	initVoxelList(renderer->device, voxelCount);
 	voxelizeGeometry(renderer, 1);
 
-	//initOctree(renderer->device);
-	//createOctree(renderer, 0);
-	//createOctree(renderer, 1);
+	initOctree(renderer->device);
+	createOctree(renderer);
 	//mipMapUpOctree(renderer);
 
 	deleteVoxelList(); // also will delete the counter
@@ -213,7 +215,8 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	// Render Geometry
 	renderer->context->RSSetState(voxelRastState);
 	ID3D11UnorderedAccessView* UAViews[2] = {counterUAV, voxelListUAV};
-	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderer->backBufferRTV, 0, 1, 2, UAViews, 0);
+	const UINT * temp = (const UINT *)0;
+	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderer->backBufferRTV, 0, 1, 2, UAViews, temp);
 
 	SimpleVertexShader*   vertexShader = renderer->GetVertexShader("voxelList");
 	SimpleGeometryShader* geomShader = renderer->GetGeometryShader("voxelList");
@@ -274,16 +277,29 @@ void SparseVoxelOctree::deleteVoxelList()
 }
 
 
-// 0 to count and allocate 1 to store
-void SparseVoxelOctree::createOctree(DefferedRenderer* renderer, int mode)
+void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 {
+	// Allocate Octree
 	SimpleComputeShader* computeShader = renderer->GetComputeShader("constructSVO");
-
 	int squareDim = ceil(sqrt(voxelCount));
-
 	computeShader->SetInt("numThreadRows", squareDim);
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
-	computeShader->SetInt("store", mode);
+	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
+	computeShader->SetInt("wvWidth", 25);
+	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
+	computeShader->SetUnorderedAccessView("octree", octreeUAV);
+	computeShader->CopyAllBufferData();
+	computeShader->DispatchByThreads(squareDim, squareDim, 1);
+
+	// Unbind the UAV and SRV
+	computeShader->SetShaderResourceView("voxelList", 0);
+	computeShader->SetUnorderedAccessView("octree", 0);
+
+	// Save Values of the voxel list
+	computeShader = renderer->GetComputeShader("storeSVO");
+	computeShader->SetInt("numThreadRows", squareDim);
+	computeShader->SetInt("MaxVoxelIndex", voxelCount);
+	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
 	computeShader->SetInt("wvWidth", 25);
 	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
 	computeShader->SetUnorderedAccessView("octree", octreeUAV);

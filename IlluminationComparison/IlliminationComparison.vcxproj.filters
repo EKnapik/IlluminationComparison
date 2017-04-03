@@ -298,6 +298,9 @@
     <FxCompile Include="voxelRayTracing_PS.hlsl">
       <Filter>Shaders\SVO</Filter>
     </FxCompile>
+    <FxCompile Include="storeSVO.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -3,7 +3,7 @@ cbuffer externalData : register(b0)
 {
 	int numThreadRows;
 	int MaxVoxelIndex;
-	int MaxOctreeDepth;	
+	int MaxOctreeDepth;
 	int wvWidth;    // world Voxel width Entire space is made up of a (wvWidth + wvWidth)**3 area
 }
 
@@ -98,34 +98,30 @@ float4 GetOctaveIndex(float3 pos)
 
 // A group of 32 x 32 threads
 [numthreads(32, 32, 1)]
-void main( uint3 DTid : SV_DispatchThreadID )
+void main(uint3 DTid : SV_DispatchThreadID)
 {
 	int voxelIndex = (DTid.y * numThreadRows) + DTid.x;
 	if (voxelIndex > MaxVoxelIndex)
 		return;
-	if (voxelIndex = 0)
-		octree[0].padding = 8;
-	DeviceMemoryBarrier(); // Ensure all threads start with the next available memory
 
 	Voxel curVoxel = voxelList[voxelIndex];
 	// Go to position in octree node chunk
-	int currLevel = 0;
 	int currOctreeIndex;
 	float curVoxelWidth = wvWidth;
 	// the 0-7 index offset and the offset to move by if needing to traverse
 	float4 octaveIndex = GetOctaveIndex(curVoxel.position);
 	currOctreeIndex = octaveIndex.x;
-	int checkValue = 0;
 	[allow_uav_condition] for (int currLevel = 0; currLevel < MaxOctreeDepth; currLevel++)
 	{
-		// ALLOCATE AND follow pointer to next octree level
-		InterlockedCompareExchange(octree[currOctreeIndex].flagBits, 0, 1, checkValue);
-		InterlockedAdd(octree[0].padding, 8, octree[currOctreeIndex].childPointer);
-		currOctreeIndex = octree[currOctreeIndex].childPointer;
 		// get to new position by moving then check again
 		curVoxelWidth /= 2.0f;
 		curVoxel.position -= float3(octaveIndex.yzw) * curVoxelWidth;
 		octaveIndex = GetOctaveIndex(curVoxel.position);
-		currOctreeIndex += octaveIndex.x;
+		currOctreeIndex = octree[currOctreeIndex].childPointer + octaveIndex.x;
 	}
+
+	// Should atomically average here but currently just storing the last
+	octree[currOctreeIndex].position = voxelList[voxelIndex].position;
+	octree[currOctreeIndex].normal = voxelList[voxelIndex].position;
+	octree[currOctreeIndex].color = voxelList[voxelIndex].position;
 }

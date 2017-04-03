@@ -298,6 +298,7 @@ void Game::LoadShaders()
 
 	// Add Shaders for SVO
 	renderer->AddComputeShader("constructSVO", L"constructSVO.cso");
+	renderer->AddComputeShader("storeSVO", L"storeSVO.cso");
 	renderer->AddComputeShader("mipMapSVO", L"mipMapSVO.cso");
 	renderer->AddVertexShader("voxelList", L"voxelList_VS.cso");
 	renderer->AddGeometryShader("voxelList", L"voxelList_GS.cso");
