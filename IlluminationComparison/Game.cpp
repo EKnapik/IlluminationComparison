@@ -183,8 +183,9 @@ void Game::Update(float deltaTime, float totalTime)
 void Game::Draw(float deltaTime, float totalTime)
 {
 	renderer->RenderShadowMap();
-	renderer->Render(deltaTime, totalTime);
-	
+	// renderer->Render(deltaTime, totalTime);
+	renderer->RayTraceRender(deltaTime, totalTime);
+
 	swapChain->Present(0, 0);
 }
 

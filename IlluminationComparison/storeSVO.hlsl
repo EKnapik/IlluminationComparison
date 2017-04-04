@@ -20,7 +20,7 @@ struct Node
 	float3			position;
 	float3			normal;
 	float3			color;
-	int             flagBits;
+	int             flagBits;       // 0 empty, 1 pointer to nodes, 2 leaf node
 	int             childPointer;	// pointer to child 8 tile chunch of the octree, an offset index
 	uint			padding;		// ensures the 128 bit allignment
 };
@@ -121,6 +121,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	}
 
 	// Should atomically average here but currently just storing the last
+	octree[currOctreeIndex].flagBits = 2;
 	octree[currOctreeIndex].position = voxelList[voxelIndex].position;
 	octree[currOctreeIndex].normal = voxelList[voxelIndex].position;
 	octree[currOctreeIndex].color = voxelList[voxelIndex].position;

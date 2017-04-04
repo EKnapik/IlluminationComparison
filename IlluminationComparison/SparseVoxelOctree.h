@@ -12,6 +12,8 @@ class SparseVoxelOctree
 public:
 	SparseVoxelOctree(DefferedRenderer* const renderer);
 	~SparseVoxelOctree();
+	int maxOctreeDepth = 9;
+	int wvWidth = 25;
 
 private:
 	void initVoxelCounter(ID3D11Device* device);
@@ -25,7 +27,7 @@ private:
 
 	int voxelCount = 0;
 	int	voxelDim = 256; // 256*256*256 + mip mapped octree for memory size
-	int maxOctreeDepth = 9;
+	
 	ID3D11Buffer			  *counter;
 	ID3D11UnorderedAccessView *counterUAV;
 	ID3D11UnorderedAccessView *voxelListUAV;

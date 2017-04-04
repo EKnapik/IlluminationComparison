@@ -351,6 +351,9 @@ void DefferedRenderer::RayTraceRender(FLOAT deltaTime, FLOAT totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f, 0);
 
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	rayTraceVoxel();
+	/*
 	SortObjects();
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	gBufferRender(deltaTime, totalTime);
@@ -362,6 +365,7 @@ void DefferedRenderer::RayTraceRender(FLOAT deltaTime, FLOAT totalTime)
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	context->OMSetDepthStencilState(0, 0);
 	DrawSkyBox();
+	*/
 }
 
 void DefferedRenderer::AddPostProcessSystem(PostProcesser * newPostProcesser)
@@ -620,39 +624,20 @@ void DefferedRenderer::rayTraceVoxel()
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	pixelShader->SetFloat("drawSSAO", drawSSAO);
-
-	pixelShader->SetSamplerState("basicSampler", simpleSampler);
-	pixelShader->SetShaderResourceView("gAlbedo", AlbedoSRV);
-	pixelShader->SetShaderResourceView("gNormal", NormalSRV);
-	pixelShader->SetShaderResourceView("gDepth", DepthSRV);
-	pixelShader->SetShaderResourceView("gPBR", PBR_SRV);
-	pixelShader->SetShaderResourceView("SSAO", ssaoSRV);
-	pixelShader->SetShaderResourceView("Sky", GetCubeMaterial("japanFiltered")->GetSRV());
+	pixelShader->SetInt("MaxOctreeDepth", octree->maxOctreeDepth);
+	pixelShader->SetInt("wvWidth", octree->wvWidth);
+	pixelShader->CopyAllBufferData();
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Mesh* meshTmp = GetMesh("quad");
 	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-	DirectionalLight light;
-	for (int i = 0; i < directionalLights->size(); i++) {
-		// Send light info to pixel shader
-		light.AmbientColor = directionalLights->at(i).AmbientColor;
-		light.DiffuseColor = directionalLights->at(i).DiffuseColor;
-		light.Direction = directionalLights->at(i).Direction;
-		pixelShader->SetData("dirLight", &light, sizeof(DirectionalLight));
-		pixelShader->CopyAllBufferData();
 
-		context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
-		context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-		context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
-	}
+	// Send light info to pixel shader
+	context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
+	context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
 
 	// RESET STATES
-	pixelShader->SetShaderResourceView("gAlbedo", 0);
-	pixelShader->SetShaderResourceView("gNormal", 0);
-	pixelShader->SetShaderResourceView("gDepth", 0);
-	pixelShader->SetShaderResourceView("gPBR", 0);
-	pixelShader->SetShaderResourceView("SSAO", 0);
 	return;
 }

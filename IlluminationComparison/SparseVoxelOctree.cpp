@@ -10,6 +10,7 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	voxelListSRV->Release();
 	voxelListUAV->Release();
 	voxelCount = getCount(renderer->device, renderer->context);
+	voxelCount = 1000;
 	initVoxelList(renderer->device, 1000000);
 	voxelizeGeometry(renderer, 1);
 
@@ -286,7 +287,7 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("numThreadRows", squareDim);
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
 	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
-	computeShader->SetInt("wvWidth", 25);
+	computeShader->SetInt("wvWidth", wvWidth);
 	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
 	computeShader->SetUnorderedAccessView("octree", octreeUAV);
 	computeShader->CopyAllBufferData();
@@ -301,7 +302,7 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("numThreadRows", squareDim);
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
 	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
-	computeShader->SetInt("wvWidth", 25);
+	computeShader->SetInt("wvWidth", wvWidth);
 	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
 	computeShader->SetUnorderedAccessView("octree", octreeUAV);
 	computeShader->CopyAllBufferData();

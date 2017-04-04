@@ -54,8 +54,7 @@ float main(GStoPS input) : SV_TARGET
 		voxelList[storePlace] = voxel;
 	}
 	else {
-		// InterlockedAdd(atomicCounter[0], 1, storePlace);
-		atomicCounter[0] = 5;
+		InterlockedAdd(atomicCounter[0], 1, storePlace);
 	}
 	
 	return 1.0f;
