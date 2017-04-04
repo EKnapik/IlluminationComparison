@@ -304,6 +304,9 @@
     <FxCompile Include="svoLighting_PS.hlsl">
       <Filter>Shaders\SVO</Filter>
     </FxCompile>
+    <FxCompile Include="rayMarchExample_PS.hlsl">
+      <Filter>Shaders\SVO</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

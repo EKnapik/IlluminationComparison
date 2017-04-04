@@ -15,6 +15,8 @@ public:
 	int maxOctreeDepth = 9;
 	int wvWidth = 25;
 
+	ID3D11ShaderResourceView* GetOctreeSRV() { return octreeSRV; };
+
 private:
 	void initVoxelCounter(ID3D11Device* device);
 	void initVoxelList(ID3D11Device* device, int numElements);

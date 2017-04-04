@@ -305,6 +305,7 @@ void Game::LoadShaders()
 	renderer->AddGeometryShader("voxelList", L"voxelList_GS.cso");
 	renderer->AddPixelShader("voxelList", L"voxelList_PS.cso");
 	renderer->AddPixelShader("quadVoxelTrace", L"voxelRayTracing_PS.cso");
+	renderer->AddPixelShader("rayMarchExample", L"rayMarchExample_PS.cso");
 }
 
 void Game::LoadMeshes()
