@@ -243,13 +243,13 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	{
 		PBRMaterial* material = renderer->GetMaterial(staticObjects.at(i)->GetMaterial());
 		// Send texture Info
-		pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
-		pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
-		pixelShader->SetShaderResourceView("normalMap", material->GetNormalSRV());
-		pixelShader->SetShaderResourceView("metalMap", material->GetMetallicSRV());
-		pixelShader->SetShaderResourceView("roughMap", material->GetRoughnessSRV());
-		pixelShader->SetFloat("metallic", material->GetMetallicParam());
-		pixelShader->SetFloat("roughness", material->GetRoughnessParam());
+		// pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
+		// pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
+		// pixelShader->SetShaderResourceView("normalMap", material->GetNormalSRV());
+		// pixelShader->SetShaderResourceView("metalMap", material->GetMetallicSRV());
+		// pixelShader->SetShaderResourceView("roughMap", material->GetRoughnessSRV());
+		// pixelShader->SetFloat("metallic", material->GetMetallicParam());
+		// pixelShader->SetFloat("roughness", material->GetRoughnessParam());
 		pixelShader->CopyAllBufferData();
 
 		// Send Geometry

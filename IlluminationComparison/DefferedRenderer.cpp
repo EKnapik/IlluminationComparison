@@ -614,8 +614,8 @@ void DefferedRenderer::rayTraceLighting()
 void DefferedRenderer::rayTraceVoxel()
 {
 	SimpleVertexShader* vertexShader = GetVertexShader("quadPBR");
-	SimplePixelShader* pixelShader = GetPixelShader("quadVoxelTrace");
-	// SimplePixelShader* pixelShader = GetPixelShader("rayMarchExample");
+	// SimplePixelShader* pixelShader = GetPixelShader("quadVoxelTrace");
+	SimplePixelShader* pixelShader = GetPixelShader("rayMarchExample");
 	
 	vertexShader->SetShader();
 	pixelShader->SetShader();
