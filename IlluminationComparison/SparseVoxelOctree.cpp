@@ -10,8 +10,7 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	voxelListSRV->Release();
 	voxelListUAV->Release();
 	voxelCount = getCount(renderer->device, renderer->context);
-	voxelCount = 1000;
-	initVoxelList(renderer->device, 1000000);
+	initVoxelList(renderer->device, voxelCount);
 	voxelizeGeometry(renderer, 1);
 
 	initOctree(renderer->device);
@@ -38,14 +37,14 @@ void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 	bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 	bufDesc.CPUAccessFlags = 0;
 	bufDesc.StructureByteStride = sizeof(INT32);
-	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	bufDesc.MiscFlags = 0;
 
 	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &counter);
 	assert(result == S_OK);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 	memset(&uavDesc, 0, sizeof(uavDesc));
-	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.Format = DXGI_FORMAT_R32_SINT;
 	uavDesc.Buffer.FirstElement = 0;
 	uavDesc.Buffer.NumElements = 4;
 	uavDesc.Buffer.Flags = 0;
@@ -238,7 +237,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Mesh* meshTmp;
-	std::vector<GameEntity*> staticObjects = renderer->GetStaticObjects();
+	std::vector<GameEntity*> staticObjects = *renderer->GetStaticObjects();
 	for (int i = 0; i < staticObjects.size(); i++)
 	{
 		PBRMaterial* material = renderer->GetMaterial(staticObjects.at(i)->GetMaterial());

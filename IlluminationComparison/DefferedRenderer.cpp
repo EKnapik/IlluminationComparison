@@ -316,7 +316,7 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f, 0);
 
-	SortObjects();
+	SortObjects();   /// PLACES GAME OBJECTS INTO OPAQUE AND TRANSPARENT BUFFER
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	gBufferRender(deltaTime, totalTime);
 	postProcesser->ssao(ssaoRTV); // render into ssao texture
@@ -351,6 +351,7 @@ void DefferedRenderer::RayTraceRender(FLOAT deltaTime, FLOAT totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f, 0);
 
+	SortObjects();   /// PLACES GAME OBJECTS INTO OPAQUE AND TRANSPARENT BUFFER
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	rayTraceVoxel();
 	/*

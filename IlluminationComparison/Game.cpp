@@ -74,6 +74,10 @@ void Game::Init()
 
 	gameManager.SetActiveScene(new PBRDemoScene());
 	renderer->SetSkyBox("japan");
+
+	// Set the current scene's entities so the octree will have them
+	gameManager.Update(0);
+	renderer->SetGameEntities(&gameManager.GameEntities);
 	renderer->AddVoxelOctree(new SparseVoxelOctree(renderer));
 }
 
