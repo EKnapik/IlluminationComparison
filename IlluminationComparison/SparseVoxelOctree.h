@@ -27,8 +27,12 @@ private:
 	void mipMapUpOctree(DefferedRenderer* renderer);
 	int  getCount(ID3D11Device* device, ID3D11DeviceContext* context);
 
+	void cpuVoxelListCapture();
+	void cpuOctreeCapture();
+
 	int voxelCount = 0;
 	int	voxelDim = 256; // 256*256*256 + mip mapped octree for memory size
+	int octreeSize = 0;
 	
 	ID3D11Buffer			  *counter;
 	ID3D11UnorderedAccessView *counterUAV;
