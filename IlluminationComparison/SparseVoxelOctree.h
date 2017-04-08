@@ -16,6 +16,7 @@ public:
 	int wvWidth = 25;
 
 	ID3D11ShaderResourceView* GetOctreeSRV() { return octreeSRV; };
+	void OctreeEveryFrame(DefferedRenderer* const renderer);
 
 private:
 	void initVoxelCounter(ID3D11Device* device);
@@ -27,14 +28,16 @@ private:
 	void mipMapUpOctree(DefferedRenderer* renderer);
 	int  getCount(ID3D11Device* device, ID3D11DeviceContext* context);
 
-	void cpuVoxelListCapture();
-	void cpuOctreeCapture();
+	void cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context);
+	void cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	int voxelCount = 0;
 	int	voxelDim = 256; // 256*256*256 + mip mapped octree for memory size
 	int octreeSize = 0;
 	
 	ID3D11Buffer			  *counter;
+	ID3D11Buffer			  *voxelList;
+	ID3D11Buffer			  *octree;
 	ID3D11UnorderedAccessView *counterUAV;
 	ID3D11UnorderedAccessView *voxelListUAV;
 	ID3D11ShaderResourceView  *voxelListSRV;

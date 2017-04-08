@@ -1,7 +1,8 @@
 
-
 // GET PBR TEXTURE INFO
 // GET APPROPRIATE OBJECT COLOR
+Texture2D albedoMap			: register(t0);
+SamplerState basicSampler	: register(s0);
 
 cbuffer voxelExternalData : register(b0)
 {
@@ -46,7 +47,7 @@ float main(GStoPS input) : SV_TARGET
 		Voxel voxel;
 		voxel.position = input.pos;
 		voxel.normal = input.pos;
-		voxel.color = float3(1.0f, 0.0f, 0.0f);
+		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
 		voxel.padding = float3(0.0, 0.0, 0.0); // This data is uninportant and is used for gpu efficiency
 		
 		InterlockedAdd(atomicCounter[0], -1, storePlace);

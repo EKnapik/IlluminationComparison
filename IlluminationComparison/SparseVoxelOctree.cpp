@@ -7,24 +7,41 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	initVoxelList(renderer->device, 16); // DirectX requires VoxelList to exist
 	voxelizeGeometry(renderer, 0);
 	// get count of voxels
+	voxelList->Release();
 	voxelListSRV->Release();
 	voxelListUAV->Release();
 	voxelCount = getCount(renderer->device, renderer->context);
 	initVoxelList(renderer->device, voxelCount);
  	voxelizeGeometry(renderer, 1);
+	// use breakpoint debug to check the voxel list
+	// cpuVoxelListCapture(renderer->device, renderer->context);
 
 	initOctree(renderer->device);
 	createOctree(renderer);
-	//mipMapUpOctree(renderer);
+	// Use breakpoint debug to check the octree
+	// cpuOctreeCapture(renderer->device, renderer->context);
+	// mipMapUpOctree(renderer);
 
-	deleteVoxelList(); // also will delete the counter
+	// deleteVoxelList(); // also will delete the counter
 }
 
 
 SparseVoxelOctree::~SparseVoxelOctree()
 {
+	octree->Release();
 	octreeUAV->Release();
 	octreeSRV->Release();
+	deleteVoxelList();
+}
+
+
+void SparseVoxelOctree::OctreeEveryFrame(DefferedRenderer * const renderer)
+{
+	octree->Release();
+	octreeSRV->Release();
+	octreeUAV->Release();
+	initOctree(renderer->device);
+	createOctree(renderer);
 }
 
 void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
@@ -58,8 +75,6 @@ void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 
 void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 {
-	ID3D11Buffer *voxelListBuffer;
-
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
 	bufDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -69,7 +84,7 @@ void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 	bufDesc.StructureByteStride = sizeof(Voxel);
 	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &voxelListBuffer);
+	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &voxelList);
 	assert(result == S_OK);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
@@ -81,7 +96,7 @@ void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 
 	// TODO: Check the results and error handle
-	result = device->CreateUnorderedAccessView(voxelListBuffer, &uavDesc, &voxelListUAV);
+	result = device->CreateUnorderedAccessView(voxelList, &uavDesc, &voxelListUAV);
 	assert(result == S_OK);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -90,11 +105,8 @@ void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.Buffer.ElementWidth = numElements;
 
-	result = device->CreateShaderResourceView(voxelListBuffer, &srvDesc, &voxelListSRV);
+	result = device->CreateShaderResourceView(voxelList, &srvDesc, &voxelListSRV);
 	assert(result == S_OK);
-
-	// release the cpu buffer
-	voxelListBuffer->Release();
 }
 
 
@@ -116,18 +128,15 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	// OF VALUES IF THEIR FINAL NODE RESULTS IN A COLLISION BECAUSE OF SIZE RESTRICTION
 
 	// 256*256*256 + mip mapped octree for memory size
-	int totalLeafNodes = voxelDim*voxelDim*voxelDim;
+	int totalLeafNodes = voxelDim*voxelDim;// *voxelDim;
 	int numOctreeNodes = totalLeafNodes;
-	int octreeLevels = 1;
-	while (totalLeafNodes > 8)
+	for (int i = 0; i < 0; i++)
 	{
 		totalLeafNodes /= 8;
 		numOctreeNodes += totalLeafNodes;
-		octreeLevels++;
 	}
 
 	octreeSize = numOctreeNodes;
-	ID3D11Buffer *octreeBuffer;
 
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
@@ -138,7 +147,7 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	bufDesc.StructureByteStride = sizeof(Node);
 	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &octreeBuffer);
+	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &octree);
 	assert(result == S_OK);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
@@ -150,7 +159,7 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 
 	// TODO: Check the results and error handle
-	result = device->CreateUnorderedAccessView(octreeBuffer, &uavDesc, &octreeUAV);
+	result = device->CreateUnorderedAccessView(octree, &uavDesc, &octreeUAV);
 	assert(result == S_OK);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -159,11 +168,8 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.Buffer.ElementWidth = octreeSize;
 
-	result = device->CreateShaderResourceView(octreeBuffer, &srvDesc, &octreeSRV);
+	result = device->CreateShaderResourceView(octree, &srvDesc, &octreeSRV);
 	assert(result == S_OK);
-
-	// release the cpu buffer
-	octreeBuffer->Release();
 }
 
 
@@ -243,8 +249,8 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	{
 		PBRMaterial* material = renderer->GetMaterial(staticObjects.at(i)->GetMaterial());
 		// Send texture Info
-		// pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
-		// pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
+		pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
+		pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
 		// pixelShader->SetShaderResourceView("normalMap", material->GetNormalSRV());
 		// pixelShader->SetShaderResourceView("metalMap", material->GetMetallicSRV());
 		// pixelShader->SetShaderResourceView("roughMap", material->GetRoughnessSRV());
@@ -274,6 +280,7 @@ void SparseVoxelOctree::deleteVoxelList()
 {
 	counter->Release();
 	counterUAV->Release();
+	voxelList->Release();
 	voxelListUAV->Release();
 	voxelListSRV->Release();
 }
@@ -345,42 +352,65 @@ int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* conte
 
 	// Map for reading
 	D3D11_MAPPED_SUBRESOURCE mapped;
-	unsigned int srIndex = D3D11CalcSubresource(0, 0, 0);
 	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
 
 	// Copy data and unmap
 	INT32 finalCount[4];
 	memcpy(finalCount, mapped.pData, sizeof(INT32)*4);
-	context->Unmap(stagingBuffer, srIndex);
+	context->Unmap(stagingBuffer, 0);
 	stagingBuffer->Release();
 
 	return finalCount[0];
 }
 
-void SparseVoxelOctree::cpuVoxelListCapture()
+void SparseVoxelOctree::cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context)
 {
-	D3D11_BUFFER_DESC bufDesc;
-	memset(&bufDesc, 0, sizeof(bufDesc));
-	bufDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufDesc.ByteWidth = sizeof(Voxel) * numElements;
-	bufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-	bufDesc.CPUAccessFlags = 0;
-	bufDesc.StructureByteStride = sizeof(Voxel);
-	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	D3D11_BUFFER_DESC stagingDesc;
+	memset(&stagingDesc, 0, sizeof(stagingDesc));
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.ByteWidth = sizeof(Voxel) * voxelCount;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	stagingDesc.StructureByteStride = sizeof(Voxel);
+	stagingDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &voxelListBuffer);
+	ID3D11Buffer* stagingBuffer;
+	HRESULT result = device->CreateBuffer(&stagingDesc, 0, &stagingBuffer);
+	context->CopyResource(stagingBuffer, voxelList);
+	context->Flush();
+
+	// Map for reading
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
+
+	Voxel finalVoxelList[1000];
+	memcpy(finalVoxelList, mapped.pData, sizeof(Voxel) * voxelCount);
+	context->Unmap(stagingBuffer, 0);
+	stagingBuffer->Release();
 }
 
-void SparseVoxelOctree::cpuOctreeCapture()
+void SparseVoxelOctree::cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context)
 {
-	D3D11_BUFFER_DESC bufDesc;
-	memset(&bufDesc, 0, sizeof(bufDesc));
-	bufDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufDesc.ByteWidth = sizeof(Node) * octreeSize;
-	bufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-	bufDesc.CPUAccessFlags = 0;
-	bufDesc.StructureByteStride = sizeof(Node);
-	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	D3D11_BUFFER_DESC stagingDesc;
+	memset(&stagingDesc, 0, sizeof(stagingDesc));
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.ByteWidth = sizeof(Node) * octreeSize;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	stagingDesc.StructureByteStride = sizeof(Node);
+	stagingDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &octreeBuffer);
+	ID3D11Buffer* stagingBuffer;
+	HRESULT result = device->CreateBuffer(&stagingDesc, 0, &stagingBuffer);
+	context->CopyResource(stagingBuffer, octree);
+	context->Flush();
+
+	// Map for reading
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
+
+	Node finalOctree[1000];
+	memcpy(finalOctree, mapped.pData, sizeof(Node) * 1000);
+	context->Unmap(stagingBuffer, 0);
+	stagingBuffer->Release();
 }
