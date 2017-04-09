@@ -14,10 +14,10 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	initVoxelList(renderer->device, voxelCount);
  	voxelizeGeometry(renderer, 1);
 	// use breakpoint debug to check the voxel list
-	// cpuVoxelListCapture(renderer->device, renderer->context);
+	cpuVoxelListCapture(renderer->device, renderer->context);
 
 	initOctree(renderer->device);
-	createOctree(renderer);
+	// createOctree(renderer);
 	// Use breakpoint debug to check the octree
 	// cpuOctreeCapture(renderer->device, renderer->context);
 	// mipMapUpOctree(renderer);
@@ -35,14 +35,37 @@ SparseVoxelOctree::~SparseVoxelOctree()
 }
 
 
-void SparseVoxelOctree::OctreeEveryFrame(DefferedRenderer * const renderer)
+void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 {
-	octree->Release();
-	octreeSRV->Release();
-	octreeUAV->Release();
-	initOctree(renderer->device);
-	createOctree(renderer);
+	renderer->context->OMSetRenderTargets(1, &renderer->backBufferRTV, renderer->depthStencilView);
+
+	SimpleVertexShader*   vertexShader = renderer->GetVertexShader("voxelDebug");
+	SimplePixelShader*    pixelShader = renderer->GetPixelShader("voxelDebug");
+	vertexShader->SetShader();
+	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
+	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
+	vertexShader->SetFloat("voxelScale", 1.0f);
+	vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
+	
+	pixelShader->SetShader();
+	pixelShader->CopyAllBufferData();
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	Mesh* meshTmp = renderer->GetMesh("cube");
+	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
+	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
+	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	for (int i = 0; i < voxelCount; i++)
+	{
+		vertexShader->SetInt("id", i);
+		vertexShader->CopyAllBufferData();
+		renderer->context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
+	}
+	
+	// renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
 }
+
 
 void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 {
@@ -273,6 +296,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	voxelRastState->Release();
 	renderer->context->GSSetShader(0, 0, 0); // unset geometry shader
 	renderer->context->RSSetState(0); // reset state
+	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(0, 0, 0, 0, 0, 0, 0);
 }
 
 

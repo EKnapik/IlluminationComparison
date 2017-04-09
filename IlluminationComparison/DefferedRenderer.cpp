@@ -306,15 +306,11 @@ void DefferedRenderer::Render(FLOAT deltaTime, FLOAT totalTime)
 	const float clearColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-	context->ClearRenderTargetView(backBufferRTV, black);
 	// clear all the render targets
 	context->ClearRenderTargetView(AlbedoRTV, black);
 	context->ClearRenderTargetView(NormalRTV, black);
 	context->ClearRenderTargetView(DepthRTV, black);
 	context->ClearRenderTargetView(PBR_RTV, black);
-	context->ClearDepthStencilView(depthStencilView,
-		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-		1.0f, 0);
 
 	SortObjects();   /// PLACES GAME OBJECTS INTO OPAQUE AND TRANSPARENT BUFFER
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
@@ -341,15 +337,11 @@ void DefferedRenderer::RayTraceRender(FLOAT deltaTime, FLOAT totalTime)
 	const float clearColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-	context->ClearRenderTargetView(backBufferRTV, black);
 	// clear all the render targets
 	context->ClearRenderTargetView(AlbedoRTV, black);
 	context->ClearRenderTargetView(NormalRTV, black);
 	context->ClearRenderTargetView(DepthRTV, black);
 	context->ClearRenderTargetView(PBR_RTV, black);
-	context->ClearDepthStencilView(depthStencilView,
-		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-		1.0f, 0);
 
 	SortObjects();   /// PLACES GAME OBJECTS INTO OPAQUE AND TRANSPARENT BUFFER
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);

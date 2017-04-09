@@ -187,8 +187,14 @@ void Game::Update(float deltaTime, float totalTime)
 void Game::Draw(float deltaTime, float totalTime)
 {
 	// renderer->Render(deltaTime, totalTime);
-	renderer->RayTraceRender(deltaTime, totalTime);
-	// renderer->octree->OctreeEveryFrame(renderer);
+	// renderer->RayTraceRender(deltaTime, totalTime);
+	const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	context->ClearRenderTargetView(backBufferRTV, black);
+	context->ClearDepthStencilView(depthStencilView,
+		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+		1.0f, 0);
+
+	renderer->octree->DrawVoxelDebug(renderer);
 
 	swapChain->Present(0, 0);
 }
@@ -306,10 +312,12 @@ void Game::LoadShaders()
 	renderer->AddComputeShader("storeSVO", L"storeSVO.cso");
 	renderer->AddComputeShader("mipMapSVO", L"mipMapSVO.cso");
 	renderer->AddVertexShader("voxelList", L"voxelList_VS.cso");
+	renderer->AddVertexShader("voxelDebug", L"voxelDebug_VS.cso");
 	renderer->AddGeometryShader("voxelList", L"voxelList_GS.cso");
 	renderer->AddPixelShader("voxelList", L"voxelList_PS.cso");
 	renderer->AddPixelShader("quadVoxelTrace", L"voxelRayTracing_PS.cso");
 	renderer->AddPixelShader("rayMarchExample", L"rayMarchExample_PS.cso");
+	renderer->AddPixelShader("voxelDebug", L"voxelDebug_PS.cso");
 }
 
 void Game::LoadMeshes()
