@@ -46,7 +46,8 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
 	vertexShader->SetFloat("voxelScale", 1.0f);
 	vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
-	
+	vertexShader->CopyAllBufferData();
+
 	pixelShader->SetShader();
 	pixelShader->CopyAllBufferData();
 
@@ -56,14 +57,7 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
 	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
 	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-	for (int i = 0; i < voxelCount; i++)
-	{
-		vertexShader->SetInt("id", i);
-		vertexShader->CopyAllBufferData();
-		renderer->context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
-	}
-	
-	// renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
+	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
 }
 
 
