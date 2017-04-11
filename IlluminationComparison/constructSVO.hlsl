@@ -29,7 +29,7 @@ struct Node
 StructuredBuffer<Voxel> voxelList : register(t0);
 // globallycoherent RWStructuredBuffer<Node> octree : register(u0);
 // AllMemoryBarrierWithGroupSync
-globallycoherent RWStructuredBuffer<Node> octree : register(u0);
+globallycoherent RWStructuredBuffer<Node> octree : register(u1);
 
 // The last memory position of the octree
 // octree[0].padding
@@ -101,12 +101,16 @@ float4 GetOctaveIndex(float3 pos)
 void main( uint3 DTid : SV_DispatchThreadID )
 {
 	int voxelIndex = (DTid.y * numThreadRows) + DTid.x;
+
+	octree[0].position = float3(5, 0.0f, 0.0f);
 	if (voxelIndex > MaxVoxelIndex)
 		return;
 	if (voxelIndex = 0)
 		octree[0].padding = 8;
 	DeviceMemoryBarrier(); // Ensure all threads start with the next available memory
 
+
+	/*
 	Voxel curVoxel = voxelList[voxelIndex];
 	// Go to position in octree node chunk
 	int currLevel = 0;
@@ -128,4 +132,5 @@ void main( uint3 DTid : SV_DispatchThreadID )
 		octaveIndex = GetOctaveIndex(curVoxel.position);
 		currOctreeIndex += octaveIndex.x;
 	}
+	*/
 }

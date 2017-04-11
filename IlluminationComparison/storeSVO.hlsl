@@ -104,6 +104,11 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	if (voxelIndex > MaxVoxelIndex)
 		return;
 
+	octree[0].position = float3(5.0f, 0.0f, 0.0f);
+	return;
+
+	octree[voxelIndex].position = float3(voxelIndex, 0.0f, 0.0f);
+
 	Voxel curVoxel = voxelList[voxelIndex];
 	// Go to position in octree node chunk
 	int currOctreeIndex;

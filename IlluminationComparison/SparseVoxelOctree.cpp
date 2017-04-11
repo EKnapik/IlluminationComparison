@@ -153,7 +153,8 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 		numOctreeNodes += totalLeafNodes;
 	}
 
-	octreeSize = numOctreeNodes;
+	// octreeSize = numOctreeNodes;
+	octreeSize = 1000;
 
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
@@ -330,6 +331,8 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("wvWidth", wvWidth);
 	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
 	computeShader->SetUnorderedAccessView("octree", octreeUAV);
+	// const UINT * temp = (const UINT *)0;
+	// renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderer->backBufferRTV, 0, 1, 1, &octreeUAV, temp);
 	computeShader->CopyAllBufferData();
 	computeShader->DispatchByThreads(squareDim, squareDim, 1);
 

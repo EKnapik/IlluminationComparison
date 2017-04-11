@@ -32,6 +32,9 @@ static float maxDist = 100.0f;
 // Node Pos [(1,1,1), (-1,1,1), (-1,1,-1), (1,1,-1), (1,-1,1), (-1,-1,1), (-1,-1,-1), (1,-1,-1), .....]
 //
 
+static Node staticOctree[8];
+
+void initStaticOctree();
 
 float4 GetOctaveIndex(float3 pos)
 {
@@ -180,4 +183,18 @@ float4 main(VertexToPixel input) : SV_TARGET
 	finalColor += amb;
 
 	return float4(finalColor, 1.0f);
+}
+
+
+
+void initStaticOctree()
+{
+	Node node;
+	node.position = float3(5, 3, 2);
+	node.normal = float3(0.0f, 1.0f, 0.0f);
+	node.color = float3(1.0f, 0.0f, 0.0f);
+	node.flagBits = 2;
+	node.childPointer = 0;
+	node.padding = 0;
+	staticOctree[0] = node;
 }

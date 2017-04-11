@@ -62,7 +62,7 @@ struct Node
 	DirectX::XMFLOAT3 color;
 	INT32             flagBits;
 	INT32             childPointer; // pointer to child 8 tile chunch of the octree, an offset index
-	INT32			  padding; // ensures the 128 bit allignment
+	UINT32			  padding; // ensures the 128 bit allignment
 };
 /*
 Needs:
