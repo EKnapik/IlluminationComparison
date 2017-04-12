@@ -45,7 +45,8 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
 	vertexShader->SetFloat("voxelScale", 1.0f);
-	vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
+	// vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
+	renderer->context->VSSetShaderResources(0, 1, &voxelListSRV);
 	vertexShader->CopyAllBufferData();
 
 	pixelShader->SetShader();
