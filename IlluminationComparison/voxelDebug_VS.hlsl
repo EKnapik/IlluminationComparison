@@ -48,7 +48,7 @@ VStoPS main( VSInput input )
 	VStoPS output;
 	output.position = mul(float4(input.position, 1.0f), WVP);
 	// output.color = voxelList[id].color;
-	// output.color = voxelList[input.InstanceId].color;
+	output.color = voxelList[input.InstanceId].color;
 	output.color = float3(0, 1.0, 0.0);
 	return output;
 }
