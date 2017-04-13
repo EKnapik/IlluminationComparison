@@ -36,9 +36,7 @@ StructuredBuffer<Voxel> voxelList : register(t0);
 
 VStoPS main( VSInput input )
 {
-	// float3 trans = voxelList[id].position;
 	float3 trans = voxelList[input.InstanceId].position;
-	// float3 trans = float3(input.InstanceId * 1.25f, 0.0f, 0.0f);
 	matrix world = float4x4(voxelScale, 0, 0, 0,
 							0, voxelScale, 0, 0,
 							0, 0, voxelScale, 0,
@@ -47,8 +45,6 @@ VStoPS main( VSInput input )
 
 	VStoPS output;
 	output.position = mul(float4(input.position, 1.0f), WVP);
-	// output.color = voxelList[id].color;
 	output.color = voxelList[input.InstanceId].color;
-	// output.color *= float3(0, 1.0, 0.0);
 	return output;
 }

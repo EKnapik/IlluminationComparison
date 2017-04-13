@@ -22,7 +22,7 @@ private:
 	void initVoxelCounter(ID3D11Device* device);
 	void initVoxelList(ID3D11Device* device, int numElements);
 	void initOctree(ID3D11Device* device);
-	void voxelizeGeometry(DefferedRenderer* renderer, int mode); // 0 to count 1 to store
+ 	void voxelizeGeometry(DefferedRenderer* renderer, int mode); // 0 to count 1 to store
 	void deleteVoxelList();
 	void createOctree(DefferedRenderer* renderer);
 	void mipMapUpOctree(DefferedRenderer* renderer);
