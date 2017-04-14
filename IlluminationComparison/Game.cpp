@@ -79,6 +79,7 @@ void Game::Init()
 	gameManager.Update(0);
 	renderer->SetGameEntities(&gameManager.GameEntities);
 	renderer->AddVoxelOctree(new SparseVoxelOctree(renderer));
+	ResetViewport(); // voxel octree changes the view port
 }
 
 // --------------------------------------------------------

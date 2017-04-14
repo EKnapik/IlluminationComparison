@@ -19,6 +19,8 @@ public:
 		bool debugTitleBarStats);	// Show extra stats (fps) in title bar?
 	~DXCore();
 
+	void ResetViewport();
+
 	// Static requirements for OS-level message processing
 	static DXCore* DXCoreInstance;
 	static LRESULT CALLBACK WindowProc(

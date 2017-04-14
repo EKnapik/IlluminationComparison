@@ -4,6 +4,7 @@
 #include "DXMathImpl.h"
 #include "SimpleShader.h"
 #include "DefferedRenderer.h"
+#include "DXCore.h"
 
 class DefferedRenderer;
 

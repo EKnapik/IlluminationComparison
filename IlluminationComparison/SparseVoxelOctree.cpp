@@ -14,7 +14,7 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	initVoxelList(renderer->device, voxelCount);
  	voxelizeGeometry(renderer, 1);
 	// use breakpoint debug to check the voxel list
-	cpuVoxelListCapture(renderer->device, renderer->context);
+	// cpuVoxelListCapture(renderer->device, renderer->context);
 
 	initOctree(renderer->device);
 	// createOctree(renderer);
@@ -192,8 +192,19 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 }
 
 
+
+// D3D11_CONSERVATIVE_RASTERIZATION_MODE
 void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 {
+	D3D11_VIEWPORT viewport = {};
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = (float)voxelDim;
+	viewport.Height = (float)voxelDim;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	renderer->context->RSSetViewports(1, &viewport);
+
 	ID3D11RasterizerState *voxelRastState;
 	D3D11_RASTERIZER_DESC voxelRastDesc = {};
 	voxelRastDesc.FillMode = D3D11_FILL_SOLID;
@@ -259,6 +270,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	
 	pixelShader->SetShader();
 	pixelShader->SetInt("store", mode); // 0 to count 1 to store
+	pixelShader->SetInt("voxelWidth", voxelDim);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;

@@ -83,6 +83,18 @@ DXCore::~DXCore()
 	if (device) { device->Release();}
 }
 
+void DXCore::ResetViewport()
+{
+	D3D11_VIEWPORT viewport = {};
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = (float)width;
+	viewport.Height = (float)height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	context->RSSetViewports(1, &viewport);
+}
+
 // --------------------------------------------------------
 // Created the actual window for our application
 // --------------------------------------------------------
@@ -261,14 +273,7 @@ HRESULT DXCore::InitDirectX()
 
 	// Lastly, set up a viewport so we render into
 	// to correct portion of the window
-	D3D11_VIEWPORT viewport = {};
-	viewport.TopLeftX	= 0;
-	viewport.TopLeftY	= 0;
-	viewport.Width		= (float)width;
-	viewport.Height		= (float)height;
-	viewport.MinDepth	= 0.0f;
-	viewport.MaxDepth	= 1.0f;
-	context->RSSetViewports(1, &viewport);
+	ResetViewport();
 
 	// Return the "everything is ok" HRESULT value
 	return S_OK;

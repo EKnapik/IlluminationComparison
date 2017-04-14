@@ -23,6 +23,7 @@ struct GStoPS
 {
 	float4 AABB			: BOUNDING_BOX;
 	float4 pos			: SV_POSITION;
+	float3 wPos			: WORLD_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
 	int	   axis			: AXIS_CHOOSEN;
@@ -31,6 +32,10 @@ struct GStoPS
 [maxvertexcount(3)]
 void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 {
+	float3 worldPos[3];
+	worldPos[0] = mul(input[0].position, World).xyz;
+	worldPos[1] = mul(input[1].position, World).xyz;
+	worldPos[2] = mul(input[2].position, World).xyz;
 	float3 faceNormal = normalize(cross(input[1].position - input[0].position, input[2].position - input[0].position));
 	float NdotXAxis = abs(faceNormal.x);
 	float NdotYAxis = abs(faceNormal.y);
@@ -106,6 +111,7 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	for (uint i = 0; i < 3; i++)
 	{
 		element.pos = pos[i];
+		element.wPos = worldPos[i];
 		element.normal = input[i].normal;
 		element.uv = input[i].uv;
 		output.Append(element);
