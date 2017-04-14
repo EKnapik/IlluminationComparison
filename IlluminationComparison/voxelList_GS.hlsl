@@ -41,9 +41,9 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	float NdotYAxis = abs(faceNormal.y);
 	float NdotZAxis = abs(faceNormal.z);
 	matrix proj;
-	matrix MVPx = mul(World, ViewProjX);
-	matrix MVPy = mul(World, ViewProjY);
-	matrix MVPz = mul(World, ViewProjZ);
+	matrix MVPx = ViewProjX;
+	matrix MVPy = ViewProjY;
+	matrix MVPz = ViewProjZ;
 	int axis;
 
 	//Find the axis the maximize the projected area of this triangle

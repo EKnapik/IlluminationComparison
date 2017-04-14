@@ -39,14 +39,14 @@ RWStructuredBuffer<Voxel> voxelList : register(u2);
 
 float main(GStoPS input) : SV_TARGET
 {
-	// if (input.pos.x < input.AABB.x || input.pos.y < input.AABB.y || input.pos.x > input.AABB.z || input.pos.y > input.AABB.w)
-	// 	discard;
+	//if (input.pos.x < input.AABB.x || input.pos.y < input.AABB.y || input.pos.x > input.AABB.z || input.pos.y > input.AABB.w)
+	//	return 1.0f;
 
 	int storePlace;
 	if (store == 1)	
 	{
 		Voxel voxel;
-		voxel.position = input.pos;
+		voxel.position = input.wPos;
 		voxel.normal = input.normal;
 		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
 		voxel.padding = float3(0.0, 0.0, 0.0); // This data is uninportant and is used for gpu efficiency

@@ -3,7 +3,8 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 5;
+	int depthNum = 1;
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -20,6 +21,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	*/
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -36,6 +38,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -69,6 +72,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -93,6 +97,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	*/
 
 	/*
 	ball = new Ball();
@@ -102,7 +107,7 @@ PBRDemoScene::PBRDemoScene()
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 	*/
-
+	/*
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
 	ball->entity->Scale(VEC3(10.0f, 3.0f, 8.0f));
@@ -110,6 +115,7 @@ PBRDemoScene::PBRDemoScene()
 	ball->kinematics->SetPosition(VEC3(0.0, -2.5f, 3.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
+	*/
 
 	PointLights.push_back(new ScenePointLight(
 		VEC4(1.0f, 0.5f, 0.3f, 1.0f),

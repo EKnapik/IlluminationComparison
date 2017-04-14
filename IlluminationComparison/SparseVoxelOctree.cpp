@@ -44,7 +44,7 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetShader();
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
-	vertexShader->SetFloat("voxelScale", 1.0f);
+	vertexShader->SetFloat("voxelScale", 1.0f/50.0f);
 	// vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
 	renderer->context->VSSetShaderResources(0, 1, &voxelListSRV);
 	vertexShader->CopyAllBufferData();
@@ -231,7 +231,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 
 	eye = XMFLOAT3(0, 2, 0);
 	focus = XMFLOAT3(0, 0, 0);
-	up = XMFLOAT3(0, 0, -1);
+	up = XMFLOAT3(0, 0, 1);
 	Eye = XMLoadFloat3(&eye);
 	Focus = XMLoadFloat3(&focus);
 	Up = XMLoadFloat3(&up);
@@ -239,7 +239,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	// save Y transpose
 	DirectX::XMStoreFloat4x4(&viewProjY, DirectX::XMMatrixTranspose(ViewProj));
 
-	eye = XMFLOAT3(0, 0, 2);
+	eye = XMFLOAT3(0, 0, -2);
 	focus = XMFLOAT3(0, 0, 0);
 	up = XMFLOAT3(0, 1, 0);
 	Eye = XMLoadFloat3(&eye);
