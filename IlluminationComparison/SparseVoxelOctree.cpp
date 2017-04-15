@@ -44,7 +44,7 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetShader();
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
-	vertexShader->SetFloat("voxelScale", 1.0f/50.0f);
+	vertexShader->SetFloat("voxelScale", 1.0f/1.0f);
 	// vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
 	renderer->context->VSSetShaderResources(0, 1, &voxelListSRV);
 	vertexShader->CopyAllBufferData();
@@ -221,7 +221,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	XMFLOAT3 focus = XMFLOAT3(0, 0, 0);
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 
-	MATRIX Ortho = XMMatrixOrthographicLH(2.0f, 2.0f, 1.0f, 3.0f);
+	MATRIX Ortho = XMMatrixOrthographicLH(1.0f, 1.0f, 1.0f, 3.0f);
 	XMVECTOR Eye = XMLoadFloat3(&eye);
 	XMVECTOR Focus = XMLoadFloat3(&focus);
 	XMVECTOR Up = XMLoadFloat3(&up);

@@ -22,6 +22,7 @@ PBRDemoScene::PBRDemoScene()
 		GameObjects.push_back(ball);
 	}
 	*/
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -38,7 +39,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	
+	*/
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -47,6 +48,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -56,6 +58,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	*/
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
