@@ -1,4 +1,10 @@
 
+cbuffer voxelExternalData : register(b0)
+{
+	matrix World;
+}
+
+
 struct VSInput
 {
 	float3 position		: POSITION;     // XYZ position
@@ -17,7 +23,7 @@ struct VStoGS
 VStoGS main(VSInput input)
 {
 	VStoGS output;
-	output.position = float4(input.position, 1.0f);
+	output.position = mul(float4(input.position, 1.0f), World);
 	output.normal = input.normal;
 	output.uv = input.uv;
 

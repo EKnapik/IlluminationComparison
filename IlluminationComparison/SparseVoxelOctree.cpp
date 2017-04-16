@@ -217,11 +217,12 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	MAT4X4 viewProjY;
 	MAT4X4 viewProjZ;
 
-	XMFLOAT3 eye = XMFLOAT3(2, 0, 0);
+	// Changes where the eyepoint and the projection point is at
+	XMFLOAT3 eye = XMFLOAT3(5, 0, 0);
 	XMFLOAT3 focus = XMFLOAT3(0, 0, 0);
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 
-	MATRIX Ortho = XMMatrixOrthographicLH(1.0f, 1.0f, 1.0f, 3.0f);
+	MATRIX Ortho = XMMatrixOrthographicLH(2.0f, 2.0f, 1.0f, 3.0f);
 	XMVECTOR Eye = XMLoadFloat3(&eye);
 	XMVECTOR Focus = XMLoadFloat3(&focus);
 	XMVECTOR Up = XMLoadFloat3(&up);
@@ -229,7 +230,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	// save X transpose
 	DirectX::XMStoreFloat4x4(&viewProjX, DirectX::XMMatrixTranspose(ViewProj));
 
-	eye = XMFLOAT3(0, 2, 0);
+	eye = XMFLOAT3(0, 5, 0);
 	focus = XMFLOAT3(0, 0, 0);
 	up = XMFLOAT3(0, 0, 1);
 	Eye = XMLoadFloat3(&eye);
@@ -239,7 +240,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	// save Y transpose
 	DirectX::XMStoreFloat4x4(&viewProjY, DirectX::XMMatrixTranspose(ViewProj));
 
-	eye = XMFLOAT3(0, 0, -2);
+	eye = XMFLOAT3(0, 0, -5);
 	focus = XMFLOAT3(0, 0, 0);
 	up = XMFLOAT3(0, 1, 0);
 	Eye = XMLoadFloat3(&eye);
@@ -259,14 +260,14 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	SimpleGeometryShader* geomShader = renderer->GetGeometryShader("voxelList");
 	SimplePixelShader*    pixelShader = renderer->GetPixelShader("voxelList");
 	vertexShader->SetShader();
-	vertexShader->CopyAllBufferData();
-
+	
 	geomShader->SetShader();
-	geomShader->SetMatrix4x4("ViewProjX", viewProjX);
+	geomShader->SetMatrix4x4("ViewProjX", viewProjY);
 	geomShader->SetMatrix4x4("ViewProjY", viewProjY);
-	geomShader->SetMatrix4x4("ViewProjZ", viewProjZ);
+	geomShader->SetMatrix4x4("ViewProjZ", viewProjY);
 	geomShader->SetInt("height", voxelDim);
 	geomShader->SetInt("width", voxelDim);
+	geomShader->CopyAllBufferData();
 	
 	pixelShader->SetShader();
 	pixelShader->SetInt("store", mode); // 0 to count 1 to store
@@ -290,8 +291,8 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 		pixelShader->CopyAllBufferData();
 
 		// Send Geometry
-		geomShader->SetMatrix4x4("World", *staticObjects.at(i)->GetWorld());
-		geomShader->CopyAllBufferData();
+		vertexShader->SetMatrix4x4("World", *staticObjects.at(i)->GetWorld());
+		vertexShader->CopyAllBufferData();
 		
 		meshTmp = renderer->GetMesh(staticObjects.at(i)->GetMesh());
 		ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();

@@ -3,7 +3,6 @@
 
 cbuffer externalData : register(b0)
 {
-	matrix World;
 	matrix ViewProjX;
 	matrix ViewProjY;
 	matrix ViewProjZ;
@@ -23,7 +22,6 @@ struct GStoPS
 {
 	float4 AABB			: BOUNDING_BOX;
 	float4 pos			: SV_POSITION;
-	float3 wPos			: WORLD_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
 	int	   axis			: AXIS_CHOOSEN;
@@ -32,18 +30,14 @@ struct GStoPS
 [maxvertexcount(3)]
 void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 {
-	float3 worldPos[3];
-	worldPos[0] = mul(input[0].position, World).xyz;
-	worldPos[1] = mul(input[1].position, World).xyz;
-	worldPos[2] = mul(input[2].position, World).xyz;
 	float3 faceNormal = normalize(cross(input[1].position - input[0].position, input[2].position - input[0].position));
 	float NdotXAxis = abs(faceNormal.x);
 	float NdotYAxis = abs(faceNormal.y);
 	float NdotZAxis = abs(faceNormal.z);
 	matrix proj;
-	matrix MVPx = mul(World, ViewProjX);
-	matrix MVPy = mul(World, ViewProjY);
-	matrix MVPz = mul(World, ViewProjZ);
+	matrix MVPx = ViewProjX;
+	matrix MVPy = ViewProjY;
+	matrix MVPz = ViewProjZ;
 	int axis;
 
 	//Find the axis the maximize the projected area of this triangle
@@ -101,9 +95,9 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	float3 n2 = cross(e2, float3(0, 0, 1));
 
 	// dilate the triangle
-	pos[0].xy = pos[0].xy + pl*((e2.xy / dot(e2.xy, n0.xy)) + (e0.xy / dot(e0.xy, n2.xy)));
-	pos[1].xy = pos[1].xy + pl*((e0.xy / dot(e0.xy, n1.xy)) + (e1.xy / dot(e1.xy, n0.xy)));
-	pos[2].xy = pos[2].xy + pl*((e1.xy / dot(e1.xy, n2.xy)) + (e2.xy / dot(e2.xy, n1.xy)));
+	// pos[0].xy = pos[0].xy + pl*((e2.xy / dot(e2.xy, n0.xy)) + (e0.xy / dot(e0.xy, n2.xy)));
+	// pos[1].xy = pos[1].xy + pl*((e0.xy / dot(e0.xy, n1.xy)) + (e1.xy / dot(e1.xy, n0.xy)));
+	// pos[2].xy = pos[2].xy + pl*((e1.xy / dot(e1.xy, n2.xy)) + (e2.xy / dot(e2.xy, n1.xy)));
 
 	GStoPS element;
 	element.AABB = AABB;
@@ -111,7 +105,6 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	for (uint i = 0; i < 3; i++)
 	{
 		element.pos = pos[i];
-		element.wPos = worldPos[i];
 		element.normal = input[i].normal;
 		element.uv = input[i].uv;
 		output.Append(element);

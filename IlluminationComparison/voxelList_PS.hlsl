@@ -14,7 +14,6 @@ struct GStoPS
 {
 	float4 AABB			: BOUNDING_BOX;
 	float4 pos			: SV_POSITION;
-	float3 wPos			: WORLD_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
 	int	   axis			: AXIS_CHOOSEN;
@@ -45,8 +44,31 @@ float main(GStoPS input) : SV_TARGET
 	int storePlace;
 	if (store == 1)	
 	{
+		float3 temp = float3(input.pos.x, input.pos.y, input.pos.z * 32.0f);
+		float3 final;
+		/*
+		if (input.axis == 1)
+		{
+			final.x = 20.0f - temp.z;
+			final.z = temp.x;
+			final.y = temp.y;
+		}
+		else if (input.axis == 2)
+		{
+			
+		}
+		else
+			*/
+		final.z = temp.y;
+		final.y = 32.0f - temp.z;
+		final.x = temp.x;
+
+		// final = temp;
+
+
+
 		Voxel voxel;
-		voxel.position = input.pos;
+		voxel.position = final;
 		voxel.normal = input.normal;
 		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
 		voxel.padding = float3(0.0, 0.0, 0.0); // This data is uninportant and is used for gpu efficiency

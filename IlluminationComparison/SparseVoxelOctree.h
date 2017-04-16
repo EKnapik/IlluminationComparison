@@ -33,7 +33,7 @@ private:
 	void cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	int voxelCount = 0;
-	int	voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
+	int	voxelDim = 32; // 256*256*256 + mip mapped octree for memory size
 	int octreeSize = 0;
 	
 	ID3D11Buffer			  *counter;
