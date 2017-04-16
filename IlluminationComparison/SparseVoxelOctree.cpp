@@ -221,8 +221,9 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	XMFLOAT3 eye = XMFLOAT3(5, 0, 0);
 	XMFLOAT3 focus = XMFLOAT3(0, 0, 0);
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
-
-	MATRIX Ortho = XMMatrixOrthographicLH(2.0f, 2.0f, 1.0f, 3.0f);
+	// near - far with the values 1.0f and 3.0f put the range -1.0f, 1.0f in z axis
+	// width and height are tied to the z voxel depth.
+	MATRIX Ortho = XMMatrixOrthographicLH(8.0f, 8.0f, 1.0f, 3.0f);
 	XMVECTOR Eye = XMLoadFloat3(&eye);
 	XMVECTOR Focus = XMLoadFloat3(&focus);
 	XMVECTOR Up = XMLoadFloat3(&up);

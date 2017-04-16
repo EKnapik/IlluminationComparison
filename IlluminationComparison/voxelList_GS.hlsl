@@ -87,12 +87,14 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	// f_AABB = AABB;
 
 	// find 3 triangle edge plane
+	/*
 	float3 e0 = float3(pos[1].xy - pos[0].xy, 0);
 	float3 e1 = float3(pos[2].xy - pos[1].xy, 0);
 	float3 e2 = float3(pos[0].xy - pos[2].xy, 0);
 	float3 n0 = cross(e0, float3(0, 0, 1));
 	float3 n1 = cross(e1, float3(0, 0, 1));
 	float3 n2 = cross(e2, float3(0, 0, 1));
+	*/
 
 	// dilate the triangle
 	// pos[0].xy = pos[0].xy + pl*((e2.xy / dot(e2.xy, n0.xy)) + (e0.xy / dot(e0.xy, n2.xy)));

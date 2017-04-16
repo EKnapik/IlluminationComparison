@@ -44,7 +44,7 @@ float main(GStoPS input) : SV_TARGET
 	int storePlace;
 	if (store == 1)	
 	{
-		float3 temp = float3(input.pos.x, input.pos.y, input.pos.z * 32.0f);
+		float3 temp = float3(input.pos.x, input.pos.y, input.pos.z * 64);
 		float3 final;
 		/*
 		if (input.axis == 1)
@@ -60,17 +60,24 @@ float main(GStoPS input) : SV_TARGET
 		else
 			*/
 		final.z = temp.y;
-		final.y = 32.0f - temp.z;
+		final.y = 64 - temp.z;
 		final.x = temp.x;
 
+		// Convert from 0 - voxelDim to world space voxel pos
+		final /= 64;
+		final *= 16.0f;
+		final -= 8.0f;
+
 		// final = temp;
-
-
-
 		Voxel voxel;
 		voxel.position = final;
+		voxel.position = float3(input.pos.x-4, input.pos.y-12, input.pos.z*16);
 		voxel.normal = input.normal;
 		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
+		if (input.pos.z < 0.0f)
+			voxel.color = float3(0, input.pos.z * -1.0f, 0.0);
+		else
+			voxel.color = float3(input.pos.z, 0.0, 0.0);
 		voxel.padding = float3(0.0, 0.0, 0.0); // This data is uninportant and is used for gpu efficiency
 		
 		InterlockedAdd(atomicCounter[0], -1, storePlace);
