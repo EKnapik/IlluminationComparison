@@ -9,6 +9,7 @@ cbuffer voxelExternalData : register(b0)
 	float3 padding;
 	int store;
 	int voxelWidth;
+	int worldWidth;
 }
 
 struct GStoPS
@@ -45,7 +46,7 @@ float main(GStoPS input) : SV_TARGET
 	int storePlace;
 	if (store == 1)	
 	{
-		float zScale = voxelWidth / (8.0f / 2.0f);
+		float zScale = voxelWidth / (worldWidth / 2.0f);
 		float3 temp = float3(input.pos.x, input.pos.y, input.pos.z * zScale);
 		float3 final;
 		/*
@@ -67,9 +68,9 @@ float main(GStoPS input) : SV_TARGET
 			
 
 		// Convert from 0 - voxelDim to world space voxel pos
-		final /= 64.0f;   // now in   0  to 1 space
-		final *= 16.0f;
-		final = 8.0f - final;
+		final /= float(voxelWidth);   // now in   0  to 1 space
+		final *= (worldWidth * 2.0f);
+		final = worldWidth - final;
 
 		// final = temp;
 		Voxel voxel;

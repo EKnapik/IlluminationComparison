@@ -32,6 +32,7 @@ private:
 	void cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context);
 	void cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context);
 
+	int worldWidth = 8;
 	int voxelCount = 0;
 	int	voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
 	int octreeSize = 0;
