@@ -44,7 +44,7 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetShader();
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
-	vertexShader->SetFloat("voxelScale", 16.0f/voxelDim);
+	vertexShader->SetFloat("voxelScale", worldWidth*2.0f/float(voxelDim));
 	// vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
 	renderer->context->VSSetShaderResources(0, 1, &voxelListSRV);
 	vertexShader->CopyAllBufferData();
@@ -226,7 +226,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	// Anything outside of the width and height as world space is clipped.
 	//   This is an 8x8x2 region so when scaling z back it must be mul by (64 / (8/2))
 	//   The other axis are fine
-	MATRIX Ortho = XMMatrixOrthographicLH(worldWidth, worldWidth, 1, 3.0f);
+	MATRIX Ortho = XMMatrixOrthographicLH(worldWidth, worldWidth, 1.0f, 3.0f);
 	XMVECTOR Eye = XMLoadFloat3(&eye);
 	XMVECTOR Focus = XMLoadFloat3(&focus);
 	XMVECTOR Up = XMLoadFloat3(&up);
@@ -274,9 +274,10 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	geomShader->CopyAllBufferData();
 	
 	pixelShader->SetShader();
+	pixelShader->SetFloat("voxelWidth", voxelDim);
+	pixelShader->SetFloat("worldWidth", worldWidth);
 	pixelShader->SetInt("store", mode); // 0 to count 1 to store
-	pixelShader->SetInt("voxelWidth", voxelDim);
-	pixelShader->SetInt("worldWidth", worldWidth);
+	
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;

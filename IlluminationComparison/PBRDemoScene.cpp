@@ -9,7 +9,7 @@ PBRDemoScene::PBRDemoScene()
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "goldScuffed"));
-		ball->kinematics->SetPosition(VEC3(-5, 4, i));
+		ball->kinematics->SetPosition(VEC3(-5, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
@@ -17,17 +17,15 @@ PBRDemoScene::PBRDemoScene()
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "ironRusted4"));
-		ball->kinematics->SetPosition(VEC3(-4, 4, i));
+		ball->kinematics->SetPosition(VEC3(-4, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	*/
-	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "aluminumScuffed"));
-		ball->kinematics->SetPosition(VEC3(-3, 4, i));
+		ball->kinematics->SetPosition(VEC3(-3, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
@@ -35,7 +33,7 @@ PBRDemoScene::PBRDemoScene()
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "copperScuffed"));
-		ball->kinematics->SetPosition(VEC3(-2, 4, i));
+		ball->kinematics->SetPosition(VEC3(-2, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
@@ -44,7 +42,7 @@ PBRDemoScene::PBRDemoScene()
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "graniteSmooth"));
-		ball->kinematics->SetPosition(VEC3(-1, 1, 1+i));
+		ball->kinematics->SetPosition(VEC3(-1, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
@@ -54,7 +52,7 @@ PBRDemoScene::PBRDemoScene()
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "greasyMetal"));
 		// ball->entity->Scale(VEC3(1.0f, 1.0f, 1.0f));
-		ball->kinematics->SetPosition(VEC3(0, 2, 1+i));
+		ball->kinematics->SetPosition(VEC3(0, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}

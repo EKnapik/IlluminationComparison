@@ -7,9 +7,9 @@ SamplerState basicSampler	: register(s0);
 cbuffer voxelExternalData : register(b0)
 {
 	float3 padding;
+	float voxelWidth;
+	float worldWidth;
 	int store;
-	int voxelWidth;
-	int worldWidth;
 }
 
 struct GStoPS
@@ -65,7 +65,7 @@ float main(GStoPS input) : SV_TARGET
 			final = temp;
 
 		// Convert from 0 - voxelDim to world space voxel pos
-		final /= float(voxelWidth);   // now in   0  to 1 space
+		final /= voxelWidth;   // now in   0  to 1 space
 		final *= (worldWidth * 2.0f);
 		final = worldWidth - final;
 
@@ -75,6 +75,7 @@ float main(GStoPS input) : SV_TARGET
 		// voxel.position = float3(input.pos.x-4, input.pos.y-2, input.pos.z*16);
 		voxel.normal = input.normal;
 		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
+		//voxel.color = float3(final.y/4, 0.0, 0.0);
 		voxel.padding = float3(0.0, 0.0, 0.0); // This data is uninportant and is used for gpu efficiency
 		
 		InterlockedAdd(atomicCounter[0], -1, storePlace);
