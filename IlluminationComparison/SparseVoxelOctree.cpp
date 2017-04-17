@@ -223,6 +223,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 	// near - far with the values 1.0f and 3.0f put the range -1.0f, 1.0f in z axis
 	// width and height are tied to the z voxel depth.
+	// Anything outside of the width and height as world space is clipped. 
 	MATRIX Ortho = XMMatrixOrthographicLH(8.0f, 8.0f, 1.0f, 3.0f);
 	XMVECTOR Eye = XMLoadFloat3(&eye);
 	XMVECTOR Focus = XMLoadFloat3(&focus);
@@ -263,9 +264,9 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	vertexShader->SetShader();
 	
 	geomShader->SetShader();
-	geomShader->SetMatrix4x4("ViewProjX", viewProjY);
-	geomShader->SetMatrix4x4("ViewProjY", viewProjY);
-	geomShader->SetMatrix4x4("ViewProjZ", viewProjY);
+	geomShader->SetMatrix4x4("ViewProjX", viewProjZ);
+	geomShader->SetMatrix4x4("ViewProjY", viewProjZ);
+	geomShader->SetMatrix4x4("ViewProjZ", viewProjZ);
 	geomShader->SetInt("height", voxelDim);
 	geomShader->SetInt("width", voxelDim);
 	geomShader->CopyAllBufferData();

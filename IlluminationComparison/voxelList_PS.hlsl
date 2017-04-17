@@ -49,13 +49,15 @@ float main(GStoPS input) : SV_TARGET
 		/*
 		if (input.axis == 1)
 		{
-			final.x = 20.0f - temp.z;
-			final.z = temp.x;
-			final.y = temp.y;
+			final.x = 64 - temp.z;
+		final.z = temp.x;
+		final.y = temp.y;
 		}
 		else if (input.axis == 2)
 		{
-			
+			final.z = temp.y;
+		final.y = 64 - temp.z;
+		final.x = temp.x;
 		}
 		else
 			*/
@@ -71,7 +73,7 @@ float main(GStoPS input) : SV_TARGET
 		// final = temp;
 		Voxel voxel;
 		voxel.position = final;
-		voxel.position = float3(input.pos.x-4, input.pos.y-12, input.pos.z*16);
+		voxel.position = float3(input.pos.x-4, input.pos.y-2, input.pos.z*16);
 		voxel.normal = input.normal;
 		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
 		if (input.pos.z < 0.0f)
