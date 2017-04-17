@@ -44,7 +44,7 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetShader();
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
-	vertexShader->SetFloat("voxelScale", 1.0f/1.0f);
+	vertexShader->SetFloat("voxelScale", 16.0f/voxelDim);
 	// vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
 	renderer->context->VSSetShaderResources(0, 1, &voxelListSRV);
 	vertexShader->CopyAllBufferData();
@@ -223,8 +223,10 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 	// near - far with the values 1.0f and 3.0f put the range -1.0f, 1.0f in z axis
 	// width and height are tied to the z voxel depth.
-	// Anything outside of the width and height as world space is clipped. 
-	MATRIX Ortho = XMMatrixOrthographicLH(8.0f, 8.0f, 1.0f, 3.0f);
+	// Anything outside of the width and height as world space is clipped.
+	//   This is an 8x8x2 region so when scaling z back it must be mul by (64 / (8/2))
+	//   The other axis are fine
+	MATRIX Ortho = XMMatrixOrthographicLH(8.0f, 8.0f, 1, 3.0f);
 	XMVECTOR Eye = XMLoadFloat3(&eye);
 	XMVECTOR Focus = XMLoadFloat3(&focus);
 	XMVECTOR Up = XMLoadFloat3(&up);
@@ -238,11 +240,11 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	Eye = XMLoadFloat3(&eye);
 	Focus = XMLoadFloat3(&focus);
 	Up = XMLoadFloat3(&up);
-	ViewProj = XMMatrixLookAtLH(Eye, Focus, Up) * Ortho;
+	ViewProj = XMMatrixLookAtLH(Eye, Focus, Up) * Ortho; 
 	// save Y transpose
 	DirectX::XMStoreFloat4x4(&viewProjY, DirectX::XMMatrixTranspose(ViewProj));
 
-	eye = XMFLOAT3(0, 0, -5);
+	eye = XMFLOAT3(0, 0, 5);
 	focus = XMFLOAT3(0, 0, 0);
 	up = XMFLOAT3(0, 1, 0);
 	Eye = XMLoadFloat3(&eye);

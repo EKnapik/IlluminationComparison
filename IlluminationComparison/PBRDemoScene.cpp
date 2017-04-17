@@ -48,17 +48,17 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	/*
+	
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "greasyMetal"));
 		// ball->entity->Scale(VEC3(1.0f, 1.0f, 1.0f));
-		ball->kinematics->SetPosition(VEC3(0, 4, i));
+		ball->kinematics->SetPosition(VEC3(0, 3, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
