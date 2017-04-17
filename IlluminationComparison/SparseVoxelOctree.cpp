@@ -236,7 +236,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 
 	eye = XMFLOAT3(0, 5, 0);
 	focus = XMFLOAT3(0, 0, 0);
-	up = XMFLOAT3(0, 0, 1);
+	up = XMFLOAT3(0, 0, -1);
 	Eye = XMLoadFloat3(&eye);
 	Focus = XMLoadFloat3(&focus);
 	Up = XMLoadFloat3(&up);
@@ -266,8 +266,8 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	vertexShader->SetShader();
 	
 	geomShader->SetShader();
-	geomShader->SetMatrix4x4("ViewProjX", viewProjZ);
-	geomShader->SetMatrix4x4("ViewProjY", viewProjZ);
+	geomShader->SetMatrix4x4("ViewProjX", viewProjX);
+	geomShader->SetMatrix4x4("ViewProjY", viewProjY);
 	geomShader->SetMatrix4x4("ViewProjZ", viewProjZ);
 	geomShader->SetInt("height", voxelDim);
 	geomShader->SetInt("width", voxelDim);

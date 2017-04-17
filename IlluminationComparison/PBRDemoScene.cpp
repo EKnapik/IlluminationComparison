@@ -44,7 +44,7 @@ PBRDemoScene::PBRDemoScene()
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "graniteSmooth"));
-		ball->kinematics->SetPosition(VEC3(-1, 1, i));
+		ball->kinematics->SetPosition(VEC3(-1, 1, 1+i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
@@ -54,7 +54,7 @@ PBRDemoScene::PBRDemoScene()
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "greasyMetal"));
 		// ball->entity->Scale(VEC3(1.0f, 1.0f, 1.0f));
-		ball->kinematics->SetPosition(VEC3(0, 2, i));
+		ball->kinematics->SetPosition(VEC3(0, 2, 1+i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
