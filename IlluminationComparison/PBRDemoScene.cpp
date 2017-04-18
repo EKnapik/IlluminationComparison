@@ -3,7 +3,7 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 2;
+	int depthNum = 4;
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -108,7 +108,7 @@ PBRDemoScene::PBRDemoScene()
 	*/
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
-	ball->entity->Scale(VEC3(6.0f, 2.0f, 4.0f));
+	ball->entity->Scale(VEC3(7.0f, 2.0f, 4.0f));
 	// ball->kinematics->SetPosition(VEC3(0.0, 1.5f, 3.0f));
 	ball->kinematics->SetPosition(VEC3(0.0, -1.5f, 1.0f));
 	balls.push_back(ball);

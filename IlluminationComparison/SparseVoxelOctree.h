@@ -34,7 +34,7 @@ private:
 
 	float  worldWidth = 8;
 	int    voxelCount = 0;
-	float  voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
+	float  voxelDim = 128; // 256*256*256 + mip mapped octree for memory size
 	int octreeSize = 0;
 	
 	ID3D11Buffer			  *counter;
