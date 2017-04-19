@@ -14,7 +14,7 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	initVoxelList(renderer->device, voxelCount);
  	voxelizeGeometry(renderer, 1);
 	// use breakpoint debug to check the voxel list
-	// cpuVoxelListCapture(renderer->device, renderer->context);
+	cpuVoxelListCapture(renderer->device, renderer->context);
 
 	initOctree(renderer->device);
 	// createOctree(renderer);
@@ -424,7 +424,7 @@ void SparseVoxelOctree::cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceCo
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
 
-	Voxel finalVoxelList[1000];
+	Voxel finalVoxelList[2560];
 	memcpy(finalVoxelList, mapped.pData, sizeof(Voxel) * voxelCount);
 	context->Unmap(stagingBuffer, 0);
 	stagingBuffer->Release();
