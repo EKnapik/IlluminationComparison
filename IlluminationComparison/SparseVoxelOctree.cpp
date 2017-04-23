@@ -14,15 +14,13 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	initVoxelList(renderer->device, voxelCount);
  	voxelizeGeometry(renderer, 1);
 	// use breakpoint debug to check the voxel list
-	cpuVoxelListCapture(renderer->device, renderer->context);
+	// cpuVoxelListCapture(renderer->device, renderer->context);
 
 	initOctree(renderer->device);
-	// createOctree(renderer);
+	createOctree(renderer);
 	// Use breakpoint debug to check the octree
-	// cpuOctreeCapture(renderer->device, renderer->context);
+	cpuOctreeCapture(renderer->device, renderer->context);
 	// mipMapUpOctree(renderer);
-
-	// deleteVoxelList(); // also will delete the counter
 }
 
 
@@ -155,7 +153,7 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	}
 
 	// octreeSize = numOctreeNodes;
-	octreeSize = 1000;
+	octreeSize = 1280;
 
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
@@ -334,7 +332,9 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
 	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
 	computeShader->SetInt("wvWidth", wvWidth);
-	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
+	// set SRV and UAV simple shader can not do these propperly
+	renderer->context->CSSetShaderResources(0, 1, &voxelListSRV);
+	renderer->context->CSGetUnorderedAccessViews(1, 1, &octreeUAV);
 	computeShader->SetUnorderedAccessView("octree", octreeUAV);
 	computeShader->CopyAllBufferData();
 	computeShader->DispatchByThreads(squareDim, squareDim, 1);
@@ -349,10 +349,10 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
 	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
 	computeShader->SetInt("wvWidth", wvWidth);
-	computeShader->SetShaderResourceView("voxelList", voxelListSRV);
+	// set SRV and UAV simple shader can not do these propperly
+	renderer->context->CSSetShaderResources(0, 1, &voxelListSRV);
+	renderer->context->CSGetUnorderedAccessViews(1, 1, &octreeUAV);
 	computeShader->SetUnorderedAccessView("octree", octreeUAV);
-	// const UINT * temp = (const UINT *)0;
-	// renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderer->backBufferRTV, 0, 1, 1, &octreeUAV, temp);
 	computeShader->CopyAllBufferData();
 	computeShader->DispatchByThreads(squareDim, squareDim, 1);
 
@@ -450,7 +450,7 @@ void SparseVoxelOctree::cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceConte
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
 
-	Node finalOctree[1000];
+	Node finalOctree[1280];
 	memcpy(finalOctree, mapped.pData, sizeof(Node) * 1000);
 	context->Unmap(stagingBuffer, 0);
 	stagingBuffer->Release();

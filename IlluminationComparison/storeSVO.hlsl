@@ -29,7 +29,7 @@ struct Node
 StructuredBuffer<Voxel> voxelList : register(t0);
 // globallycoherent RWStructuredBuffer<Node> octree : register(u0);
 // AllMemoryBarrierWithGroupSync
-globallycoherent RWStructuredBuffer<Node> octree : register(u0);
+globallycoherent RWStructuredBuffer<Node> octree : register(u1);
 
 // The last memory position of the octree
 // octree[0].padding
@@ -104,6 +104,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	if (voxelIndex > MaxVoxelIndex)
 		return;
 
+	return;
 	octree[0].position = float3(5.0f, 0.0f, 0.0f);
 	return;
 

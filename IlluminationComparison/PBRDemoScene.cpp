@@ -3,7 +3,7 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 4;
+	int depthNum = 2;
 	/*
 	for (int i = 0; i < depthNum; i++)
 	{
