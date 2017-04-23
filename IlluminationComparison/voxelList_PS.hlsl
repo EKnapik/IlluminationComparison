@@ -6,7 +6,6 @@ SamplerState basicSampler	: register(s0);
 
 cbuffer voxelExternalData : register(b0)
 {
-	float3 padding;
 	float voxelWidth;
 	float worldWidth;
 	int store;
@@ -68,6 +67,15 @@ float main(GStoPS input) : SV_TARGET
 		final /= voxelWidth;   // now in   0  to 1 space
 		final *= (worldWidth * 2.0f);
 		final = worldWidth - final;
+
+		// snap voxels to the (worldWidth/voxelWidth) increment
+		final /= (worldWidth / voxelWidth);
+		temp = final - floor(final);
+		final -= temp; // Final has NO DECIMAL PART
+		final.x += (temp.x < 0.5) ? 0.0f : 1.0f;
+		final.y += (temp.y < 0.5) ? 0.0f : 1.0f;
+		final.z += (temp.z < 0.5) ? 0.0f : 1.0f;
+		final *= (worldWidth / voxelWidth);
 
 		// final = temp;
 		Voxel voxel;
