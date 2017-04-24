@@ -70,14 +70,28 @@ void SparseVoxelOctree::DrawOctreeDebug(DefferedRenderer * const renderer)
 	SimpleVertexShader*   vertexShader = renderer->GetVertexShader("octreeDebug");
 	SimplePixelShader*    pixelShader = renderer->GetPixelShader("octreeDebug");
 
+	vertexShader->SetShader();
+	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
+	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
+	vertexShader->SetFloat("worldSize", worldWidth);
+	renderer->context->VSSetShaderResources(0, 1, &octreeSRV);
+	vertexShader->CopyAllBufferData();
 
+	pixelShader->SetShader();
+	pixelShader->CopyAllBufferData();
+
+	// Set Topology to render the cube outline
+	renderer->context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	Mesh* meshTmp = renderer->GetMesh("cube");
+	Mesh* meshTmp = renderer->GetMesh("cubeOutline");
 	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
 	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
 	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
+	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), octreeSize, 0, 0, 0);
+
+	// reset topology
+	renderer->context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
@@ -524,6 +538,7 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 	for (int i = 0; i < octNum; i++)
 	{
 		cpuOctree[i] = Node();
+		cpuOctree[i].childPointer = -1;
 	}
 
 	cpuOctree[0].padding = 0;
@@ -543,7 +558,7 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 			// ALLOCATE AND follow pointer to next octree level
 			if (cpuOctree[currOctreeIndex].flagBits == 0)
 			{
-				cpuOctree[currOctreeIndex].flagBits = 1;
+				cpuOctree[currOctreeIndex].flagBits = currLevel;
 				// move the pointer to allocate a child since this is no longer a leaf
 				cpuOctree[0].padding += 8;
 				cpuOctree[currOctreeIndex].childPointer = cpuOctree[0].padding;
@@ -558,10 +573,10 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 			currOctreeIndex += octaveIndex.x;
 		}
 		// store
-		cpuOctree[currOctreeIndex].flagBits = 2;
-		cpuOctree[currOctreeIndex].position = voxelList[i].position;
+		cpuOctree[currOctreeIndex].position = voxelList[i].position; // might not need position;
 		cpuOctree[currOctreeIndex].normal = voxelList[i].normal;
 		cpuOctree[currOctreeIndex].color = voxelList[i].color;
+		cpuOctree[currOctreeIndex].childPointer = 0;
 	}
 
 	printf("Number of allocations %d\n", cpuOctree[0].padding);

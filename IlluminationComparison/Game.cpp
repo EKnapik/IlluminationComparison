@@ -333,6 +333,7 @@ void Game::LoadMeshes()
 	// renderer->AddMesh("cylinder", "Assets/cylinder.obj");
 	// renderer->AddMesh("helix", "Assets/helix.obj");
 	renderer->AddMesh("sphere", "Assets/sphere.obj");
+	renderer->AddMesh("cubeOutline", CubeOutline::GetMesh(device));
 	// renderer->AddMesh("mountains", "Assets/mountains.obj");
 	// renderer->AddMesh("torus", "Assets/torus.obj");
 	// renderer->AddMesh("court", "Assets/Court.obj");

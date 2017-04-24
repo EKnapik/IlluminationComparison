@@ -13,6 +13,7 @@
 #include "Camera.h"
 
 #include "Lights.h"
+#include "CubeOutlineObj.h"
 
 #include "GameManager.h"
 #include "DefferedRenderer.h"
