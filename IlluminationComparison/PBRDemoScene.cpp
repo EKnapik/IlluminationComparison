@@ -3,8 +3,7 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 2;
-	/*
+	int depthNum = 3;
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -37,7 +36,6 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	*/
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();

@@ -7,19 +7,22 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	initVoxelList(renderer->device, 16); // DirectX requires VoxelList to exist
 	voxelizeGeometry(renderer, 0);
 	// get count of voxels
-	voxelList->Release();
+	voxelListBuffer->Release();
 	voxelListSRV->Release();
 	voxelListUAV->Release();
 	voxelCount = getCount(renderer->device, renderer->context);
 	initVoxelList(renderer->device, voxelCount);
  	voxelizeGeometry(renderer, 1);
 	// use breakpoint debug to check the voxel list
-	// cpuVoxelListCapture(renderer->device, renderer->context);
-
-	initOctree(renderer->device);
-	createOctree(renderer);
+	Voxel* voxelList = cpuVoxelListCapture(renderer->device, renderer->context);
+	Node* cpuOctree = CPUCreateOctree(voxelList);
+	delete voxelList;
+	initOctree(renderer->device, cpuOctree);
+	delete cpuOctree;
+	// initOctree(renderer->device, NULL);
+	// createOctree(renderer);
 	// Use breakpoint debug to check the octree
-	cpuOctreeCapture(renderer->device, renderer->context);
+	// cpuOctreeCapture(renderer->device, renderer->context);
 	// mipMapUpOctree(renderer);
 }
 
@@ -59,6 +62,23 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
 }
 
+
+void SparseVoxelOctree::DrawOctreeDebug(DefferedRenderer * const renderer)
+{
+	renderer->context->OMSetRenderTargets(1, &renderer->backBufferRTV, renderer->depthStencilView);
+
+	SimpleVertexShader*   vertexShader = renderer->GetVertexShader("octreeDebug");
+	SimplePixelShader*    pixelShader = renderer->GetPixelShader("octreeDebug");
+
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	Mesh* meshTmp = renderer->GetMesh("cube");
+	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
+	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
+	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
+}
 
 void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 {
@@ -100,7 +120,7 @@ void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 	bufDesc.StructureByteStride = sizeof(Voxel);
 	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &voxelList);
+	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &voxelListBuffer);
 	assert(result == S_OK);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
@@ -112,7 +132,7 @@ void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 
 	// TODO: Check the results and error handle
-	result = device->CreateUnorderedAccessView(voxelList, &uavDesc, &voxelListUAV);
+	result = device->CreateUnorderedAccessView(voxelListBuffer, &uavDesc, &voxelListUAV);
 	assert(result == S_OK);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -121,39 +141,18 @@ void SparseVoxelOctree::initVoxelList(ID3D11Device* device, int numElements)
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.Buffer.ElementWidth = numElements;
 
-	result = device->CreateShaderResourceView(voxelList, &srvDesc, &voxelListSRV);
+	result = device->CreateShaderResourceView(voxelListBuffer, &srvDesc, &voxelListSRV);
 	assert(result == S_OK);
 }
 
 
-void SparseVoxelOctree::initOctree(ID3D11Device* device)
+void SparseVoxelOctree::initOctree(ID3D11Device* device, Node* initData)
 {
-	/*
 	//Calculate the maximum possilbe node number
-	int totalNode = 1;
-	int nTmp = 1;
-	for (int i = 1; i <= octreeLevel; ++i)
-	{
-		nTmp *= 8;
-		totalNode += nTmp;
-	}
-	cout << "Max possible node: " << totalNode << endl;
-	*/
 	// TODO:
 	// INITIALLY I WANT TO MAKE THE BUFFER JUST LARGE ENOUGH TO WORK THEN THE INTENTION IS TO DO AN AVERAGE
 	// OF VALUES IF THEIR FINAL NODE RESULTS IN A COLLISION BECAUSE OF SIZE RESTRICTION
-
-	// 256*256*256 + mip mapped octree for memory size
-	int totalLeafNodes = voxelDim*voxelDim;// *voxelDim;
-	int numOctreeNodes = totalLeafNodes;
-	for (int i = 0; i < 0; i++)
-	{
-		totalLeafNodes /= 8;
-		numOctreeNodes += totalLeafNodes;
-	}
-
-	// octreeSize = numOctreeNodes;
-	octreeSize = 1280;
+	octreeSize = voxelCount * 10;
 
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
@@ -164,7 +163,13 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	bufDesc.StructureByteStride = sizeof(Node);
 	bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT result = device->CreateBuffer(&bufDesc, NULL, &octree);
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = initData;
+	data.SysMemPitch = 0;      // has no meaning for this buffer
+	data.SysMemSlicePitch = 0; // has no meaning for this buffer
+
+	HRESULT result = device->CreateBuffer(&bufDesc, &data, &octree);
 	assert(result == S_OK);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
@@ -188,7 +193,6 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device)
 	result = device->CreateShaderResourceView(octree, &srvDesc, &octreeSRV);
 	assert(result == S_OK);
 }
-
 
 
 // D3D11_CONSERVATIVE_RASTERIZATION_MODE
@@ -317,7 +321,7 @@ void SparseVoxelOctree::deleteVoxelList()
 {
 	counter->Release();
 	counterUAV->Release();
-	voxelList->Release();
+	voxelListBuffer->Release();
 	voxelListUAV->Release();
 	voxelListSRV->Release();
 }
@@ -331,7 +335,6 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("numThreadRows", squareDim);
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
 	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
-	computeShader->SetInt("wvWidth", wvWidth);
 	// set SRV and UAV simple shader can not do these propperly
 	renderer->context->CSSetShaderResources(0, 1, &voxelListSRV);
 	renderer->context->CSGetUnorderedAccessViews(1, 1, &octreeUAV);
@@ -348,7 +351,6 @@ void SparseVoxelOctree::createOctree(DefferedRenderer* renderer)
 	computeShader->SetInt("numThreadRows", squareDim);
 	computeShader->SetInt("MaxVoxelIndex", voxelCount);
 	computeShader->SetInt("MaxOctreeDepth", maxOctreeDepth);
-	computeShader->SetInt("wvWidth", wvWidth);
 	// set SRV and UAV simple shader can not do these propperly
 	renderer->context->CSSetShaderResources(0, 1, &voxelListSRV);
 	renderer->context->CSGetUnorderedAccessViews(1, 1, &octreeUAV);
@@ -404,7 +406,8 @@ int SparseVoxelOctree::getCount(ID3D11Device* device, ID3D11DeviceContext* conte
 	return finalCount[0];
 }
 
-void SparseVoxelOctree::cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context)
+
+Voxel* SparseVoxelOctree::cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	D3D11_BUFFER_DESC stagingDesc;
 	memset(&stagingDesc, 0, sizeof(stagingDesc));
@@ -417,18 +420,20 @@ void SparseVoxelOctree::cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceCo
 
 	ID3D11Buffer* stagingBuffer;
 	HRESULT result = device->CreateBuffer(&stagingDesc, 0, &stagingBuffer);
-	context->CopyResource(stagingBuffer, voxelList);
+	context->CopyResource(stagingBuffer, voxelListBuffer);
 	context->Flush();
 
 	// Map for reading
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
 
-	Voxel finalVoxelList[2560];
+	Voxel* finalVoxelList = new Voxel[voxelCount];
 	memcpy(finalVoxelList, mapped.pData, sizeof(Voxel) * voxelCount);
 	context->Unmap(stagingBuffer, 0);
 	stagingBuffer->Release();
+	return finalVoxelList;
 }
+
 
 void SparseVoxelOctree::cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context)
 {
@@ -454,4 +459,111 @@ void SparseVoxelOctree::cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceConte
 	memcpy(finalOctree, mapped.pData, sizeof(Node) * 1000);
 	context->Unmap(stagingBuffer, 0);
 	stagingBuffer->Release();
+}
+
+
+VEC4 GetOctaveIndex(VEC3 pos)
+{
+	if (pos.x > 0)
+	{
+		if (pos.y > 0)
+		{
+			if (pos.z > 0)
+			{
+				return VEC4(0, 1, 1, 1);
+			}
+			else
+			{
+				return VEC4(3, 1, 1, -1);
+			}
+		}
+		else
+		{
+			if (pos.z > 0)
+			{
+				return VEC4(4, 1, -1, 1);
+			}
+			else
+			{
+				return VEC4(7, 1, -1, -1);
+			}
+		}
+	}
+	else
+	{
+		if (pos.y > 0)
+		{
+			if (pos.z > 0)
+			{
+				return VEC4(1, -1, 1, 1);
+			}
+			else
+			{
+				return VEC4(2, -1, 1, -1);
+			}
+		}
+		else
+		{
+			if (pos.z > 0)
+			{
+				return VEC4(5, -1, -1, 1);
+			}
+			else
+			{
+				return VEC4(6, -1, -1, -1);
+			}
+		}
+	}
+}
+
+
+Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
+{
+	int octNum = voxelCount * 10;
+	Node* cpuOctree = new Node[octNum];
+	for (int i = 0; i < octNum; i++)
+	{
+		cpuOctree[i] = Node();
+	}
+
+	cpuOctree[0].padding = 0;
+	for (int i = 0; i < voxelCount; i++)
+	{
+		Voxel voxel = voxelList[i];
+		Voxel curVoxel = voxelList[i];
+		// Go to position in octree node chunk
+		int currLevel = 0;
+		int currOctreeIndex;
+		float curVoxelWidth = worldWidth / 2.0f; // start at the top level
+		// the 0-7 index offset and the offset to move by if needing to traverse
+		VEC4 octaveIndex = GetOctaveIndex(curVoxel.position);
+		currOctreeIndex = octaveIndex.x;
+		for (currLevel = 0; currLevel < maxOctreeDepth; currLevel++)
+		{
+			// ALLOCATE AND follow pointer to next octree level
+			if (cpuOctree[currOctreeIndex].flagBits == 0)
+			{
+				cpuOctree[currOctreeIndex].flagBits = 1;
+				// move the pointer to allocate a child since this is no longer a leaf
+				cpuOctree[0].padding += 8;
+				cpuOctree[currOctreeIndex].childPointer = cpuOctree[0].padding;
+			}
+			currOctreeIndex = cpuOctree[currOctreeIndex].childPointer;
+			// get to new position by moving then check again
+			curVoxelWidth /= 2.0f;
+			curVoxel.position.x -= octaveIndex.y * curVoxelWidth;
+			curVoxel.position.y -= octaveIndex.z * curVoxelWidth;
+			curVoxel.position.z -= octaveIndex.w * curVoxelWidth;
+			octaveIndex = GetOctaveIndex(curVoxel.position);
+			currOctreeIndex += octaveIndex.x;
+		}
+		// store
+		cpuOctree[currOctreeIndex].flagBits = 2;
+		cpuOctree[currOctreeIndex].position = voxelList[i].position;
+		cpuOctree[currOctreeIndex].normal = voxelList[i].normal;
+		cpuOctree[currOctreeIndex].color = voxelList[i].color;
+	}
+
+	printf("Number of allocations %d\n", cpuOctree[0].padding);
+	return cpuOctree;
 }

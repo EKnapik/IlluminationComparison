@@ -4,7 +4,6 @@ cbuffer externalData : register(b0)
 	int numThreadRows;
 	int MaxVoxelIndex;
 	int MaxOctreeDepth;
-	int wvWidth;    // world Voxel width Entire space is made up of a (wvWidth + wvWidth)**3 area
 }
 
 struct Voxel
@@ -113,7 +112,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
 	Voxel curVoxel = voxelList[voxelIndex];
 	// Go to position in octree node chunk
 	int currOctreeIndex;
-	float curVoxelWidth = wvWidth;
+	float curVoxelWidth = 4.0f; //wvWidth;  /////////////////////////////////////////////////////////FIX THIS
 	// the 0-7 index offset and the offset to move by if needing to traverse
 	float4 octaveIndex = GetOctaveIndex(curVoxel.position);
 	currOctreeIndex = octaveIndex.x;

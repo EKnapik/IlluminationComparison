@@ -312,13 +312,18 @@ void Game::LoadShaders()
 	renderer->AddComputeShader("constructSVO", L"constructSVO.cso");
 	renderer->AddComputeShader("storeSVO", L"storeSVO.cso");
 	renderer->AddComputeShader("mipMapSVO", L"mipMapSVO.cso");
+
 	renderer->AddVertexShader("voxelList", L"voxelList_VS.cso");
 	renderer->AddVertexShader("voxelDebug", L"voxelDebug_VS.cso");
+	renderer->AddVertexShader("octreeDebug", L"octreeDebug_VS.cso");
+
 	renderer->AddGeometryShader("voxelList", L"voxelList_GS.cso");
+
 	renderer->AddPixelShader("voxelList", L"voxelList_PS.cso");
 	renderer->AddPixelShader("quadVoxelTrace", L"voxelRayTracing_PS.cso");
 	renderer->AddPixelShader("rayMarchExample", L"rayMarchExample_PS.cso");
 	renderer->AddPixelShader("voxelDebug", L"voxelDebug_PS.cso");
+	renderer->AddPixelShader("octreeDebug", L"octreeDebug_PS.cso");
 }
 
 void Game::LoadMeshes()

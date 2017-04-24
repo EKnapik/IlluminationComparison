@@ -3,8 +3,8 @@ cbuffer externalData : register(b0)
 {
 	int numThreadRows;
 	int MaxVoxelIndex;
-	int MaxOctreeDepth;	
-	int wvWidth;    // world Voxel width Entire space is made up of a (wvWidth + wvWidth)**3 area
+	int MaxOctreeDepth;
+	// NEED TO GET VOXEL WITH BY VOXEL NUMBER / WORLD WIDTH
 }
 
 struct Voxel

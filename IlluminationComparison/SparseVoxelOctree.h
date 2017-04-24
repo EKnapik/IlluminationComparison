@@ -6,48 +6,6 @@
 #include "DefferedRenderer.h"
 #include "DXCore.h"
 
-class DefferedRenderer;
-
-class SparseVoxelOctree
-{
-public:
-	SparseVoxelOctree(DefferedRenderer* const renderer);
-	~SparseVoxelOctree();
-	int maxOctreeDepth = 9;
-	int wvWidth = 25;
-
-	ID3D11ShaderResourceView* GetOctreeSRV() { return octreeSRV; };
-	void DrawVoxelDebug(DefferedRenderer* const renderer);
-
-private:
-	void initVoxelCounter(ID3D11Device* device);
-	void initVoxelList(ID3D11Device* device, int numElements);
-	void initOctree(ID3D11Device* device);
- 	void voxelizeGeometry(DefferedRenderer* renderer, int mode); // 0 to count 1 to store
-	void deleteVoxelList();
-	void createOctree(DefferedRenderer* renderer);
-	void mipMapUpOctree(DefferedRenderer* renderer);
-	int  getCount(ID3D11Device* device, ID3D11DeviceContext* context);
-
-	void cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context);
-	void cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context);
-
-	float  worldWidth = 8;
-	int    voxelCount = 0;
-	float  voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
-	int octreeSize = 0;
-	
-	ID3D11Buffer			  *counter;
-	ID3D11Buffer			  *voxelList;
-	ID3D11Buffer			  *octree;
-	ID3D11UnorderedAccessView *counterUAV;
-	ID3D11UnorderedAccessView *voxelListUAV;
-	ID3D11ShaderResourceView  *voxelListSRV;
-	ID3D11UnorderedAccessView *octreeUAV;
-	ID3D11ShaderResourceView  *octreeSRV;
-
-};
-
 
 struct Voxel
 {
@@ -66,6 +24,53 @@ struct Node
 	INT32             childPointer; // pointer to child 8 tile chunch of the octree, an offset index
 	UINT32			  padding; // ensures the 128 bit allignment
 };
+
+class DefferedRenderer;
+
+class SparseVoxelOctree
+{
+public:
+	SparseVoxelOctree(DefferedRenderer* const renderer);
+	~SparseVoxelOctree();
+	
+
+	ID3D11ShaderResourceView* GetOctreeSRV() { return octreeSRV; };
+	void DrawVoxelDebug(DefferedRenderer* const renderer);
+	void DrawOctreeDebug(DefferedRenderer * const renderer);
+	float getVoxelWidth() { return (worldWidth / voxelDim); };
+	float getOctreeDepth() { return maxOctreeDepth; };
+
+private:
+	void initVoxelCounter(ID3D11Device* device);
+	void initVoxelList(ID3D11Device* device, int numElements);
+	void initOctree(ID3D11Device* device, Node* initData);
+ 	void voxelizeGeometry(DefferedRenderer* renderer, int mode); // 0 to count 1 to store
+	void deleteVoxelList();
+	void createOctree(DefferedRenderer* renderer);
+	void mipMapUpOctree(DefferedRenderer* renderer);
+	int  getCount(ID3D11Device* device, ID3D11DeviceContext* context);
+
+	Voxel* cpuVoxelListCapture(ID3D11Device* device, ID3D11DeviceContext* context);
+	void cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context);
+	Node* CPUCreateOctree(Voxel* voxelList);
+
+	float  worldWidth = 8;
+	int    voxelCount = 0;
+	float  voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
+	int octreeSize = 0;
+	int maxOctreeDepth = int(log2(voxelDim));
+	
+	ID3D11Buffer			  *counter;
+	ID3D11Buffer			  *voxelListBuffer;
+	ID3D11Buffer			  *octree;
+	ID3D11UnorderedAccessView *counterUAV;
+	ID3D11UnorderedAccessView *voxelListUAV;
+	ID3D11ShaderResourceView  *voxelListSRV;
+	ID3D11UnorderedAccessView *octreeUAV;
+	ID3D11ShaderResourceView  *octreeSRV;
+
+};
+
 /*
 Needs:
 Node List 

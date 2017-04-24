@@ -619,8 +619,9 @@ void DefferedRenderer::rayTraceVoxel()
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	pixelShader->SetInt("MaxOctreeDepth", octree->maxOctreeDepth);
-	pixelShader->SetInt("wvWidth", octree->wvWidth);
+	////////////////////////////////////////////////////////////////////////////////////////////////////FIX THIS WITH VOXEL WIDTH
+	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
+	pixelShader->SetInt("wvWidth", octree->getVoxelWidth());
 	pixelShader->SetShaderResourceView("octree", octree->GetOctreeSRV());
 	pixelShader->CopyAllBufferData();
 
