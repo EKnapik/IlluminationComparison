@@ -56,7 +56,7 @@ private:
 
 	float  worldWidth = 16;
 	int    voxelCount = 0;
-	float  voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
+	float  voxelDim = 128; // 256*256*256 + mip mapped octree for memory size
 	int octreeSize = 0;
 	int maxOctreeDepth = int(log2(voxelDim));
 	
