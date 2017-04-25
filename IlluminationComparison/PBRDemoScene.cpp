@@ -3,7 +3,7 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 2;
+	int depthNum = 1;
 	/*
 	for (int i = 0; i < depthNum; i++)
 	{
@@ -44,8 +44,7 @@ PBRDemoScene::PBRDemoScene()
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "graniteSmooth"));
-		// ball->kinematics->SetPosition(VEC3(0.5, 1, i));
-		ball->kinematics->SetPosition(VEC3(0.0, 0, i));
+		ball->kinematics->SetPosition(VEC3(0.5, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}

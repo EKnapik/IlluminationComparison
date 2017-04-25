@@ -36,6 +36,7 @@ StructuredBuffer<Voxel> voxelList : register(t0);
 
 VStoPS main( VSInput input )
 {
+	input.position += 0.5; // corrects for centering issue
 	float3 trans = voxelList[input.InstanceId].position;
 	matrix world = float4x4(voxelScale, 0, 0, 0,
 							0, voxelScale, 0, 0,

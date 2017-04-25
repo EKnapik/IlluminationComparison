@@ -480,11 +480,11 @@ void SparseVoxelOctree::cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceConte
 
 VEC4 GetOctaveIndex(VEC3 pos)
 {
-	if (pos.x > 0)
+	if (pos.x >= 0)
 	{
-		if (pos.y > 0)
+		if (pos.y >= 0)
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return VEC4(0, 1, 1, 1);
 			}
@@ -495,7 +495,7 @@ VEC4 GetOctaveIndex(VEC3 pos)
 		}
 		else
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return VEC4(4, 1, -1, 1);
 			}
@@ -507,9 +507,9 @@ VEC4 GetOctaveIndex(VEC3 pos)
 	}
 	else
 	{
-		if (pos.y > 0)
+		if (pos.y >= 0)
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return VEC4(1, -1, 1, 1);
 			}
@@ -520,7 +520,7 @@ VEC4 GetOctaveIndex(VEC3 pos)
 		}
 		else
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return VEC4(5, -1, -1, 1);
 			}
@@ -546,7 +546,6 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 	cpuOctree[0].padding = 0;
 	for (int i = 0; i < voxelCount; i++)
 	{
-		Voxel voxel = voxelList[i];
 		Voxel curVoxel = voxelList[i];
 		// Go to position in octree node chunk
 		int currLevel = 0;
@@ -557,13 +556,13 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 		currOctreeIndex = octaveIndex.x;
 		// the extra divide by 2.0f to center the octave
 		VEC3 curOctavePos = VEC3(octaveIndex.y * curVoxelWidth / 2.0f, octaveIndex.z * curVoxelWidth / 2.0f, octaveIndex.w * curVoxelWidth / 2.0f);
-		for (currLevel = 0; currLevel < maxOctreeDepth; currLevel++)
+		for (currLevel = 1; currLevel < maxOctreeDepth; currLevel++)
 		{
 			// ALLOCATE AND follow pointer to next octree level
 			if (cpuOctree[currOctreeIndex].flagBits == -1)
 			{
 				cpuOctree[currOctreeIndex].position = curOctavePos;
-				cpuOctree[currOctreeIndex].flagBits = currLevel+1;
+				cpuOctree[currOctreeIndex].flagBits = currLevel;
 				// move the pointer to allocate a child since this is no longer a leaf
 				cpuOctree[0].padding += 8;
 				cpuOctree[currOctreeIndex].childPointer = cpuOctree[0].padding;
@@ -574,19 +573,21 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 			curVoxel.position.x -= octaveIndex.y * curVoxelWidth;
 			curVoxel.position.y -= octaveIndex.z * curVoxelWidth;
 			curVoxel.position.z -= octaveIndex.w * curVoxelWidth;
-			curOctavePos.x -= octaveIndex.y * curVoxelWidth;
-			curOctavePos.y -= octaveIndex.z * curVoxelWidth;
-			curOctavePos.z -= octaveIndex.w * curVoxelWidth;
 
 			octaveIndex = GetOctaveIndex(curVoxel.position);
 			currOctreeIndex += octaveIndex.x;
+
+			// need the extra divide so the centers are moved appropriately
+			curOctavePos.x += octaveIndex.y * (curVoxelWidth / 2.0f);
+			curOctavePos.y += octaveIndex.z * (curVoxelWidth / 2.0f);
+			curOctavePos.z += octaveIndex.w * (curVoxelWidth / 2.0f);
 		}
 		// store
-		cpuOctree[currOctreeIndex].position = voxelList[i].position; // might not need position;
+		cpuOctree[currOctreeIndex].position = curOctavePos;
 		cpuOctree[currOctreeIndex].normal = voxelList[i].normal;
 		cpuOctree[currOctreeIndex].color = voxelList[i].color;
 		cpuOctree[currOctreeIndex].childPointer = 0;
-		cpuOctree[currOctreeIndex].flagBits = maxOctreeDepth-1; //////////////////////////////////////////////////////////////////////////////////////////////////////
+		cpuOctree[currOctreeIndex].flagBits = maxOctreeDepth;
 	}
 
 	printf("Number of allocations %d\n", cpuOctree[0].padding);
