@@ -45,7 +45,7 @@ float main(GStoPS input) : SV_TARGET
 	int storePlace;
 	if (store == 1)	
 	{
-		float zScale = voxelWidth / (worldWidth / 2.0f);
+		float zScale = voxelWidth;
 		float3 temp = float3(input.pos.x, input.pos.y, input.pos.z * zScale);
 		float3 final;
 		if (input.axis == 1)
@@ -65,7 +65,7 @@ float main(GStoPS input) : SV_TARGET
 
 		// Convert from 0 - voxelDim to world space voxel pos
 		final /= voxelWidth;   // now in   0  to 1 space
-		final *= worldWidth*2.0f;
+		final *= worldWidth * 2.0f;
 		final = worldWidth - final;
 		final /= 2.0f;
 
@@ -78,13 +78,10 @@ float main(GStoPS input) : SV_TARGET
 		final.z += (temp.z < 0.5) ? 0.0f : 1.0f;
 		final *= (worldWidth / voxelWidth);
 
-		// final = temp;
 		Voxel voxel;
 		voxel.position = final;
-		// voxel.position = float3(input.pos.x-4, input.pos.y-2, input.pos.z*16);
 		voxel.normal = input.normal;
 		voxel.color = albedoMap.Sample(basicSampler, input.uv).rgb;
-		//voxel.color = float3(final.y/4, 0.0, 0.0);
 		voxel.padding = float3(0.0, 0.0, 0.0); // This data is uninportant and is used for gpu efficiency
 		
 		InterlockedAdd(atomicCounter[0], -1, storePlace);
