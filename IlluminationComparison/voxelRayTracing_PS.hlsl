@@ -4,7 +4,7 @@ cbuffer externalData	: register(b0)
 	float3 cameraPosition;
 	float3 cameraForward;
 	int MaxOctreeDepth;
-	int wvWidth;    // world Voxel width Entire space is made up of a (wvWidth + wvWidth)**3 area
+	int wvWidth;    // world Voxel width Entire space is made up of
 }
 
 struct VertexToPixel
@@ -38,11 +38,11 @@ void initStaticOctree();
 
 float4 GetOctaveIndex(float3 pos)
 {
-	if (pos.x > 0)
+	if (pos.x >= 0)
 	{
-		if (pos.y > 0)
+		if (pos.y >= 0)
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return float4(0, 1, 1, 1);
 			}
@@ -53,7 +53,7 @@ float4 GetOctaveIndex(float3 pos)
 		}
 		else
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return float4(4, 1, -1, 1);
 			}
@@ -65,9 +65,9 @@ float4 GetOctaveIndex(float3 pos)
 	}
 	else
 	{
-		if (pos.y > 0)
+		if (pos.y >= 0)
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return float4(1, -1, 1, 1);
 			}
@@ -78,7 +78,7 @@ float4 GetOctaveIndex(float3 pos)
 		}
 		else
 		{
-			if (pos.z > 0)
+			if (pos.z >= 0)
 			{
 				return float4(5, -1, -1, 1);
 			}
@@ -102,7 +102,8 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 	Node currentNode = octree[0];
 	float t = 0;
 	float3 pos;
-	while (t < maxDist && currentNode.flagBits != 2)
+	float minStep = wvWidth / pow(2, MaxOctreeDepth+1);
+	while (t < maxDist && currentNode.childPointer != 0) // chilld pointer 0 means leaf node
 	{
 		pos = rayO + rayDir*t;
 		octaveIndex = GetOctaveIndex(pos);
@@ -112,9 +113,9 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 		for (int currLevel = 0; currLevel < MaxOctreeDepth; currLevel++)
 		{
 			// get to new position by moving then check again
-			if (currentNode.flagBits == 0)
+			if (currentNode.flagBits == -1)
 			{
-				t += wvWidth / pow(2, currLevel + 1);
+				t += wvWidth / pow(2, currLevel + 2);
 				break;
 			}
 			else
@@ -125,6 +126,7 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 			}
 			currentNode = octree[octreeIndex];
 		}
+		t += minStep;
 	}
 	iNode = currentNode;
 	return t;
@@ -140,7 +142,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	Node hitNode;
 	float t = intersect(rayOrigin, rayDir, hitNode);
 	if (t >= maxDist)
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+		return float4(0.0f, 1.0f, 0.0f, 1.0f);
 
 	float3 pos = rayOrigin + rayDir * t;
 	// need this to prevent shelf shading
@@ -183,18 +185,4 @@ float4 main(VertexToPixel input) : SV_TARGET
 	finalColor += amb;
 
 	return float4(finalColor, 1.0f);
-}
-
-
-
-void initStaticOctree()
-{
-	Node node;
-	node.position = float3(5, 3, 2);
-	node.normal = float3(0.0f, 1.0f, 0.0f);
-	node.color = float3(1.0f, 0.0f, 0.0f);
-	node.flagBits = 2;
-	node.childPointer = 0;
-	node.padding = 0;
-	staticOctree[0] = node;
 }

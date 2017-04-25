@@ -307,9 +307,6 @@
     <FxCompile Include="octreeDebug_VS.hlsl">
       <Filter>Shaders\SVO\octree</Filter>
     </FxCompile>
-    <FxCompile Include="rayMarchExample_PS.hlsl">
-      <Filter>Shaders\SVO\octree</Filter>
-    </FxCompile>
     <FxCompile Include="storeSVO.hlsl">
       <Filter>Shaders\SVO\octree</Filter>
     </FxCompile>
@@ -330,6 +327,9 @@
     </FxCompile>
     <FxCompile Include="voxelList_VS.hlsl">
       <Filter>Shaders\SVO\voxel</Filter>
+    </FxCompile>
+    <FxCompile Include="rayMarchExample_PS.hlsl">
+      <Filter>Shaders\SVO</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

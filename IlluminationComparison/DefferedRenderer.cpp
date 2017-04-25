@@ -607,8 +607,8 @@ void DefferedRenderer::rayTraceLighting()
 void DefferedRenderer::rayTraceVoxel()
 {
 	SimpleVertexShader* vertexShader = GetVertexShader("quadPBR");
-	// SimplePixelShader* pixelShader = GetPixelShader("quadVoxelTrace");
-	SimplePixelShader* pixelShader = GetPixelShader("rayMarchExample");
+	SimplePixelShader* pixelShader = GetPixelShader("quadVoxelTrace");
+	// SimplePixelShader* pixelShader = GetPixelShader("rayMarchExample");
 	
 	vertexShader->SetShader();
 	pixelShader->SetShader();
@@ -619,10 +619,10 @@ void DefferedRenderer::rayTraceVoxel()
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	////////////////////////////////////////////////////////////////////////////////////////////////////FIX THIS WITH VOXEL WIDTH
 	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
 	pixelShader->SetInt("wvWidth", octree->getVoxelWidth());
-	pixelShader->SetShaderResourceView("octree", octree->GetOctreeSRV());
+	ID3D11ShaderResourceView* octreeSRV = octree->GetOctreeSRV();
+	context->PSSetShaderResources(0, 1, &octreeSRV);
 	pixelShader->CopyAllBufferData();
 
 	UINT stride = sizeof(Vertex);
