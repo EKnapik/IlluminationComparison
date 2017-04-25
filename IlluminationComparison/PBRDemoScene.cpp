@@ -3,7 +3,8 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 3;
+	int depthNum = 1;
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -12,6 +13,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -28,6 +30,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -36,15 +39,17 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
+	*/
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "graniteSmooth"));
-		ball->kinematics->SetPosition(VEC3(0.5, 1, i));
+		// ball->kinematics->SetPosition(VEC3(0.5, 1, i));
+		ball->kinematics->SetPosition(VEC3(0.0, 0, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -53,7 +58,7 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	/*
+	
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();

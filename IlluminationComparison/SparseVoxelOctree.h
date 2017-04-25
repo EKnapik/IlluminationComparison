@@ -54,7 +54,7 @@ private:
 	void cpuOctreeCapture(ID3D11Device* device, ID3D11DeviceContext* context);
 	Node* CPUCreateOctree(Voxel* voxelList);
 
-	float  worldWidth = 8;
+	float  worldWidth = 10;
 	int    voxelCount = 0;
 	float  voxelDim = 64; // 256*256*256 + mip mapped octree for memory size
 	int octreeSize = 0;

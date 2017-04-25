@@ -4,7 +4,7 @@ using namespace DirectX;
 SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 {
 	initVoxelCounter(renderer->device);
-	initVoxelList(renderer->device, 16); // DirectX requires VoxelList to exist
+	initVoxelList(renderer->device, 16); // DirectX requires VoxelList to exist and be minimum size
 	voxelizeGeometry(renderer, 0);
 	// get count of voxels
 	voxelListBuffer->Release();
@@ -15,10 +15,13 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
  	voxelizeGeometry(renderer, 1);
 	// use breakpoint debug to check the voxel list
 	Voxel* voxelList = cpuVoxelListCapture(renderer->device, renderer->context);
+	octreeSize = voxelCount * 50;
 	Node* cpuOctree = CPUCreateOctree(voxelList);
 	delete voxelList;
 	initOctree(renderer->device, cpuOctree);
 	delete cpuOctree;
+
+
 	// initOctree(renderer->device, NULL);
 	// createOctree(renderer);
 	// Use breakpoint debug to check the octree
@@ -45,8 +48,8 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	vertexShader->SetShader();
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
-	vertexShader->SetFloat("voxelScale", worldWidth*2.0f/float(voxelDim));
-	// vertexShader->SetShaderResourceView("voxelList", voxelListSRV);
+	vertexShader->SetFloat("voxelScale", worldWidth/float(voxelDim));
+	// can't use simple shader for voxelSRV
 	renderer->context->VSSetShaderResources(0, 1, &voxelListSRV);
 	vertexShader->CopyAllBufferData();
 
@@ -74,6 +77,7 @@ void SparseVoxelOctree::DrawOctreeDebug(DefferedRenderer * const renderer)
 	vertexShader->SetMatrix4x4("view", *renderer->camera->GetView());
 	vertexShader->SetMatrix4x4("projection", *renderer->camera->GetProjection());
 	vertexShader->SetFloat("worldSize", worldWidth);
+	vertexShader->SetInt("maxOctreeIndex", octreeSize);
 	renderer->context->VSSetShaderResources(0, 1, &octreeSRV);
 	vertexShader->CopyAllBufferData();
 
@@ -166,8 +170,6 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device, Node* initData)
 	// TODO:
 	// INITIALLY I WANT TO MAKE THE BUFFER JUST LARGE ENOUGH TO WORK THEN THE INTENTION IS TO DO AN AVERAGE
 	// OF VALUES IF THEIR FINAL NODE RESULTS IN A COLLISION BECAUSE OF SIZE RESTRICTION
-	octreeSize = voxelCount * 10;
-
 	D3D11_BUFFER_DESC bufDesc;
 	memset(&bufDesc, 0, sizeof(bufDesc));
 	bufDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -533,12 +535,12 @@ VEC4 GetOctaveIndex(VEC3 pos)
 
 Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 {
-	int octNum = voxelCount * 10;
-	Node* cpuOctree = new Node[octNum];
-	for (int i = 0; i < octNum; i++)
+	Node* cpuOctree = new Node[octreeSize];
+	for (int i = 0; i < octreeSize; i++)
 	{
 		cpuOctree[i] = Node();
 		cpuOctree[i].childPointer = -1;
+		cpuOctree[i].flagBits = -1;
 	}
 
 	cpuOctree[0].padding = 0;
@@ -553,12 +555,15 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 		// the 0-7 index offset and the offset to move by if needing to traverse
 		VEC4 octaveIndex = GetOctaveIndex(curVoxel.position);
 		currOctreeIndex = octaveIndex.x;
+		// the extra divide by 2.0f to center the octave
+		VEC3 curOctavePos = VEC3(octaveIndex.y * curVoxelWidth / 2.0f, octaveIndex.z * curVoxelWidth / 2.0f, octaveIndex.w * curVoxelWidth / 2.0f);
 		for (currLevel = 0; currLevel < maxOctreeDepth; currLevel++)
 		{
 			// ALLOCATE AND follow pointer to next octree level
-			if (cpuOctree[currOctreeIndex].flagBits == 0)
+			if (cpuOctree[currOctreeIndex].flagBits == -1)
 			{
-				cpuOctree[currOctreeIndex].flagBits = currLevel;
+				cpuOctree[currOctreeIndex].position = curOctavePos;
+				cpuOctree[currOctreeIndex].flagBits = currLevel+1;
 				// move the pointer to allocate a child since this is no longer a leaf
 				cpuOctree[0].padding += 8;
 				cpuOctree[currOctreeIndex].childPointer = cpuOctree[0].padding;
@@ -569,6 +574,10 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 			curVoxel.position.x -= octaveIndex.y * curVoxelWidth;
 			curVoxel.position.y -= octaveIndex.z * curVoxelWidth;
 			curVoxel.position.z -= octaveIndex.w * curVoxelWidth;
+			curOctavePos.x -= octaveIndex.y * curVoxelWidth;
+			curOctavePos.y -= octaveIndex.z * curVoxelWidth;
+			curOctavePos.z -= octaveIndex.w * curVoxelWidth;
+
 			octaveIndex = GetOctaveIndex(curVoxel.position);
 			currOctreeIndex += octaveIndex.x;
 		}
@@ -577,6 +586,7 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 		cpuOctree[currOctreeIndex].normal = voxelList[i].normal;
 		cpuOctree[currOctreeIndex].color = voxelList[i].color;
 		cpuOctree[currOctreeIndex].childPointer = 0;
+		cpuOctree[currOctreeIndex].flagBits = maxOctreeDepth-1; //////////////////////////////////////////////////////////////////////////////////////////////////////
 	}
 
 	printf("Number of allocations %d\n", cpuOctree[0].padding);

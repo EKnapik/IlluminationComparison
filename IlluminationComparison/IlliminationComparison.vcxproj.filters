@@ -52,6 +52,12 @@
     <Filter Include="Shaders\SVO">
       <UniqueIdentifier>{fd744094-bf5c-4d09-af57-7fdfae7041c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\SVO\voxel">
+      <UniqueIdentifier>{1173faa8-81e0-4471-b342-ec2d5829bdb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\SVO\octree">
+      <UniqueIdentifier>{9bf1e89f-31b1-4a4b-816f-2a3817cf938b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -118,6 +124,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SparseVoxelOctree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CubeOutlineObj.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -197,8 +206,11 @@
     <ClInclude Include="PBRDemoScene.h">
       <Filter>Header Files\Engine\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="CubeOutlineObj.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="SparseVoxelOctree.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -280,38 +292,44 @@
     <FxCompile Include="PassThrough_PS.hlsl">
       <Filter>Shaders\PostProcessing</Filter>
     </FxCompile>
-    <FxCompile Include="voxelList_GS.hlsl">
-      <Filter>Shaders\SVO</Filter>
-    </FxCompile>
-    <FxCompile Include="voxelList_VS.hlsl">
-      <Filter>Shaders\SVO</Filter>
-    </FxCompile>
-    <FxCompile Include="voxelList_PS.hlsl">
-      <Filter>Shaders\SVO</Filter>
-    </FxCompile>
-    <FxCompile Include="constructSVO.hlsl">
-      <Filter>Shaders\SVO</Filter>
-    </FxCompile>
-    <FxCompile Include="mipMapSVO.hlsl">
-      <Filter>Shaders\SVO</Filter>
-    </FxCompile>
     <FxCompile Include="voxelRayTracing_PS.hlsl">
       <Filter>Shaders\SVO</Filter>
     </FxCompile>
-    <FxCompile Include="storeSVO.hlsl">
-      <Filter>Shaders\SVO</Filter>
+    <FxCompile Include="constructSVO.hlsl">
+      <Filter>Shaders\SVO\octree</Filter>
     </FxCompile>
-    <FxCompile Include="svoLighting_PS.hlsl">
-      <Filter>Shaders\SVO</Filter>
+    <FxCompile Include="mipMapSVO.hlsl">
+      <Filter>Shaders\SVO\octree</Filter>
+    </FxCompile>
+    <FxCompile Include="octreeDebug_PS.hlsl">
+      <Filter>Shaders\SVO\octree</Filter>
+    </FxCompile>
+    <FxCompile Include="octreeDebug_VS.hlsl">
+      <Filter>Shaders\SVO\octree</Filter>
     </FxCompile>
     <FxCompile Include="rayMarchExample_PS.hlsl">
-      <Filter>Shaders\SVO</Filter>
+      <Filter>Shaders\SVO\octree</Filter>
     </FxCompile>
-    <FxCompile Include="voxelDebug_VS.hlsl">
-      <Filter>Shaders\SVO</Filter>
+    <FxCompile Include="storeSVO.hlsl">
+      <Filter>Shaders\SVO\octree</Filter>
+    </FxCompile>
+    <FxCompile Include="svoLighting_PS.hlsl">
+      <Filter>Shaders\SVO\octree</Filter>
     </FxCompile>
     <FxCompile Include="voxelDebug_PS.hlsl">
-      <Filter>Shaders\SVO</Filter>
+      <Filter>Shaders\SVO\voxel</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelDebug_VS.hlsl">
+      <Filter>Shaders\SVO\voxel</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelList_GS.hlsl">
+      <Filter>Shaders\SVO\voxel</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelList_PS.hlsl">
+      <Filter>Shaders\SVO\voxel</Filter>
+    </FxCompile>
+    <FxCompile Include="voxelList_VS.hlsl">
+      <Filter>Shaders\SVO\voxel</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

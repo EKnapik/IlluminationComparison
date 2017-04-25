@@ -196,6 +196,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f, 0);
 
 	renderer->octree->DrawVoxelDebug(renderer);
+	// renderer->octree->DrawOctreeDebug(renderer);
+	// renderer->Render(deltaTime, totalTime);
 
 	swapChain->Present(0, 0);
 }

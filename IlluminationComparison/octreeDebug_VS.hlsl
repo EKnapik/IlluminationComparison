@@ -5,6 +5,7 @@ cbuffer externalData : register(b1)
 	matrix view;
 	matrix projection;
 	float  worldSize;
+	int    maxOctreeIndex;
 };
 
 struct VSInput
@@ -36,27 +37,39 @@ StructuredBuffer<Node> octree : register(t0);
 // INDEX [   0    ,     1    ,    2   ,     3   ,     4    ,      5    ,     6   ,      7   , .....]
 // Node Pos [(1,1,1), (-1,1,1), (-1,1,-1), (1,1,-1), (1,-1,1), (-1,-1,1), (-1,-1,-1), (1,-1,-1), .....]
 
-float3 GetOctalPos();
+// finds the parent through N search !!!!! REALLY INEFFICIENT
+int GetParentIndex(int childIndex)
+{
+	for (int i = 0; i < maxOctreeIndex; i++)
+	{
+		if (octree[i].childPointer == childIndex)
+			return i;
+	}
+}
 
 VStoPS main(VSInput input)
 {
 	Node curNode = octree[input.InstanceId];
-	if (curNode.childPointer < 0)
-		discard;
+	VStoPS output;
+	if (curNode.childPointer < 0)   /// SETTING TO != 0 so only leafs are done
+	{
+		output.position = float4(0.0, 0.0, 0.0, 1.0);
+		output.color = float3(0.0, 0.0, 1.0); // blue colors are discarded
+		return output;
+	}
 
 	float3 trans = curNode.position;
-	float scale = worldSize / pow(curNode.flagBits);
+	float scale = worldSize / pow(2.0f, curNode.flagBits);
 	matrix world = float4x4(scale, 0, 0, 0,
 		0, scale, 0, 0,
 		0, 0, scale, 0,
 		trans.x, trans.y, trans.z, 1);
 	matrix WVP = mul(mul(world, view), projection);
 	
-	VStoPS output;
 	output.position = mul(float4(input.position, 1.0f), WVP);
 	if(curNode.childPointer == 0)
 		output.color = float3(0.0f, 1.0f, 0.0f);
 	else
-		output.color = float3(1.0f, 0.0f, 0.0f);
+		output.color = float3(1.0f/(curNode.flagBits), 0.0f, 0.0f);
 	return output;
 }

@@ -65,8 +65,9 @@ float main(GStoPS input) : SV_TARGET
 
 		// Convert from 0 - voxelDim to world space voxel pos
 		final /= voxelWidth;   // now in   0  to 1 space
-		final *= (worldWidth * 2.0f);
+		final *= worldWidth*2.0f;
 		final = worldWidth - final;
+		final /= 2.0f;
 
 		// snap voxels to the (worldWidth/voxelWidth) increment
 		final /= (worldWidth / voxelWidth);
