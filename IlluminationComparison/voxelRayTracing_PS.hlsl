@@ -32,10 +32,6 @@ static float maxDist = 100.0f;
 // Node Pos [(1,1,1), (-1,1,1), (-1,1,-1), (1,1,-1), (1,-1,1), (-1,-1,1), (-1,-1,-1), (1,-1,-1), .....]
 //
 
-static Node staticOctree[8];
-
-void initStaticOctree();
-
 float4 GetOctaveIndex(float3 pos)
 {
 	if (pos.x >= 0)
@@ -110,7 +106,7 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 		octreeIndex = octaveIndex.x;
 		currentNode = octree[octreeIndex];
 		// Traverse down the octree to the leaf node of the current position
-		for (int currLevel = 0; currLevel < MaxOctreeDepth; currLevel++)
+		for (int currLevel = 1; currLevel < MaxOctreeDepth; currLevel++)
 		{
 			// get to new position by moving then check again
 			if (currentNode.flagBits == -1)
@@ -120,7 +116,7 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 			}
 			else
 			{
-				pos -= float3(octaveIndex.yzw) * wvWidth / pow(2, currLevel + 1);
+				pos -= float3(octaveIndex.yzw) * (wvWidth / pow(2, currLevel + 1));
 				octaveIndex = GetOctaveIndex(pos);
 				octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
 			}
@@ -143,6 +139,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float t = intersect(rayOrigin, rayDir, hitNode);
 	if (t >= maxDist)
 		return float4(0.0f, 1.0f, 0.0f, 1.0f);
+	return float4(1.0f, 0.0f, 0.0f, 1.0f) * t;
 
 	float3 pos = rayOrigin + rayDir * t;
 	// need this to prevent shelf shading
