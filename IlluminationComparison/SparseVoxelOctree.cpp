@@ -63,6 +63,9 @@ void SparseVoxelOctree::DrawVoxelDebug(DefferedRenderer * const renderer)
 	renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
 	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), voxelCount, 0, 0, 0);
+
+	// reset
+	renderer->context->VSSetShaderResources(0, 0, 0);
 }
 
 
@@ -94,9 +97,11 @@ void SparseVoxelOctree::DrawOctreeDebug(DefferedRenderer * const renderer)
 	renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 	renderer->context->DrawIndexedInstanced(meshTmp->GetIndexCount(), octreeSize, 0, 0, 0);
 
-	// reset topology
+	// reset
+	renderer->context->VSSetShaderResources(0, 0, 0);
 	renderer->context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
+
 
 void SparseVoxelOctree::initVoxelCounter(ID3D11Device* device)
 {

@@ -6,7 +6,7 @@ using namespace DirectX;
 
 Camera::Camera(int width, int height)
 {
-	SetVector3(&position, 0, 1, -10);
+	SetVector3(&position, 0, 1, -5);
 	xRot = 0;
 	yRot = 0;
 	zFar = 100.0f;

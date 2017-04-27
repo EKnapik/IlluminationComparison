@@ -3,8 +3,9 @@ cbuffer externalData	: register(b0)
 {
 	float3 cameraPosition;
 	float3 cameraForward;
+	float maxDist;
 	int MaxOctreeDepth;
-	int wvWidth;    // world Voxel width Entire space is made up of
+	int worldWidth;    // world Voxel width Entire space is made up of
 }
 
 struct VertexToPixel
@@ -24,8 +25,7 @@ struct Node
 	uint			padding;		// ensures the 128 bit allignment
 };
 
-StructuredBuffer<Node> octree : register(t0);
-static float maxDist = 100.0f;
+StructuredBuffer<Node> octree : register(t1);
 // OCTREE STRUCTURE
 // look top down on a LH xz grid and follow the normal counter clockwise 4 quadrant orientation
 // INDEX [   0    ,     1    ,    2   ,     3   ,     4    ,      5    ,     6   ,      7   , .....]
@@ -91,38 +91,42 @@ float4 GetOctaveIndex(float3 pos)
 /// into the iNode.
 float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 {
-	float curVoxelWidth = wvWidth;
+	float curVoxelWidth = worldWidth;
 	float4 octaveIndex;
 	int octreeIndex;
 
-	Node currentNode = octree[0];
+	Node currentNode;
+	iNode = octree[0];
 	float t = 0;
-	float3 pos;
-	float minStep = wvWidth / pow(2, MaxOctreeDepth+1);
+	float3 pos = rayO + rayDir*t;;
+	float minStep = worldWidth / pow(2, MaxOctreeDepth+2);
+	octaveIndex = GetOctaveIndex(pos);
+	octreeIndex = octaveIndex.x;
+	currentNode = octree[0];
+
 	while (t < maxDist && currentNode.childPointer != 0) // chilld pointer 0 means leaf node
 	{
+		t += minStep;
 		pos = rayO + rayDir*t;
 		octaveIndex = GetOctaveIndex(pos);
 		octreeIndex = octaveIndex.x;
 		currentNode = octree[octreeIndex];
 		// Traverse down the octree to the leaf node of the current position
+		float curVoxelWidth = worldWidth / 2.0f;
 		for (int currLevel = 1; currLevel < MaxOctreeDepth; currLevel++)
 		{
-			// get to new position by moving then check again
-			if (currentNode.flagBits == -1)
+			if (octree[octreeIndex].childPointer < 0)
 			{
-				t += wvWidth / pow(2, currLevel + 2);
+				t += curVoxelWidth / 4.0f;
 				break;
 			}
-			else
-			{
-				pos -= float3(octaveIndex.yzw) * (wvWidth / pow(2, currLevel + 1));
-				octaveIndex = GetOctaveIndex(pos);
-				octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
-			}
-			currentNode = octree[octreeIndex];
+
+			curVoxelWidth /= 2.0f;
+			pos -= float3(octaveIndex.y, octaveIndex.z, octaveIndex.w) * curVoxelWidth;
+			octaveIndex = GetOctaveIndex(pos);
+			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
 		}
-		t += minStep;
+		currentNode = octree[octreeIndex];
 	}
 	iNode = currentNode;
 	return t;
@@ -138,12 +142,11 @@ float4 main(VertexToPixel input) : SV_TARGET
 	Node hitNode;
 	float t = intersect(rayOrigin, rayDir, hitNode);
 	if (t >= maxDist)
-		return float4(0.0f, 1.0f, 0.0f, 1.0f);
-	return float4(1.0f, 0.0f, 0.0f, 1.0f) * t;
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float3 pos = rayOrigin + rayDir * t;
 	// need this to prevent shelf shading
-	float3 posShadow = rayOrigin + rayDir * (t - 0.0001);
+	float3 posShadow = rayOrigin + rayDir * (t - 0.001);
 	float3 nor;
 	float3 reflectEye; // rayDir is the eye to position
 

@@ -3,7 +3,7 @@
 PBRDemoScene::PBRDemoScene()
 {
 	Ball* ball;
-	int depthNum = 2;
+	int depthNum = 4;
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -73,16 +73,16 @@ PBRDemoScene::PBRDemoScene()
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	/*
+	
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
 		ball->SetEntity(new GameEntity("sphere", "redPlastic"));
-		ball->kinematics->SetPosition(VEC3(4, 4, i));
+		ball->kinematics->SetPosition(VEC3(4.5, 1, i));
 		balls.push_back(ball);
 		GameObjects.push_back(ball);
 	}
-	
+	/*
 	for (int i = 0; i < depthNum; i++)
 	{
 		ball = new Ball();
@@ -110,15 +110,13 @@ PBRDemoScene::PBRDemoScene()
 	GameObjects.push_back(ball);
 	*/
 
-	/*
+	
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
-	ball->entity->Scale(VEC3(7.0f, 2.0f, 4.0f));
-	// ball->kinematics->SetPosition(VEC3(0.0, 1.5f, 3.0f));
-	ball->kinematics->SetPosition(VEC3(0.0, -1.5f, 1.0f));
+	ball->entity->Scale(VEC3(9.0f, 2.0f, 4.0f));
+	ball->kinematics->SetPosition(VEC3(0.0, -1.25f, 2.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
-	*/
 
 
 	PointLights.push_back(new ScenePointLight(

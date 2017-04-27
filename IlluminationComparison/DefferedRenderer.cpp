@@ -619,10 +619,11 @@ void DefferedRenderer::rayTraceVoxel()
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
+	pixelShader->SetFloat("maxDist", 100.0f);
 	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
-	pixelShader->SetInt("wvWidth", octree->getVoxelWidth());
+	pixelShader->SetInt("worldWidth", octree->getWorldWidth());
 	ID3D11ShaderResourceView* octreeSRV = octree->GetOctreeSRV();
-	context->PSSetShaderResources(0, 1, &octreeSRV);
+	context->PSSetShaderResources(1, 1, &octreeSRV);
 	pixelShader->CopyAllBufferData();
 
 	UINT stride = sizeof(Vertex);
@@ -636,6 +637,6 @@ void DefferedRenderer::rayTraceVoxel()
 	context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
 
 	// RESET STATES
-	pixelShader->SetShaderResourceView("octree", 0);
+	context->PSSetShaderResources(0, 0, NULL);
 	return;
 }

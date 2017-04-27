@@ -39,6 +39,7 @@ public:
 	void DrawOctreeDebug(DefferedRenderer * const renderer);
 	float getVoxelWidth() { return (worldWidth / voxelDim); };
 	float getOctreeDepth() { return maxOctreeDepth; };
+	float getWorldWidth() { return worldWidth; };
 
 private:
 	void initVoxelCounter(ID3D11Device* device);
