@@ -26,6 +26,9 @@ struct Node
 };
 
 StructuredBuffer<Node> octree : register(t1);
+TextureCube Sky				: register(t5);
+SamplerState basicSampler	: register(s0);
+
 // OCTREE STRUCTURE
 // look top down on a LH xz grid and follow the normal counter clockwise 4 quadrant orientation
 // INDEX [   0    ,     1    ,    2   ,     3   ,     4    ,      5    ,     6   ,      7   , .....]
@@ -142,7 +145,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	Node hitNode;
 	float t = intersect(rayOrigin, rayDir, hitNode);
 	if (t >= maxDist)
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+		return float4(Sky.SampleLevel(basicSampler, rayDir, 0).rgb, 1.0f);
 
 	float3 pos = rayOrigin + rayDir * t;
 	// need this to prevent shelf shading
