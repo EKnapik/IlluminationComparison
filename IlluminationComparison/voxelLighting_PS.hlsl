@@ -53,6 +53,7 @@ struct VertexToPixel
 };
 
 static const float PI = 3.14159265359;
+static const int recursionDepth = 1;
 
 // OCTREE STRUCTURE
 StructuredBuffer<Node> octree : register(t6);
@@ -271,7 +272,36 @@ float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
 	return SpecularLighting / NumSamples;
 }
 
-float3 GetColor();
+float4 GetColor(float3 albedo, float3 N, float metalness, float roughness, float3 L, float3 V, float3 H, float3 radiance, float3 F, float3 posShadow)
+{
+	float3 R = reflect(-V, N);
+	Node hitNode;
+	float shadow = intersect(posShadow, L, hitNode);
+	if (shadow < maxDist) { // did this hit anything?
+		shadow = 0.1;
+	}
+	else {
+		shadow = 1.0;
+	}
+
+	// Cook-Torrance BRDF
+	float NDF = DistributionGGX(N, H, roughness);
+	float G = GeometrySmith(N, V, L, roughness);
+	
+	// kS is equal to Fresnel
+	// energy conservation can only have 100% light unless object is emitter
+	float3 kS = F;
+	float3 kD = float3(1.0f, 1.0f, 1.0f) - kS;
+	kD *= 1.0 - metalness;
+
+	float3 nominator = (NDF * G) * F;
+	float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+	float3 brdf = nominator / denominator;
+	// scale light by N dot L
+	float lightAmount = max(dot(N, L), 0.0);
+	float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
+	return float4((Lo * shadow), shadow);
+}
 
 
 float3 getPositionWS(in float3 viewRay, in float2 uv)
@@ -294,66 +324,53 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float metalness = PBR.x;
 	float roughness = PBR.y;
 
-	float3 color = float3(0.0f, 0.0f, 0.0f);
+	float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	// L = direction toward light from world position
 	// V = direction toward camera from world position
 	float3 V = normalize(cameraPosition - gWorldPos);
 	float3 posShadow;
-	float shadow;
 	// Iterate over Directional Lights
 	for (int i = 0; i < numDirLights; i++)
 	{
 		float3 L = normalize(dirLight[i].Direction);
-		float3 R = reflect(-V, N);
 		float3 H = normalize(V + L);
-		Node hitNode;
 		posShadow = gWorldPos + (L * 0.3);
-		shadow = intersect(posShadow, L, hitNode);
-		if (shadow < maxDist) { // did this hit anything?
-			shadow = 0.1;
-		}
-		else {
-			shadow = 1.0;
-		}
-
-		// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
-		// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
-		float3 F0 = float3(0.04f, 0.04f, 0.04f);
-		F0 = lerp(F0, albedo, metalness);
-
-		// Cook-Torrance BRDF
-		float NDF = DistributionGGX(N, H, roughness);
-		float G = GeometrySmith(N, V, L, roughness);
-		float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-		// kS is equal to Fresnel
-		// energy conservation can only have 100% light unless object is emitter
-		float3 kS = F;
-		float3 kD = float3(1.0f, 1.0f, 1.0f) - kS;
-		kD *= 1.0 - metalness;
-
+		float3 R = reflect(-V, N);
 		// simple attenuation if this wasn't a directional light
 		/// float distance = length(lightPositions[i] - WorldPos);
 		/// float attenuation = 1.0 / (distance * distance);
 		/// vec3 radiance = lightColors[i] * attenuation;
-		float3 radiance = dirLight[i].DiffuseColor * 1.0f;
+		float3 radiance = dirLight[i].DiffuseColor;
+		// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+		// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
+		float3 F0 = float3(0.04f, 0.04f, 0.04f);
+		F0 = lerp(F0, albedo, metalness);
+		float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+		color += GetColor(albedo, N, metalness, roughness, L, V, H, radiance, F, posShadow);
 
-		float3 nominator = (NDF * G) * F;
-		float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
-		float3 brdf = nominator / denominator;
-		// scale light by N dot L
-		float lightAmount = max(dot(N, L), 0.0);
-		float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
-		color += Lo * shadow;
+		for (int j = 0; j < recursionDepth; j++)
+		{
+			Node currNode;
+			// Intersects a voxel
+			float t = intersect(posShadow, R, currNode);
+			if (t < maxDist)
+			{
+				// reduce radiance by the specular amount
+				color += GetColor(currNode.color, currNode.normal,
+					metalness, roughness, L, V, H, radiance * F, F, (currNode.position - (R * (t - 0.3))));
+			}
+		}
 	}
 
-	float3 ambient = SpecularIBL(albedo, roughness, N, V) * shadow;
-	color += ambient;
+	float3 ambient = SpecularIBL(albedo, roughness, N, V) * color.w;
+	color += float4(ambient, 1.0f);
 
 	// HDR tonemapping might cause issue with addative lighting
-	color = color / (color + float3(1.0f, 1.0f, 1.0f));
+	float3 finalColor = color.rgb;
+	finalColor = finalColor / (finalColor + float3(1.0f, 1.0f, 1.0f));
 	// gamma correct
-	color = pow(color, (1.0 / 2.2));
-	return float4(color, 1.0);
+	finalColor = pow(finalColor, (1.0 / 2.2));
+	return float4(finalColor, 1.0);
 }
 
 
