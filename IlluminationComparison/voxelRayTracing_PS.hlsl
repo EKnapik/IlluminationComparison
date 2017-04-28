@@ -4,8 +4,8 @@ cbuffer externalData	: register(b0)
 	float3 cameraPosition;
 	float3 cameraForward;
 	float maxDist;
+	float worldWidth;    // world Voxel width Entire space is made up of
 	int MaxOctreeDepth;
-	int worldWidth;    // world Voxel width Entire space is made up of
 }
 
 struct VertexToPixel
@@ -149,7 +149,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	float3 pos = rayOrigin + rayDir * t;
 	// need this to prevent shelf shading
-	float3 posShadow = rayOrigin + rayDir * (t - 0.001);
+	// this should be smaller but thin voxel issues causes self shadowing
+	float3 posShadow = rayOrigin + rayDir * (t - 0.100);
 	float3 nor;
 	float3 reflectEye; // rayDir is the eye to position
 

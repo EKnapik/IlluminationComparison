@@ -327,6 +327,7 @@ void Game::LoadShaders()
 	renderer->AddPixelShader("rayMarchExample", L"rayMarchExample_PS.cso");
 	renderer->AddPixelShader("voxelDebug", L"voxelDebug_PS.cso");
 	renderer->AddPixelShader("octreeDebug", L"octreeDebug_PS.cso");
+	renderer->AddPixelShader("quadVoxelLight", L"voxelLighting_PS.cso");
 }
 
 void Game::LoadMeshes()

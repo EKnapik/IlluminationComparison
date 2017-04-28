@@ -24,12 +24,14 @@ struct PointLight
 
 cbuffer externalData	: register(b0)
 {
-	DirectionalLight dirLight[];
+	DirectionalLight dirLight[1];
 	float3 cameraPosition;
 	float3 cameraForward;
 	float maxDist;
+	float worldWidth;    // world Voxel width Entire space is made up of
 	int MaxOctreeDepth;
-	int worldWidth;    // world Voxel width Entire space is made up of
+	int numDirLights;
+	int numPointLights;
 }
 
 struct Node
@@ -42,7 +44,6 @@ struct Node
 	uint			padding;		// ensures the 128 bit allignment
 };
 
-StructuredBuffer<Node> octree : register(t6);
 
 struct VertexToPixel
 {
@@ -51,8 +52,113 @@ struct VertexToPixel
 	float2 uv							: TEXCOORD;
 };
 
-
 static const float PI = 3.14159265359;
+
+// OCTREE STRUCTURE
+StructuredBuffer<Node> octree : register(t6);
+// look top down on a LH xz grid and follow the normal counter clockwise 4 quadrant orientation
+// INDEX [   0    ,     1    ,    2   ,     3   ,     4    ,      5    ,     6   ,      7   , .....]
+// Node Pos [(1,1,1), (-1,1,1), (-1,1,-1), (1,1,-1), (1,-1,1), (-1,-1,1), (-1,-1,-1), (1,-1,-1), .....]
+//
+
+float4 GetOctaveIndex(float3 pos)
+{
+	if (pos.x >= 0)
+	{
+		if (pos.y >= 0)
+		{
+			if (pos.z >= 0)
+			{
+				return float4(0, 1, 1, 1);
+			}
+			else
+			{
+				return float4(3, 1, 1, -1);
+			}
+		}
+		else
+		{
+			if (pos.z >= 0)
+			{
+				return float4(4, 1, -1, 1);
+			}
+			else
+			{
+				return float4(7, 1, -1, -1);
+			}
+		}
+	}
+	else
+	{
+		if (pos.y >= 0)
+		{
+			if (pos.z >= 0)
+			{
+				return float4(1, -1, 1, 1);
+			}
+			else
+			{
+				return float4(2, -1, 1, -1);
+			}
+		}
+		else
+		{
+			if (pos.z >= 0)
+			{
+				return float4(5, -1, -1, 1);
+			}
+			else
+			{
+				return float4(6, -1, -1, -1);
+			}
+		}
+	}
+}
+
+/// raymarches through the octree and places the intersection
+/// into the iNode.
+float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
+{
+	float curVoxelWidth = worldWidth;
+	float4 octaveIndex;
+	int octreeIndex;
+
+	Node currentNode;
+	iNode = octree[0];
+	float t = 0;
+	float3 pos = rayO + rayDir*t;;
+	float minStep = worldWidth / pow(2, MaxOctreeDepth + 2);
+	octaveIndex = GetOctaveIndex(pos);
+	octreeIndex = octaveIndex.x;
+	currentNode = octree[0];
+
+	while (t < maxDist && currentNode.childPointer != 0) // chilld pointer 0 means leaf node
+	{
+		t += minStep;
+		pos = rayO + rayDir*t;
+		octaveIndex = GetOctaveIndex(pos);
+		octreeIndex = octaveIndex.x;
+		currentNode = octree[octreeIndex];
+		// Traverse down the octree to the leaf node of the current position
+		float curVoxelWidth = worldWidth / 2.0f;
+		for (int currLevel = 1; currLevel < MaxOctreeDepth; currLevel++)
+		{
+			if (octree[octreeIndex].childPointer < 0)
+			{
+				t += curVoxelWidth / 4.0f;
+				break;
+			}
+
+			curVoxelWidth /= 2.0f;
+			pos -= float3(octaveIndex.y, octaveIndex.z, octaveIndex.w) * curVoxelWidth;
+			octaveIndex = GetOctaveIndex(pos);
+			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
+		}
+		currentNode = octree[octreeIndex];
+	}
+	iNode = currentNode;
+	return t;
+}
 
 float DistributionGGX(float3 N, float3 H, float roughness)
 {
@@ -132,6 +238,42 @@ float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
 	return TangentX * H.x + TangentY * H.y + N * H.z;
 }
 
+float3 SpecularIBL(float3 SpecularColor, float Roughness, float3 N, float3 V)
+{
+	float3 SpecularLighting = 0;
+
+	const uint NumSamples = 1;
+	for (uint i = 0; i < NumSamples; i++)
+	{
+		float2 Xi = Hammersley(i, NumSamples);
+		float3 H = ImportanceSampleGGX(Xi, Roughness, N);
+		float3 L = 2 * dot(V, H) * H - V;
+
+		float NoV = saturate(dot(N, V));
+		float NoL = saturate(dot(N, L));
+		float NoH = saturate(dot(N, H));
+		float VoH = saturate(dot(V, H));
+
+		if (NoL > 0)
+		{
+			float3 SampleColor = SampleColor = Sky.SampleLevel(basicSampler, L, (Roughness * 6.0f)).rgb;
+
+			float G = GeometrySmith(N, V, L, Roughness);
+			float Fc = pow(1 - VoH, 5);
+			float3 F = (1 - Fc) * SpecularColor + Fc;
+
+			// Incident light = SampleColor * NoL
+			// Microfacet specular = D*G*F / (4*NoL*NoV)
+			// pdf = D * NoH / (4 * VoH)
+			SpecularLighting += SampleColor * F * G * VoH / (NoH * NoV);
+		}
+	}
+	return SpecularLighting / NumSamples;
+}
+
+float3 GetColor();
+
+
 float3 getPositionWS(in float3 viewRay, in float2 uv)
 {
 	// float viewZDist = dot(cameraForward, viewRay);
@@ -152,46 +294,60 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float metalness = PBR.x;
 	float roughness = PBR.y;
 
+	float3 color = float3(0.0f, 0.0f, 0.0f);
 	// L = direction toward light from world position
 	// V = direction toward camera from world position
-	float3 L = normalize(dirLight.Direction);
 	float3 V = normalize(cameraPosition - gWorldPos);
-	// float3 R = reflect(-V, N);
-	float3 H = normalize(V + L);
+	float3 posShadow;
+	float shadow;
+	// Iterate over Directional Lights
+	for (int i = 0; i < numDirLights; i++)
+	{
+		float3 L = normalize(dirLight[i].Direction);
+		float3 R = reflect(-V, N);
+		float3 H = normalize(V + L);
+		Node hitNode;
+		posShadow = gWorldPos + (L * 0.3);
+		shadow = intersect(posShadow, L, hitNode);
+		if (shadow < maxDist) { // did this hit anything?
+			shadow = 0.1;
+		}
+		else {
+			shadow = 1.0;
+		}
 
-	// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
-	// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
-	float3 F0 = float3(0.04f, 0.04f, 0.04f);
-	F0 = lerp(F0, albedo, metalness);
+		// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+		// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
+		float3 F0 = float3(0.04f, 0.04f, 0.04f);
+		F0 = lerp(F0, albedo, metalness);
 
-	// Cook-Torrance BRDF
-	float NDF = DistributionGGX(N, H, roughness);
-	float G = GeometrySmith(N, V, L, roughness);
-	float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-	// kS is equal to Fresnel
-	// energy conservation can only have 100% light unless object is emitter
-	float3 kS = F;
-	float3 kD = float3(1.0f, 1.0f, 1.0f) - kS;
-	kD *= 1.0 - metalness;
+		// Cook-Torrance BRDF
+		float NDF = DistributionGGX(N, H, roughness);
+		float G = GeometrySmith(N, V, L, roughness);
+		float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+		// kS is equal to Fresnel
+		// energy conservation can only have 100% light unless object is emitter
+		float3 kS = F;
+		float3 kD = float3(1.0f, 1.0f, 1.0f) - kS;
+		kD *= 1.0 - metalness;
 
-	// simple attenuation if this wasn't a directional light
-	/// float distance = length(lightPositions[i] - WorldPos);
-	/// float attenuation = 1.0 / (distance * distance);
-	/// vec3 radiance = lightColors[i] * attenuation;
-	float3 radiance = dirLight.DiffuseColor * 1.0f;
+		// simple attenuation if this wasn't a directional light
+		/// float distance = length(lightPositions[i] - WorldPos);
+		/// float attenuation = 1.0 / (distance * distance);
+		/// vec3 radiance = lightColors[i] * attenuation;
+		float3 radiance = dirLight[i].DiffuseColor * 1.0f;
 
-	float3 nominator = (NDF * G) * F;
-	float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
-	float3 brdf = nominator / denominator;
+		float3 nominator = (NDF * G) * F;
+		float denominator = 4 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+		float3 brdf = nominator / denominator;
+		// scale light by N dot L
+		float lightAmount = max(dot(N, L), 0.0);
+		float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
+		color += Lo * shadow;
+	}
 
-	// scale light by N dot L
-	float lightAmount = max(dot(N, L), 0.0);
-	float3 Lo = (kD * albedo / PI + brdf) * radiance * lightAmount;
-
-
-
-
-	float3 color = ambient + Lo;
+	float3 ambient = SpecularIBL(albedo, roughness, N, V) * shadow;
+	color += ambient;
 
 	// HDR tonemapping might cause issue with addative lighting
 	color = color / (color + float3(1.0f, 1.0f, 1.0f));

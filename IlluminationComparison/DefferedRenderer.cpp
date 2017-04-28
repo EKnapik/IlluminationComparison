@@ -345,20 +345,15 @@ void DefferedRenderer::RayTraceRender(FLOAT deltaTime, FLOAT totalTime)
 
 	SortObjects();   /// PLACES GAME OBJECTS INTO OPAQUE AND TRANSPARENT BUFFER
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
-	rayTraceVoxel();
-	/*
-	SortObjects();
-	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	gBufferRender(deltaTime, totalTime);
 	// Render Scene using raytracing for lighting
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	// rayTraceVoxel();
 	rayTraceLighting();
-
 	// Render Skybox
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	context->OMSetDepthStencilState(0, 0);
 	DrawSkyBox();
-	*/
 }
 
 void DefferedRenderer::AddPostProcessSystem(PostProcesser * newPostProcesser)
@@ -600,14 +595,11 @@ void DefferedRenderer::DrawTransparentMaterials()
 // Renders the final using ray tracing through the SVO for lighting
 void DefferedRenderer::rayTraceLighting()
 {
-	directionalLights;
-	pointLights;
-
 	float factors[4] = { 1,1,1,1 };
 	context->OMSetBlendState(blendState, factors, 0xFFFFFFFF);
 
 	SimpleVertexShader* vertexShader = GetVertexShader("quadPBR");
-	SimplePixelShader* pixelShader = GetPixelShader("quadPBR");
+	SimplePixelShader* pixelShader = GetPixelShader("quadVoxelLight");
 	vertexShader->SetShader();
 	pixelShader->SetShader();
 
@@ -617,9 +609,11 @@ void DefferedRenderer::rayTraceLighting()
 
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	pixelShader->SetFloat("maxDist", 100.0f);
+	pixelShader->SetFloat("maxDist", octree->getWorldWidth() * 4.0f);
+	pixelShader->SetFloat("worldWidth", octree->getWorldWidth());
 	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
-	pixelShader->SetInt("worldWidth", octree->getWorldWidth());
+	pixelShader->SetInt("numDirLights", directionalLights->size());
+	pixelShader->SetInt("numPointLights", pointLights->size());
 	ID3D11ShaderResourceView* octreeSRV = octree->GetOctreeSRV();
 	context->PSSetShaderResources(6, 1, &octreeSRV);
 
@@ -632,20 +626,24 @@ void DefferedRenderer::rayTraceLighting()
 	pixelShader->SetShaderResourceView("SSAO", ssaoSRV);
 	pixelShader->SetShaderResourceView("Sky", GetCubeMaterial("japanFiltered")->GetSRV());
 
+	// Send Lighting Info
+	pixelShader->SetData("dirLight", &directionalLights->at(0), sizeof(DirectionalLight) * directionalLights->size());
+	directionalLights;
+	pointLights;
+	pixelShader->CopyAllBufferData();
+
+
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Mesh* meshTmp = GetMesh("quad");
 	ID3D11Buffer* vertTemp = meshTmp->GetVertexBuffer();
-	DirectionalLight light;
-
-	pixelShader->SetData("dirLight", &light, sizeof(DirectionalLight));
-	pixelShader->CopyAllBufferData();
 
 	context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
 	context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 	context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
 
 	// RESET STATES
+	context->PSSetShaderResources(0, 0, NULL);
 	pixelShader->SetShaderResourceView("gAlbedo", 0);
 	pixelShader->SetShaderResourceView("gNormal", 0);
 	pixelShader->SetShaderResourceView("gDepth", 0);
@@ -672,9 +670,9 @@ void DefferedRenderer::rayTraceVoxel()
 	vertexShader->CopyAllBufferData();
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	pixelShader->SetFloat("maxDist", 100.0f);
+	pixelShader->SetFloat("maxDist", octree->getWorldWidth() * 4.0f);
+	pixelShader->SetFloat("worldWidth", octree->getWorldWidth());
 	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
-	pixelShader->SetInt("worldWidth", octree->getWorldWidth());
 	pixelShader->SetSamplerState("basicSampler", simpleSampler);
 	pixelShader->SetShaderResourceView("Sky", skyBox->GetSRV());
 
