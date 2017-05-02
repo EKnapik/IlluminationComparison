@@ -110,13 +110,14 @@ PBRDemoScene::PBRDemoScene()
 	GameObjects.push_back(ball);
 	*/
 
-	
+	/*
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "goldScuffed"));
 	ball->entity->Scale(VEC3(9.0f, 2.0f, 4.0f));
 	ball->kinematics->SetPosition(VEC3(0.0, -1.25f, 2.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
+	*/
 
 
 	PointLights.push_back(new ScenePointLight(

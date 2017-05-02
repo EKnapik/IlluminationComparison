@@ -13,7 +13,6 @@ cbuffer voxelExternalData : register(b0)
 
 struct GStoPS
 {
-	float4 AABB			: BOUNDING_BOX;
 	float4 pos			: SV_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
@@ -39,9 +38,6 @@ RWStructuredBuffer<Voxel> voxelList : register(u2);
 
 float main(GStoPS input) : SV_TARGET
 {
-	//if (input.pos.x < input.AABB.x || input.pos.y < input.AABB.y || input.pos.x > input.AABB.z || input.pos.y > input.AABB.w)
-	//	return 1.0f;
-
 	int storePlace;
 	if (store == 1)	
 	{

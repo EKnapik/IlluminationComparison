@@ -20,7 +20,6 @@ struct VStoGS
 
 struct GStoPS
 {
-	float4 AABB			: BOUNDING_BOX;
 	float4 pos			: SV_POSITION;
 	float3 normal		: NORMAL;
 	float2 uv			: TEXCOORD;
@@ -59,50 +58,21 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 
 	float4 pos[3];
 
+	// enlarge the triangles
+	float hPixel = float(8.0 / width);  // height and width are the same here
+	float pl = 1.4142135637309 / width;
+	float3 centerPos = (input[0].position.xyz + input[1].position.xyz + input[2].position.xyz) / 3.0f;
+	float4 tCenter = float4(centerPos, 1.0f);
+	input[0].position += normalize(input[0].position - tCenter) * hPixel;
+	input[1].position += normalize(input[1].position - tCenter) * hPixel;
+	input[2].position += normalize(input[2].position - tCenter) * hPixel;
+
 	//transform vertices to clip space
 	pos[0] = mul(input[0].position, proj);
 	pos[1] = mul(input[1].position, proj);
 	pos[2] = mul(input[2].position, proj);
 
-	// Next enlarge the triangle to enable conservative rasterization
-	// Outlined in Chapter 22 of opengl insights
-	float4 AABB;
-	float2 hPixel = float2(1.0 / width, 1.0 / height);
-	float pl = 1.4142135637309 / width;
-
-	//calculate AABB of this triangle
-	AABB.xy = pos[0].xy;
-	AABB.zw = pos[0].xy;
-
-	AABB.xy = min(pos[1].xy, AABB.xy);
-	AABB.zw = max(pos[1].xy, AABB.zw);
-
-	AABB.xy = min(pos[2].xy, AABB.xy);
-	AABB.zw = max(pos[2].xy, AABB.zw);
-
-	//Enlarge half-pixel
-	AABB.xy -= hPixel;
-	AABB.zw += hPixel;
-
-	// f_AABB = AABB;
-
-	// find 3 triangle edge plane
-	/*
-	float3 e0 = float3(pos[1].xy - pos[0].xy, 0);
-	float3 e1 = float3(pos[2].xy - pos[1].xy, 0);
-	float3 e2 = float3(pos[0].xy - pos[2].xy, 0);
-	float3 n0 = cross(e0, float3(0, 0, 1));
-	float3 n1 = cross(e1, float3(0, 0, 1));
-	float3 n2 = cross(e2, float3(0, 0, 1));
-	*/
-
-	// dilate the triangle
-	// pos[0].xy = pos[0].xy + pl*((e2.xy / dot(e2.xy, n0.xy)) + (e0.xy / dot(e0.xy, n2.xy)));
-	// pos[1].xy = pos[1].xy + pl*((e0.xy / dot(e0.xy, n1.xy)) + (e1.xy / dot(e1.xy, n0.xy)));
-	// pos[2].xy = pos[2].xy + pl*((e1.xy / dot(e1.xy, n2.xy)) + (e2.xy / dot(e2.xy, n1.xy)));
-
 	GStoPS element;
-	element.AABB = AABB;
 	element.axis = axis;
 	for (uint i = 0; i < 3; i++)
 	{
