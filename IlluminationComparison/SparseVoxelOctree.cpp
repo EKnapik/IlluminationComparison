@@ -538,6 +538,39 @@ VEC4 GetOctaveIndex(VEC3 pos)
 }
 
 
+
+/*
+  Averages the lower octaves and sets them recursively
+*/
+void AverageOctave(Node* cpuOctree, int octaveIndex)
+{
+	if (cpuOctree[octaveIndex].childPointer <= 0)
+		return;
+
+	float avgCount = 0.0f;
+	int childPointer = cpuOctree[octaveIndex].childPointer;
+	VEC3 totalNormal = VEC3(0.0f, 0.0f, 0.0f);
+	VEC3 totalColor = VEC3(0.0f, 0.0f, 0.0f);
+
+	for (int i = 0; i < 8; i++)
+	{
+		if (cpuOctree[childPointer + i].flagBits < 0)
+			continue;
+		avgCount += 1.0f;
+		AverageOctave(cpuOctree, childPointer + i);
+		// sum the normal
+		totalNormal.x += cpuOctree[childPointer + i].normal.x;
+		totalNormal.y += cpuOctree[childPointer + i].normal.y;
+		totalNormal.z += cpuOctree[childPointer + i].normal.z;
+		// sum the color
+		totalColor.x += cpuOctree[childPointer + i].color.x;
+		totalColor.y += cpuOctree[childPointer + i].color.y;
+		totalColor.z += cpuOctree[childPointer + i].color.z;
+	}
+	cpuOctree[octaveIndex].normal = VEC3(totalNormal.x / avgCount, totalNormal.y / avgCount, totalNormal.z / avgCount);
+	cpuOctree[octaveIndex].color = VEC3(totalColor.x / avgCount, totalColor.y / avgCount, totalColor.z / avgCount);
+}
+
 Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 {
 	Node* cpuOctree = new Node[octreeSize];
@@ -595,6 +628,12 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 		cpuOctree[currOctreeIndex].flagBits = maxOctreeDepth;
 	}
 
-	printf("Number of allocations %d\n", cpuOctree[0].padding);
+	// average the voxels recursively through the octree 
+	for (int i = 0; i < 8; i++)
+	{
+		if (cpuOctree[i].flagBits < 0)
+			continue;
+		AverageOctave(cpuOctree, i);
+	}
 	return cpuOctree;
 }

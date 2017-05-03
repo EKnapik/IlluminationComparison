@@ -195,9 +195,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f, 0);
 
-	renderer->RayTraceRender(deltaTime, totalTime);
-	// renderer->octree->DrawVoxelDebug(renderer);
-	// renderer->octree->DrawOctreeDebug(renderer);
+	// renderer->RayTraceRender(deltaTime, totalTime);
+	renderer->octree->DrawVoxelDebug(renderer);
+	renderer->octree->DrawOctreeDebug(renderer);
 	
 
 	swapChain->Present(0, 0);
