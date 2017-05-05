@@ -39,7 +39,7 @@ struct Node
 	float3			position;
 	float3			normal;
 	float3			color;
-	int             flagBits;       // 0 empty, 1 pointer to nodes, 2 leaf node
+	int             level;       // -1 empty
 	int             childPointer;	// pointer to child 8 tile chunch of the octree, an offset index
 	uint			padding;		// ensures the 128 bit allignment
 };
@@ -53,7 +53,12 @@ struct VertexToPixel
 };
 
 static const float PI = 3.14159265359;
-static const int recursionDepth = 1;
+static const int recursionDepth = 2;
+
+static const float3 weightVector[6] = {float3(0.0, 1.0, 0.0), float3(0.0, 0.5, 0.866025),
+		float3(0.823639, 0.5, 0.267627), float3(0.509037, 0.5, -0.700629),
+		float3(-0.509037, 0.5, -0.700629), float3(-0.823639, 0.5, 0.267617)};
+static const float weight[6] = {PI/4.0f, 3*PI/20.0f, 3*PI/20.0f, 3*PI/20.0f, 3*PI/20.0f, 3*PI/20.0f};
 
 // OCTREE STRUCTURE
 StructuredBuffer<Node> octree : register(t6);
@@ -118,22 +123,22 @@ float4 GetOctaveIndex(float3 pos)
 
 /// raymarches through the octree and places the intersection
 /// into the iNode.
-float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
+float coneTrace(in float3 rayO, in float3 rayDir, out Node iNode)
 {
 	float curVoxelWidth = worldWidth;
 	float4 octaveIndex;
 	int octreeIndex;
-
+	int maxDepth = MaxOctreeDepth;
 	Node currentNode;
 	iNode = octree[0];
 	float t = 0;
 	float3 pos = rayO + rayDir*t;;
-	float minStep = worldWidth / pow(2, MaxOctreeDepth + 2);
+	float minStep = worldWidth / pow(2, maxDepth + 2);
 	octaveIndex = GetOctaveIndex(pos);
 	octreeIndex = octaveIndex.x;
 	currentNode = octree[0];
-
-	while (t < maxDist && currentNode.childPointer != 0) // chilld pointer 0 means leaf node
+	int currentLevel = -1;
+	while (t < maxDist && currentLevel != maxDepth) // If something is hit
 	{
 		t += minStep;
 		pos = rayO + rayDir*t;
@@ -142,7 +147,7 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 		currentNode = octree[octreeIndex];
 		// Traverse down the octree to the leaf node of the current position
 		float curVoxelWidth = worldWidth / 2.0f;
-		for (int currLevel = 1; currLevel < MaxOctreeDepth; currLevel++)
+		for (int currLevel = 1; currLevel < maxDepth; currLevel++)
 		{
 			if (octree[octreeIndex].childPointer < 0)
 			{
@@ -155,7 +160,15 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 			octaveIndex = GetOctaveIndex(pos);
 			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
 		}
+
+		if (t >= minStep * 14.0f)
+		{
+			maxDepth--;
+			minStep = minStep * 2.0f;
+		}
+
 		currentNode = octree[octreeIndex];
+		currentLevel = currentNode.level;
 	}
 	iNode = currentNode;
 	return t;
@@ -276,7 +289,7 @@ float4 GetColor(float3 albedo, float3 N, float metalness, float roughness, float
 {
 	float3 R = reflect(-V, N);
 	Node hitNode;
-	float shadow = intersect(posShadow, L, hitNode);
+	float shadow = coneTrace(posShadow, L, hitNode);
 	if (shadow < maxDist) { // did this hit anything?
 		shadow = 0.1;
 	}
@@ -329,12 +342,12 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// V = direction toward camera from world position
 	float3 V = normalize(cameraPosition - gWorldPos);
 	float3 posShadow;
-	// Iterate over Directional Lights
+	// Iterate over Directional Lights for direct illumination
 	for (int i = 0; i < numDirLights; i++)
 	{
 		float3 L = normalize(dirLight[i].Direction);
 		float3 H = normalize(V + L);
-		posShadow = gWorldPos + (L * 0.3);
+		posShadow = gWorldPos + (N * 0.5);
 		float3 R = reflect(-V, N);
 		// simple attenuation if this wasn't a directional light
 		/// float distance = length(lightPositions[i] - WorldPos);
@@ -352,18 +365,38 @@ float4 main(VertexToPixel input) : SV_TARGET
 		{
 			Node currNode;
 			// Intersects a voxel
-			float t = intersect(posShadow, R, currNode);
+			float t = coneTrace(posShadow, R, currNode);
 			if (t < maxDist)
 			{
 				// reduce radiance by the specular amount
+				F *= F;
 				color += GetColor(currNode.color, currNode.normal,
-					metalness, roughness, L, V, H, radiance * F, F, (currNode.position - (R * (t - 0.3))));
+					metalness, roughness, L, V, H, radiance, F, currNode.position) * float4(F, 1.0f);
 			}
+			else
+			{
+				color += float4(SpecularIBL(albedo, roughness, N, V), 0.0f) * ((radiance.x + radiance.y + radiance.z) / 3.0f);
+				break;
+			}
+			posShadow = currNode.position - (R * 0.5);
+			R = reflect(-R, currNode.normal);
 		}
 	}
 
-	float3 ambient = SpecularIBL(albedo, roughness, N, V) * color.w;
-	color += float4(ambient, 1.0f);
+
+	// Compute  AO
+	/*
+	float3 ambient = float3(0.0, 0.0, 0.0);
+	for (int i = 0; i < 6; i++)
+	{
+		Node currNode;
+		float t = coneTrace(posShadow, weightVector[i] * N, currNode);
+		if (t < maxDist)
+			ambient += 1.0f * weight[i];
+	}
+	ambient = 1.0f - ambient;
+	*/
+	// color *= float4(ambient, 1.0f);
 
 	// HDR tonemapping might cause issue with addative lighting
 	float3 finalColor = color.rgb;

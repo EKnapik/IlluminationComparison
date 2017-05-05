@@ -12,9 +12,9 @@ struct Node
 	float3			position;
 	float3			normal;
 	float3			color;
-	int             flagBits;
+	int             level;
 	int             childPointer;	// pointer to child 8 tile chunch of the octree, an offset index
-	uint			padding;		// ensures the 128 bit allignment
+	uint			padding;
 };
 
 globallycoherent RWStructuredBuffer<Node> octree : register(u0);

@@ -2,6 +2,7 @@
 #include "Vertex.h"
 #include "WICTextureLoader.h"
 #include "PBRDemoScene.h"
+#include "CornellScene.h"
 #include "Start.h"
 #include "DefferedRenderer.h"
 #include "Win.h"
@@ -72,7 +73,7 @@ void Game::Init()
 	light.DiffuseColor = VEC4(0, 0, 1, 1);
 	light.Direction = VEC3(1, -1, 0);
 
-	gameManager.SetActiveScene(new PBRDemoScene());
+	gameManager.SetActiveScene(new CornellScene());
 	renderer->SetSkyBox("japan");
 
 	// Set the current scene's entities so the octree will have them
@@ -112,10 +113,26 @@ void Game::Update(float deltaTime, float totalTime)
 	camera->Update(deltaTime);
 	gameManager.Update(deltaTime);
 
-	if (GetAsyncKeyState('R') & 0x8000)
+	if (GetAsyncKeyState('V') & 0x8000)
 	{
 		gameManager.SetActiveScene(new PBRDemoScene());
+		gameManager.Update(0);
+		renderer->SetGameEntities(&gameManager.GameEntities);
+		delete renderer->octree;
+		renderer->AddVoxelOctree(new SparseVoxelOctree(renderer));
+		ResetViewport(); // voxel octree changes the view port
 	}
+
+	if (GetAsyncKeyState('C') & 0x8000)
+	{
+		gameManager.SetActiveScene(new CornellScene());
+		gameManager.Update(0);
+		renderer->SetGameEntities(&gameManager.GameEntities);
+		delete renderer->octree;
+		renderer->AddVoxelOctree(new SparseVoxelOctree(renderer));
+		ResetViewport(); // voxel octree changes the view port
+	}
+
 
 	if (GetAsyncKeyState('M') & 0x8000)
 	{
@@ -128,9 +145,13 @@ void Game::Update(float deltaTime, float totalTime)
 	}
 
 	bool currP = (GetAsyncKeyState('P') & 0x8000) != 0;
+	bool currR = (GetAsyncKeyState('R') & 0x8000) != 0;
 	if (currP && !P_toggle)
 		renderer->drawSSAO = !renderer->drawSSAO;
-	P_toggle = currP;
+
+	if (currR && !P_toggle)
+		debug = !debug;
+	P_toggle = currP | currR;
 
 	/*
 	if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
@@ -195,10 +216,14 @@ void Game::Draw(float deltaTime, float totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f, 0);
 
-	// renderer->RayTraceRender(deltaTime, totalTime);
-	renderer->octree->DrawVoxelDebug(renderer);
-	renderer->octree->DrawOctreeDebug(renderer);
-	
+
+	if (debug)
+	{
+		renderer->octree->DrawVoxelDebug(renderer);
+		renderer->octree->DrawOctreeDebug(renderer);
+	}
+	else
+		renderer->RayTraceRender(deltaTime, totalTime);
 
 	swapChain->Present(0, 0);
 }
@@ -398,8 +423,14 @@ void Game::LoadMaterials()
 
 	renderer->AddMaterial("metalTest", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
 		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.5, 0.0, "default");
-	renderer->AddMaterial("roughTest", L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_basecolor.png",
-		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.0, 0.5, "default");
+	renderer->AddMaterial("whiteWall", L"Assets/PBR_Textures/Aluminum-Scuffed_Unreal-Engine/Aluminum-Scuffed_basecolor.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.0, 0.8, "default");
+	renderer->AddMaterial("greenWall", L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-green.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.0, 0.8, "default");
+	renderer->AddMaterial("blueWall", L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-blue-alb.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.0, 0.8, "default");
+	renderer->AddMaterial("blackWall", L"Assets/PBR_Textures/scuffed-plastic-1-Unreal-Engine/scuffed-plastic-black.png",
+		L"Assets/PBR_Textures/gold-scuffed-Unreal-Engine/gold-scuffed_normal.png", 0.0, 0.8, "default");
 
 	renderer->AddCubeMaterial("skybox", L"Assets/Textures/SunnyCubeMap.dds");
 	renderer->AddCubeMaterial("japan", L"Assets/Textures/Yokohama.dds");

@@ -121,6 +121,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ball.cpp" />
+    <ClCompile Include="CornellScene.cpp" />
     <ClCompile Include="CubeOutlineObj.cpp" />
     <ClCompile Include="PBRDemoScene.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -146,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ball.h" />
+    <ClInclude Include="CornellScene.h" />
     <ClInclude Include="CubeOutlineObj.h" />
     <ClInclude Include="PBRDemoScene.h" />
     <ClInclude Include="Camera.h" />

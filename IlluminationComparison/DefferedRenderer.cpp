@@ -609,7 +609,7 @@ void DefferedRenderer::rayTraceLighting()
 
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
-	pixelShader->SetFloat("maxDist", octree->getWorldWidth() * 4.0f);
+	pixelShader->SetFloat("maxDist", octree->getWorldWidth());
 	pixelShader->SetFloat("worldWidth", octree->getWorldWidth());
 	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
 	pixelShader->SetInt("numDirLights", directionalLights->size());

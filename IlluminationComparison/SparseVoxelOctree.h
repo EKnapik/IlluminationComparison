@@ -20,7 +20,7 @@ struct Node
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT3 color;
-	INT32             flagBits;
+	INT32             level;
 	INT32             childPointer; // pointer to child 8 tile chunch of the octree, an offset index
 	UINT32			  padding; // ensures the 128 bit allignment
 };
@@ -57,7 +57,7 @@ private:
 
 	float  worldWidth = 16;
 	int    voxelCount = 0;
-	float  voxelDim = 128; // 256
+	float  voxelDim = 64; // 256
 	int octreeSize = 0;
 	int maxOctreeDepth = int(log2(voxelDim));
 	

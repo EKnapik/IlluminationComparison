@@ -129,6 +129,9 @@
     <ClCompile Include="CubeOutlineObj.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CornellScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXMathImpl.h">
@@ -211,6 +214,9 @@
     </ClInclude>
     <ClInclude Include="SparseVoxelOctree.h">
       <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="CornellScene.h">
+      <Filter>Header Files\Engine\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

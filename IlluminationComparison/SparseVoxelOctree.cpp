@@ -20,13 +20,6 @@ SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
 	delete voxelList;
 	initOctree(renderer->device, cpuOctree);
 	delete cpuOctree;
-
-
-	// initOctree(renderer->device, NULL);
-	// createOctree(renderer);
-	// Use breakpoint debug to check the octree
-	// cpuOctreeCapture(renderer->device, renderer->context);
-	// mipMapUpOctree(renderer);
 }
 
 
@@ -313,10 +306,6 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 		pixelShader->SetSamplerState("basicSampler", material->GetSamplerState());
 		pixelShader->SetShaderResourceView("albedoMap", material->GetAlbedoSRV());
 		// pixelShader->SetShaderResourceView("normalMap", material->GetNormalSRV());
-		// pixelShader->SetShaderResourceView("metalMap", material->GetMetallicSRV());
-		// pixelShader->SetShaderResourceView("roughMap", material->GetRoughnessSRV());
-		// pixelShader->SetFloat("metallic", material->GetMetallicParam());
-		// pixelShader->SetFloat("roughness", material->GetRoughnessParam());
 		pixelShader->CopyAllBufferData();
 
 		// Send Geometry
@@ -554,7 +543,7 @@ void AverageOctave(Node* cpuOctree, int octaveIndex)
 
 	for (int i = 0; i < 8; i++)
 	{
-		if (cpuOctree[childPointer + i].flagBits < 0)
+		if (cpuOctree[childPointer + i].level < 0)
 			continue;
 		avgCount += 1.0f;
 		AverageOctave(cpuOctree, childPointer + i);
@@ -578,7 +567,7 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 	{
 		cpuOctree[i] = Node();
 		cpuOctree[i].childPointer = -1;
-		cpuOctree[i].flagBits = -1;
+		cpuOctree[i].level = -1;
 	}
 
 	cpuOctree[0].padding = 0;
@@ -597,10 +586,10 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 		for (currLevel = 1; currLevel < maxOctreeDepth; currLevel++)
 		{
 			// ALLOCATE AND follow pointer to next octree level
-			if (cpuOctree[currOctreeIndex].flagBits == -1)
+			if (cpuOctree[currOctreeIndex].level == -1)
 			{
 				cpuOctree[currOctreeIndex].position = curOctavePos;
-				cpuOctree[currOctreeIndex].flagBits = currLevel;
+				cpuOctree[currOctreeIndex].level = currLevel;
 				// move the pointer to allocate a child since this is no longer a leaf
 				cpuOctree[0].padding += 8;
 				cpuOctree[currOctreeIndex].childPointer = cpuOctree[0].padding;
@@ -625,13 +614,13 @@ Node* SparseVoxelOctree::CPUCreateOctree(Voxel* voxelList)
 		cpuOctree[currOctreeIndex].normal = voxelList[i].normal;
 		cpuOctree[currOctreeIndex].color = voxelList[i].color;
 		cpuOctree[currOctreeIndex].childPointer = 0;
-		cpuOctree[currOctreeIndex].flagBits = maxOctreeDepth;
+		cpuOctree[currOctreeIndex].level = maxOctreeDepth;
 	}
 
 	// average the voxels recursively through the octree 
 	for (int i = 0; i < 8; i++)
 	{
-		if (cpuOctree[i].flagBits < 0)
+		if (cpuOctree[i].level < 0)
 			continue;
 		AverageOctave(cpuOctree, i);
 	}

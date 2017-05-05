@@ -20,7 +20,7 @@ struct Node
 	float3			position;
 	float3			normal;
 	float3			color;
-	int             flagBits;       // 0 empty, 1 pointer to nodes, 2 leaf node
+	int             level;       // 0 empty, 1 pointer to nodes, 2 leaf node
 	int             childPointer;	// pointer to child 8 tile chunch of the octree, an offset index
 	uint			padding;		// ensures the 128 bit allignment
 };
@@ -102,12 +102,12 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 	iNode = octree[0];
 	float t = 0;
 	float3 pos = rayO + rayDir*t;;
-	float minStep = worldWidth / pow(2, MaxOctreeDepth+2);
+	float minStep = worldWidth / pow(2, MaxOctreeDepth + 2);
 	octaveIndex = GetOctaveIndex(pos);
 	octreeIndex = octaveIndex.x;
 	currentNode = octree[0];
-
-	while (t < maxDist && currentNode.childPointer != 0) // chilld pointer 0 means leaf node
+	int currentLevel = -1;
+	while (t < maxDist && currentLevel == -1) // If something is hit
 	{
 		t += minStep;
 		pos = rayO + rayDir*t;
@@ -130,10 +130,12 @@ float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
 			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
 		}
 		currentNode = octree[octreeIndex];
+		currentLevel = currentNode.level;
 	}
 	iNode = currentNode;
 	return t;
 }
+
 
 float4 main(VertexToPixel input) : SV_TARGET
 {

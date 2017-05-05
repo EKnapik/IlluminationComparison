@@ -91,6 +91,7 @@ private:
 	bool O_toggle = false;
 	bool P_toggle = false;
 	bool prevTab = false;
+	bool debug = false;
 	int skyboxChoice = 0;
 };
 

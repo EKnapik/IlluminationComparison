@@ -20,9 +20,9 @@ struct Node
 	float3			position;
 	float3			normal;
 	float3			color;
-	int             flagBits;       // 0 empty, 1 pointer to nodes, 2 leaf node
+	int             level;       // 0 empty, 1 pointer to nodes, 2 leaf node
 	int             childPointer;	// pointer to child 8 tile chunch of the octree, an offset index
-	uint			padding;		// ensures the 128 bit allignment
+	uint			padding;
 };
 
 
