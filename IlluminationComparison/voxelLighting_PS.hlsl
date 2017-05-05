@@ -25,13 +25,14 @@ struct PointLight
 cbuffer externalData	: register(b0)
 {
 	DirectionalLight dirLight[1];
+	float3 pointPos;
+	float3 pointColor;
 	float3 cameraPosition;
 	float3 cameraForward;
 	float maxDist;
 	float worldWidth;    // world Voxel width Entire space is made up of
 	int MaxOctreeDepth;
 	int numDirLights;
-	int numPointLights;
 }
 
 struct Node
@@ -53,12 +54,7 @@ struct VertexToPixel
 };
 
 static const float PI = 3.14159265359;
-static const int recursionDepth = 2;
-
-static const float3 weightVector[6] = {float3(0.0, 1.0, 0.0), float3(0.0, 0.5, 0.866025),
-		float3(0.823639, 0.5, 0.267627), float3(0.509037, 0.5, -0.700629),
-		float3(-0.509037, 0.5, -0.700629), float3(-0.823639, 0.5, 0.267617)};
-static const float weight[6] = {PI/4.0f, 3*PI/20.0f, 3*PI/20.0f, 3*PI/20.0f, 3*PI/20.0f, 3*PI/20.0f};
+static const int recursionDepth = 1;
 
 // OCTREE STRUCTURE
 StructuredBuffer<Node> octree : register(t6);
@@ -161,10 +157,10 @@ float coneTrace(in float3 rayO, in float3 rayDir, out Node iNode)
 			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
 		}
 
-		if (t >= minStep * 14.0f)
+		if (t >= minStep * 18.0f)
 		{
 			maxDepth--;
-			minStep = minStep * 2.0f;
+			minStep = minStep * 4.0f;
 		}
 
 		currentNode = octree[octreeIndex];
@@ -342,6 +338,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// V = direction toward camera from world position
 	float3 V = normalize(cameraPosition - gWorldPos);
 	float3 posShadow;
+
 	// Iterate over Directional Lights for direct illumination
 	for (int i = 0; i < numDirLights; i++)
 	{
@@ -349,10 +346,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 		float3 H = normalize(V + L);
 		posShadow = gWorldPos + (N * 0.5);
 		float3 R = reflect(-V, N);
-		// simple attenuation if this wasn't a directional light
-		/// float distance = length(lightPositions[i] - WorldPos);
-		/// float attenuation = 1.0 / (distance * distance);
-		/// vec3 radiance = lightColors[i] * attenuation;
 		float3 radiance = dirLight[i].DiffuseColor;
 		// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
 		// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
@@ -371,7 +364,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 				// reduce radiance by the specular amount
 				F *= F;
 				color += GetColor(currNode.color, currNode.normal,
-					metalness, roughness, L, V, H, radiance, F, currNode.position) * float4(F, 1.0f);
+					0.5, 0.5, L, V, H, radiance, F, currNode.position) * float4(F, 1.0f);
 			}
 			else
 			{
@@ -383,6 +376,46 @@ float4 main(VertexToPixel input) : SV_TARGET
 		}
 	}
 
+
+	// POINT LIGHTS
+	{
+		float3 L = normalize(pointPos - gWorldPos);
+		float3 H = normalize(V + L);
+		posShadow = gWorldPos + (N * 0.65);
+		float3 R = reflect(-V, N);
+		// simple attenuation if this wasn't a directional light
+		float dist = length(pointPos - gWorldPos);
+		float att = 1.0f;
+		float3 radiance = pointColor * att;
+		// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+		// of 0.04 and if it's a metal, use their albedo color as F0 (metallic workflow)    
+		float3 F0 = float3(0.04f, 0.04f, 0.04f);
+		F0 = lerp(F0, albedo, metalness);
+		float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+		color += GetColor(albedo, N, metalness, roughness, L, V, H, radiance, F, posShadow);
+		for (int j = 0; j < recursionDepth; j++)
+		{
+			Node currNode;
+			// Intersects a voxel
+			float t = coneTrace(posShadow, R, currNode);
+			if (t < maxDist)
+			{
+				// reduce radiance by the specular amount
+				color += GetColor(currNode.color, currNode.normal,
+					0.5, 0.5, L, V, H, radiance, F, currNode.position);
+			}
+			else
+			{
+				color += float4(SpecularIBL(albedo, roughness, N, V), 0.0f) * ((radiance.x + radiance.y + radiance.z) / 3.0f);
+				break;
+			}
+			L = normalize(pointPos - currNode.position);
+			H = normalize(V + L);
+			posShadow = currNode.position - (R * 0.5);
+			R = reflect(-R, currNode.normal);
+			F *= F;
+		}
+	}
 
 	// Compute  AO
 	/*

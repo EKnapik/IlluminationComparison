@@ -5,15 +5,15 @@ CornellScene::CornellScene()
 	Ball* ball;
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("sphere", "aluminumScuffed"));
-	ball->kinematics->SetPosition(VEC3(0, 2, 3));
-	ball->entity->Scale(VEC3(4.0f, 4.0f, 4.0f));
+	ball->kinematics->SetPosition(VEC3(-1, 3, 3));
+	ball->entity->Scale(VEC3(6.0f, 6.0f, 6.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("sphere", "redPlastic"));
-	ball->kinematics->SetPosition(VEC3(3, 0, 1));
-	ball->entity->Scale(VEC3(2.0f, 2.0f, 2.0f));
+	ball->kinematics->SetPosition(VEC3(4, 0, 1));
+	ball->entity->Scale(VEC3(4.0f, 4.0f, 4.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 	
@@ -22,15 +22,15 @@ CornellScene::CornellScene()
 	// left
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "greenWall"));
-	ball->entity->Scale(VEC3(0.125f, 16.0f, 16.0f));
-	ball->kinematics->SetPosition(VEC3(-8.0, 0.0f, 0.0f));
+	ball->entity->Scale(VEC3(0.75f, 16.0f, 16.0f));
+	ball->kinematics->SetPosition(VEC3(-9.0, 0.0f, 0.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 	// right
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "blueWall"));
-	ball->entity->Scale(VEC3(0.5f, 16.0f, 16.0f));
-	ball->kinematics->SetPosition(VEC3(8.0, 0.0f, 0.0f));
+	ball->entity->Scale(VEC3(0.75f, 16.0f, 16.0f));
+	ball->kinematics->SetPosition(VEC3(9.0, 0.0f, 0.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 	// top
@@ -45,14 +45,14 @@ CornellScene::CornellScene()
 	// bottom
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "whiteWall"));
-	ball->entity->Scale(VEC3(16.0f, 0.125f, 16.0f));
-	ball->kinematics->SetPosition(VEC3(0.0, -5.0f, 0.0f));
+	ball->entity->Scale(VEC3(16.0f, 0.75f, 16.0f));
+	ball->kinematics->SetPosition(VEC3(0.0, -6.0f, 0.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);
 	// back
 	ball = new Ball();
 	ball->SetEntity(new GameEntity("cube", "whiteWall"));
-	ball->entity->Scale(VEC3(16.0f, 16.0f, 0.125f));
+	ball->entity->Scale(VEC3(16.0f, 16.0f, 0.75f));
 	ball->kinematics->SetPosition(VEC3(0.0, 0.0f, 8.0f));
 	balls.push_back(ball);
 	GameObjects.push_back(ball);

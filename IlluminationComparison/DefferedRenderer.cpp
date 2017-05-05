@@ -607,13 +607,14 @@ void DefferedRenderer::rayTraceLighting()
 	vertexShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	vertexShader->CopyAllBufferData();
 
+	pixelShader->SetFloat3("pointPos", pointLights->at(0)->Position);
+	pixelShader->SetFloat3("pointColor", VEC3(pointLights->at(0)->Color.x, pointLights->at(0)->Color.y, pointLights->at(0)->Color.z));
 	pixelShader->SetFloat3("cameraPosition", *camera->GetPosition());
 	pixelShader->SetFloat3("cameraForward", *camera->GetDirection());
 	pixelShader->SetFloat("maxDist", octree->getWorldWidth());
 	pixelShader->SetFloat("worldWidth", octree->getWorldWidth());
 	pixelShader->SetInt("MaxOctreeDepth", octree->getOctreeDepth());
 	pixelShader->SetInt("numDirLights", directionalLights->size());
-	pixelShader->SetInt("numPointLights", pointLights->size());
 	ID3D11ShaderResourceView* octreeSRV = octree->GetOctreeSRV();
 	context->PSSetShaderResources(6, 1, &octreeSRV);
 
@@ -628,8 +629,6 @@ void DefferedRenderer::rayTraceLighting()
 
 	// Send Lighting Info
 	pixelShader->SetData("dirLight", &directionalLights->at(0), sizeof(DirectionalLight) * directionalLights->size());
-	directionalLights;
-	pointLights;
 	pixelShader->CopyAllBufferData();
 
 

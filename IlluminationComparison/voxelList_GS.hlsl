@@ -59,7 +59,7 @@ void main(triangle VStoGS input[3], inout TriangleStream<GStoPS> output)
 	float4 pos[3];
 
 	// enlarge the triangles
-	float hPixel = float(8.0 / width);  // height and width are the same here
+	float hPixel = float(12.0 / width);  // height and width are the same here
 	float pl = 1.4142135637309 / width;
 	float3 centerPos = (input[0].position.xyz + input[1].position.xyz + input[2].position.xyz) / 3.0f;
 	float4 tCenter = float4(centerPos, 1.0f);
