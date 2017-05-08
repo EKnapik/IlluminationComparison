@@ -117,6 +117,52 @@ float4 GetOctaveIndex(float3 pos)
 	}
 }
 
+
+float intersect(in float3 rayO, in float3 rayDir, out Node iNode)
+{
+	float curVoxelWidth = worldWidth;
+	float4 octaveIndex;
+	int octreeIndex;
+
+	Node currentNode;
+	iNode = octree[0];
+	float t = 0;
+	float3 pos = rayO + rayDir*t;;
+	float minStep = worldWidth / pow(2, MaxOctreeDepth);
+	octaveIndex = GetOctaveIndex(pos);
+	octreeIndex = octaveIndex.x;
+	currentNode = octree[0];
+	int currentLevel = -1;
+	while (t < maxDist && currentLevel == -1) // If something is hit
+	{
+		t += minStep;
+		pos = rayO + rayDir*t;
+		octaveIndex = GetOctaveIndex(pos);
+		octreeIndex = octaveIndex.x;
+		currentNode = octree[octreeIndex];
+		// Traverse down the octree to the leaf node of the current position
+		float curVoxelWidth = worldWidth / 2.0f;
+		for (int currLevel = 1; currLevel < MaxOctreeDepth; currLevel++)
+		{
+			if (octree[octreeIndex].childPointer < 0)
+			{
+				t += curVoxelWidth / 4.0f;
+				break;
+			}
+
+			curVoxelWidth /= 2.0f;
+			pos -= float3(octaveIndex.y, octaveIndex.z, octaveIndex.w) * curVoxelWidth;
+			octaveIndex = GetOctaveIndex(pos);
+			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
+		}
+		currentNode = octree[octreeIndex];
+		currentLevel = currentNode.level;
+	}
+	iNode = currentNode;
+	return t;
+}
+
+
 /// raymarches through the octree and places the intersection
 /// into the iNode.
 float coneTrace(in float3 rayO, in float3 rayDir, out Node iNode)
@@ -157,7 +203,7 @@ float coneTrace(in float3 rayO, in float3 rayDir, out Node iNode)
 			octreeIndex = octree[octreeIndex].childPointer + octaveIndex.x;
 		}
 
-		if (t >= minStep * 18.0f)
+		if (t >= minStep * 14.0f)
 		{
 			maxDepth--;
 			minStep = minStep * 4.0f;
@@ -285,7 +331,7 @@ float4 GetColor(float3 albedo, float3 N, float metalness, float roughness, float
 {
 	float3 R = reflect(-V, N);
 	Node hitNode;
-	float shadow = coneTrace(posShadow, L, hitNode);
+	float shadow = intersect(posShadow, L, hitNode);
 	if (shadow < maxDist) { // did this hit anything?
 		shadow = 0.1;
 	}
@@ -359,25 +405,25 @@ float4 main(VertexToPixel input) : SV_TARGET
 			Node currNode;
 			// Intersects a voxel
 			float t = coneTrace(posShadow, R, currNode);
+			posShadow = posShadow + (R * (t - 0.5));
 			if (t < maxDist)
 			{
 				// reduce radiance by the specular amount
 				F *= F;
 				color += GetColor(currNode.color, currNode.normal,
-					0.5, 0.5, L, V, H, radiance, F, currNode.position) * float4(F, 1.0f);
+					0.5, 0.5, L, V, H, radiance, F, posShadow) * float4(F, 1.0f);
 			}
 			else
 			{
 				color += float4(SpecularIBL(albedo, roughness, N, V), 0.0f) * ((radiance.x + radiance.y + radiance.z) / 3.0f);
 				break;
 			}
-			posShadow = currNode.position - (R * 0.5);
 			R = reflect(-R, currNode.normal);
 		}
 	}
 
 
-	// POINT LIGHTS
+	// POINT LIGHT
 	{
 		float3 L = normalize(pointPos - gWorldPos);
 		float3 H = normalize(V + L);
@@ -398,20 +444,20 @@ float4 main(VertexToPixel input) : SV_TARGET
 			Node currNode;
 			// Intersects a voxel
 			float t = coneTrace(posShadow, R, currNode);
+			posShadow = posShadow + (R * (t - 0.5));
 			if (t < maxDist)
 			{
 				// reduce radiance by the specular amount
 				color += GetColor(currNode.color, currNode.normal,
-					0.5, 0.5, L, V, H, radiance, F, currNode.position);
+					0.5, 0.5, L, V, H, radiance, F, posShadow);
 			}
 			else
 			{
 				color += float4(SpecularIBL(albedo, roughness, N, V), 0.0f) * ((radiance.x + radiance.y + radiance.z) / 3.0f);
 				break;
 			}
-			L = normalize(pointPos - currNode.position);
+			L = normalize(pointPos - posShadow);
 			H = normalize(V + L);
-			posShadow = currNode.position - (R * 0.5);
 			R = reflect(-R, currNode.normal);
 			F *= F;
 		}

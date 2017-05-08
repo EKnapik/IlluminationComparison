@@ -61,7 +61,7 @@ CornellScene::CornellScene()
 
 	PointLights.push_back(new ScenePointLight(
 		VEC4(1.0f, 0.5f, 0.3f, 1.0f),
-		VEC3(0, 7, 0), 20.0f));
+		VEC3(0, 11, 3), 20.0f));
 
 	DirectionalLights.push_back(SceneDirectionalLight(
 		VEC4(0.1f, 0.1f, 0.1f, 1.0f),
