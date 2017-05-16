@@ -2,4 +2,7 @@
 
 This is a comparison between standard ambient occlusion techniques as well as an investigation into more complex global illumination techniques. Particularly voxel based global illumination utilizing a sparse voxel octree.
 
-PDF Write Up ![Here](https://github.com/EKnapik/IlluminationComparison/blob/master/SparseVoxelOctree.pdf)
+PDF Write Up [Here](https://github.com/EKnapik/IlluminationComparison/blob/master/SparseVoxelOctree.pdf)
+[[Gollum|https://github.com/EKnapik/IlluminationComparison/blob/master/SparseVoxelOctree.pdf]]
+
+https://github.com/EKnapik/IlluminationComparison/blob/master/SparseVoxelOctree.pdf
