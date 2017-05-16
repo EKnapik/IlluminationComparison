@@ -49,6 +49,9 @@ public:
 	///</summary>
 	int GetIndexCount() { return indexCount; }
 
+
+	int GetTriangleCount() { return triangleCount; }
+
 	///<summary>
 	/// Releases this object and deletes it if there are no more objects referencing it.
 	///</summary>
@@ -64,6 +67,9 @@ private:
 	/// The ammount of indeces in the indexBuffer.
 	///</summary>
 	int indexCount = -1;
+
+
+	int triangleCount = 0;
 
 	///<summary>
 	/// The ammount of indeces in the indexBuffer.

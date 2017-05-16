@@ -64,6 +64,7 @@ Mesh::Mesh(std::string fileName, ID3D11Device* device)
 				// Add vert to indicies
 				indices.push_back(vertCounter); vertCounter += 1;
 			}
+			triangleCount += 1;
 			index_offset += fv;
 
 			// per-face material

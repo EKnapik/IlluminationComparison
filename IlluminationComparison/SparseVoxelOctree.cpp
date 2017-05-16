@@ -1,4 +1,6 @@
 #include "SparseVoxelOctree.h"
+#include <ctime>
+#include <cstdio>
 using namespace DirectX;
 
 SparseVoxelOctree::SparseVoxelOctree(DefferedRenderer* const renderer)
@@ -212,6 +214,10 @@ void SparseVoxelOctree::initOctree(ID3D11Device* device, Node* initData)
 // D3D11_CONSERVATIVE_RASTERIZATION_MODE
 void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 {
+	std::clock_t timer = std::clock();
+	long triangles = 0;
+	double durationMS;
+
 	D3D11_VIEWPORT viewport = {};
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
@@ -317,6 +323,7 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 		renderer->context->IASetVertexBuffers(0, 1, &vertTemp, &stride, &offset);
 		renderer->context->IASetIndexBuffer(meshTmp->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 		renderer->context->DrawIndexed(meshTmp->GetIndexCount(), 0, 0);
+		triangles += meshTmp->GetTriangleCount();
 	}
 
 	// RESET STATES
@@ -324,6 +331,11 @@ void SparseVoxelOctree::voxelizeGeometry(DefferedRenderer* renderer, int mode)
 	renderer->context->GSSetShader(0, 0, 0); // unset geometry shader
 	renderer->context->RSSetState(0); // reset state
 	renderer->context->OMSetRenderTargetsAndUnorderedAccessViews(0, 0, 0, 0, 0, 0, 0);
+
+	// TIMER
+	durationMS = (std::clock() - timer) / (double)CLOCKS_PER_SEC * 1000;
+
+	printf("Triangle: %d,  Voxels: %d, created in %fs\n", triangles, voxelCount, durationMS);
 }
 
 
